@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../Magento/Store/etc/config.xsd">
+    <default>
+        <payment>
+            <authnetcim>
+                <active>0</active>
+                <title>Credit Card (Authorize.Net CIM)</title>
+                <cctypes>AE,VI,MC,DI</cctypes>
+                <login backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
+                <trans_key backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
+                <model>ParadoxLabs\Authnetcim\Model\Method</model>
+                <order_status>pending</order_status>
+                <payment_action>authorize</payment_action>
+                <test>0</test>
+                <useccv>1</useccv>
+                <validation_mode>liveMode</validation_mode>
+                <allowspecific>0</allowspecific>
+                <currency>USD</currency>
+                <allow_unsaved>1</allow_unsaved>
+                <show_branding>0</show_branding>
+                <require_ccv>0</require_ccv>
+                <send_shipping_address>0</send_shipping_address>
+                <send_line_items>1</send_line_items>
+                <group>online</group>
+            </authnetcim>
+        </payment>
+    </default>
+</config>

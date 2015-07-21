@@ -1,0 +1,121 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../Magento/Config/etc/system_file.xsd">
+    <system>
+        <section id="payment">
+            <group id="authnetcim" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Authorize.Net CIM</label>
+                <!-- TODO: Implement all settings -->
+                <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Title</label>
+                </field>
+                <field id="login" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Api Login ID</label>
+                    <backend_model>Magento\Backend\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="trans_key" translate="label" type="obscure" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Transaction Key</label>
+                    <backend_model>Magento\Backend\Model\Config\Backend\Encrypted</backend_model>
+                    <comment>Get these from your Authorize.Net account settings.</comment>
+                </field>
+                <field id="test" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Authorize.Net Sandbox Account</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>'Yes' only if the API credentials are for a sandbox account. The account must have test mode disabled.</comment>
+                </field>
+                <field id="payment_action" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Payment Action</label>
+                    <source_model>Magento\Authorizenet\Model\Source\PaymentAction</source_model>
+                    <attribute type="shared">1</attribute>
+                    <comment>'Authorize and Capture' to charge on checkout.</comment>
+                </field>
+                <field id="order_status" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>New Order Status</label>
+                    <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
+                    <comment>Normally 'Pending' if 'Authorize Only' above; 'Processing' if not.</comment>
+                </field>
+                <field id="validation_type" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Validation Type</label>
+                    <!-- TODO: Source model -->
+                    <source_model>ParadoxLabs\TokenBase\Model\Source\ValidationType</source_model>
+                    <attribute type="shared">1</attribute>
+                    <comment>'Live' to run a test transaction when storing new cards. This will incur an extra txn fee.</comment>
+                </field>
+                <field id="heading_cc" translate="label" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Credit Card Settings</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                    <attribute type="shared">1</attribute>
+                </field>
+                <field id="cctypes" translate="label comment" type="multiselect" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Allowed Credit Card Types</label>
+                    <source_model>Magento\Authorizenet\Model\Source\Cctype</source_model>
+                    <attribute type="shared">1</attribute>
+                </field>
+                <field id="useccv" translate="label" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Credit Card Verification</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>'Yes' to require the CCV code when using new cards (recommended).</comment>
+                </field>
+                <field id="allow_unsaved" translate="label" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Allow cards to not be stored</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If yes, customers can choose whether to save their credit card during checkout.</comment>
+                </field>
+                <field id="currency" translate="label" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Accepted Currency</label>
+                    <source_model>Magento\Config\Model\Config\Source\Locale\Currency</source_model>
+                </field>
+                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Payment from Applicable Countries</label>
+                    <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                </field>
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Payment from Specific Countries</label>
+                    <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                    <can_be_empty>1</can_be_empty>
+                    <depends>
+                        <field id="allowspecific">1</field>
+                    </depends>
+                </field>
+                <field id="show_branding" translate="label" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Show Authorize.Net logo</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Show an Authorize.Net logo on the payment form.</comment>
+                </field>
+                <field id="min_order_total" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Minimum Order Total</label>
+                </field>
+                <field id="max_order_total" translate="label" type="text" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Maximum Order Total</label>
+                </field>
+                <field id="sort_order" translate="label" type="text" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Sort Order</label>
+                    <frontend_class>validate-number</frontend_class>
+                </field>
+                <field id="heading_advanced" translate="label" sortOrder="170" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Advanced Settings</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                    <attribute type="shared">1</attribute>
+                </field>
+                <field id="require_ccv" translate="label" type="select" sortOrder="180" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Require CCV for all transactions</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If yes, CCV code will be required even for stored cards. This will not affect recurring transactions.</comment>
+                </field>
+                <field id="send_shipping_address" translate="label" type="select" sortOrder="190" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Send Shipping Address</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If yes, shipping address will be sent with each transaction. Required for some fraud filters, but it will add an extra API request and slow down checkout.</comment>
+                </field>
+                <field id="send_line_items" translate="label" type="select" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Send Line Items</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If yes, the items will be included with each transaction. May not be desired for some accounting integrations.</comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>
