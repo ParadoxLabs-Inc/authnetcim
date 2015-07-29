@@ -7,4 +7,11 @@
             </argument>
         </arguments>
     </virtualType>
+
+    <type name="ParadoxLabs\Authnetcim\Model\Method">
+        <arguments>
+            <argument name="gateway" xsi:type="object">ParadoxLabs\Authnetcim\Model\Gateway</argument>
+            <argument name="cardFactory" xsi:type="object">ParadoxLabs\Authnetcim\Model\CardFactory</argument>
+        </arguments>
+    </type>
 </config>

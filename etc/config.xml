@@ -9,6 +9,7 @@
                 <login backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
                 <trans_key backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
                 <model>ParadoxLabs\Authnetcim\Model\Method</model>
+                <card_model>ParadoxLabs\Authnetcim\Model\Card</card_model>
                 <order_status>pending</order_status>
                 <payment_action>authorize</payment_action>
                 <test>0</test>
@@ -21,7 +22,7 @@
                 <require_ccv>0</require_ccv>
                 <send_shipping_address>0</send_shipping_address>
                 <send_line_items>1</send_line_items>
-                <group>online</group>
+                <group>tokenbase</group>
             </authnetcim>
         </payment>
     </default>
