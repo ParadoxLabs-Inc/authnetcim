@@ -211,7 +211,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
                 $this->gateway()->clearParameters();
                 $this->gateway()->setCard($this->gateway()->getCard());
                 $this->gateway()->setParameter('customerShippingAddressId', $shippingId);
-                $this->gateway()->setIsReauthorize(true);
+                $this->gateway()->setHaveAuthorized(true);
 
                 $authResponse    = $this->gateway()->authorize($payment, $outstanding);
 
