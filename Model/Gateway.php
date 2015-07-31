@@ -36,8 +36,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * @var string
      */
-    // TODO: Move to a setting
-    protected $endpointLive = 'https://api.authorize.net/xml/v1/request.api';
+    protected $endpointLive = 'https://api2.authorize.net/xml/v1/request.api';
 
     /**
      * @var string
@@ -300,11 +299,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     /**
                      * We know the card is not valid, so hide and get rid of it. Except we're in the middle
                      * of a transaction... so any change will just be rolled back. Save it for a little later.
-                     * @see ParadoxLabs_TokenBase_Model_Observer_CardLoad::checkQueuedForDeletion()
+                     * @see \ParadoxLabs\TokenBase\Model\Observer\CardLoad::checkQueuedForDeletion()
                      */
-                    // TODO: Mage registry?
-//                    Mage::unregister('queue_card_deletion');
-//                    Mage::register( 'queue_card_deletion', $this->getCard() );
+                    $this->_registry->unregister('queue_card_deletion');
+                    $this->_registry->register('queue_card_deletion', $this->getData('card'));
                 }
 
                 $this->helper->log(
@@ -334,60 +332,23 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         /**
-         * Turn the direct response string into an array, as best we can.
+         * Turn response into a consistent data object, as best we can
          */
-        $directResponse = isset($transactionResult['directResponse']) ? $transactionResult['directResponse'] : '';
-        if (strlen($directResponse) > 1) {
-            // Strip out quotes, we don't want any.
-            $directResponse = str_replace('"', '', $directResponse);
-
-            // Use the second character as the delimiter. The first will always be the one-digit response code.
-            $directResponse = explode(substr($directResponse, 1, 1), $directResponse);
-        }
-
-        if (empty($directResponse) || count($directResponse) == 0) {
+        if (isset($transactionResult['directResponse'])) {
+            $data = $this->getDataFromDirectResponse($transactionResult['directResponse']);
+        } elseif (isset($transactionResult['transactionResponse'])) {
+            $data = $this->getDataFromTransactionResponse($transactionResult['transactionResponse']);
+        } else {
             $this->helper->log(
                 $this->code,
-                sprintf("Authorize.Net CIM Gateway: Transaction failed; no direct response.\n%s", $this->log)
+                sprintf("Authorize.Net CIM Gateway: Transaction failed; no response.\n%s", $this->log)
             );
 
             throw new PaymentException(
-                __('Authorize.Net CIM Gateway: Transaction failed; no direct response. '
+                __('Authorize.Net CIM Gateway: Transaction failed; no response. '
                     . 'Please re-enter your payment info and try again.')
             );
         }
-
-        /**
-         * Turn the array into a keyed object and infer some things.
-         */
-        $data = [
-            'responsecode'          => (int)$directResponse[0],
-            'response_subcode'      => (int)$directResponse[1],
-            'response_reasoncode'   => (int)$directResponse[2],
-            'response_reason_text'  => $directResponse[3],
-            'approvalcode'          => $directResponse[4],
-            'authcode'              => $directResponse[4],
-            'avs_resultcode'        => $directResponse[5],
-            'transaction_id'        => $directResponse[6],
-            'invoice_number'        => $directResponse[7],
-            'description'           => $directResponse[8],
-            'amount'                => $directResponse[9],
-            'method'                => $directResponse[10],
-            'transaction_type'      => $directResponse[11],
-            'customer_id'           => $directResponse[12],
-            'md5_hash'              => $directResponse[37],
-            'cardcode_responsecode' => $directResponse[38],
-            'cavv_responsecode'     => $directResponse[39],
-            'acc_number'            => $directResponse[50],
-            'card_type'             => $directResponse[51],
-            'split_tender_id'       => $directResponse[52],
-            'requested_amount'      => $directResponse[53],
-            'balance_on_card'       => $directResponse[54],
-            'profile_id'            => $this->getParameter('customerProfileId'),
-            'payment_id'            => $this->getParameter('customerPaymentProfileId'),
-            'is_fraud'              => false,
-            'is_error'              => false,
-        ];
 
         /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
         $response = $this->responseFactory->create();
@@ -462,7 +423,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
 
-        $this->setParameter('transactionType', 'profileTransAuthOnly');
+        $this->setParameter('transactionType', 'authOnlyTransaction');
         $this->setParameter('amount', $amount);
         $this->setParameter('invoiceNumber', $payment->getOrder()->getIncrementId());
 
@@ -480,7 +441,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $this->setParameter('cardCode', $payment->getData('cc_cid'));
         }
 
-        $result = $this->createCustomerProfileTransaction();
+        $result = $this->createTransaction();
         $response = $this->interpretTransaction($result);
 
         return $response;
@@ -499,7 +460,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         /** @var \Magento\Sales\Model\Order\Payment $payment */
 
         if ($this->getHaveAuthorized() && $this->hasParameter('authcode')) {
-            $this->setParameter('transactionType', 'profileTransPriorAuthCapture');
+            $this->setParameter('transactionType', 'priorAuthCaptureTransaction');
 
             if (!is_null($transactionId)) {
                 $this->setParameter('transId', $transactionId);
@@ -507,9 +468,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 $this->setParameter('transId', $payment->getData('transaction_id'));
             }
         } elseif ($this->getHaveAuthorized()) {
-            $this->setParameter('transactionType', 'profileTransCaptureOnly');
+            $this->setParameter('transactionType', 'captureOnlyTransaction');
         } else {
-            $this->setParameter('transactionType', 'profileTransAuthCapture');
+            $this->setParameter('transactionType', 'authCaptureTransaction');
         }
 
         $this->setParameter('amount', $amount);
@@ -540,7 +501,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $this->setParameter('cardCode', $payment->getData('cc_cid'));
         }
 
-        $result = $this->createCustomerProfileTransaction();
+        $result = $this->createTransaction();
         $response = $this->interpretTransaction($result);
 
         /**
@@ -574,7 +535,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
 
-        $this->setParameter('transactionType', 'profileTransRefund');
+        $this->setParameter('transactionType', 'refundTransaction');
         $this->setParameter('amount', $amount);
         $this->setParameter('invoiceNumber', $payment->getOrder()->getIncrementId());
 
@@ -592,7 +553,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $this->setParameter('transId', $payment->getTransactionId());
         }
 
-        $result = $this->createCustomerProfileTransaction();
+        $result = $this->createTransaction();
         $response = $this->interpretTransaction($result);
 
         /**
@@ -641,7 +602,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
 
-        $this->setParameter('transactionType', 'profileTransVoid');
+        $this->setParameter('transactionType', 'voidTransaction');
 
         if (!is_null($transactionId)) {
             $this->setParameter('transId', $transactionId);
@@ -649,7 +610,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $this->setParameter('transId', $payment->getTransactionId());
         }
 
-        $result = $this->createCustomerProfileTransaction();
+        $result = $this->createTransaction();
         $response = $this->interpretTransaction($result);
 
         return $response;
@@ -690,7 +651,6 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      * @param string $authCode
      * @return $this
      */
-    // TODO: Constant for param keys for authcode and transid?
     public function setAuthCode($authCode)
     {
         $this->setParameter('approvalCode', $authCode);
@@ -713,6 +673,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
 ########################################################################################################################
 #### API methods: See the Authorize.Net CIM XML documentation.
+#### http://developer.authorize.net/api/reference/
 ########################################################################################################################
 
     /**
@@ -1082,7 +1043,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      */
     public function createTransaction()
     {
-        $type       = $this->getParameter('transactionType');
+        $type = $this->getParameter('transactionType');
 
         if (in_array($type, ['authOnlyTransaction', 'authCaptureTransaction', 'captureOnlyTransaction'])) {
             $isNewTxn = true;
@@ -1096,6 +1057,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $isNewCard = true;
         }
 
+        /**
+         * Define the transaction and basics: Amount, txn ID, auth code
+         */
         $params = [];
         $params['transactionType'] = $type;
 
@@ -1119,49 +1083,65 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $params['authCode'] = $this->getParameter('approvalCode');
         }
 
-        if ($isNewCard === true) {
-            $params['profile'] = [
-                'customerProfileId' => $this->getParameter('customerProfileId'),
-                'paymentProfile'    => [
-                    'paymentProfileId'  => $this->getParameter('customerPaymentProfileId'),
-                ],
-            ];
-
-            if ($this->hasParameter('cardCode') && $type != 'priorAuthCaptureTransaction') {
-                $params['profile']['paymentProfile']['cardCode'] = $this->getParameter('cardCode');
-            }
-
-            if ($this->hasParameter('customerShippingAddressId')) {
-                $params['profile']['shippingProfileId'] = $this->hasParameter('customerShippingAddressId');
-            }
-        } else {
-            // TODO: Handle payment info properly
-            if ($this->hasParameter('cardNumber')) {
-                $params['payment'] = [
-                    'creditCard' => [
-                        'cardNumber'     => $this->getParameter('cardNumber'),
-                        'expirationDate' => $this->getParameter('expirationDate'),
-                    ],
-                ];
-
-                if ($this->hasParameter('cardCode')) {
-                    $params['payment']['creditCard']['cardCode'] = $this->getParameter('cardCode');
-                }
-            } elseif ($this->hasParameter('accountNumber')) {
-                $params['payment'] = [
-                    'bankAccount' => [
-                        'accountType'   => $this->getParameter('accountType'),
-                        'routingNumber' => $this->getParameter('routingNumber'),
-                        'accountNumber' => $this->getParameter('accountNumber'),
-                        'nameOnAccount' => $this->getParameter('nameOnAccount'),
-                        'echeckType'    => $this->getParameter('echeckType'),
-                        'bankName'      => $this->getParameter('bankName'),
-                    ],
-                ];
-            }
-        }
-
+        // Most of the data does not matter for follow-ups (capture, void, refund).
         if ($isNewTxn === true) {
+            /**
+             * Add payment info.
+             */
+            if ($isNewCard === true) {
+                /**
+                 * If we're storing a new card, send the payment data along and request a profile.
+                 */
+                if ($this->hasParameter('cardNumber')) {
+                    $params['payment'] = [
+                        'creditCard' => [
+                            'cardNumber'     => $this->getParameter('cardNumber'),
+                            'expirationDate' => $this->getParameter('expirationDate'),
+                        ],
+                    ];
+
+                    if ($this->hasParameter('cardCode')) {
+                        $params['payment']['creditCard']['cardCode'] = $this->getParameter('cardCode');
+                    }
+                } elseif ($this->hasParameter('accountNumber')) {
+                    $params['payment'] = [
+                        'bankAccount' => [
+                            'accountType'   => $this->getParameter('accountType'),
+                            'routingNumber' => $this->getParameter('routingNumber'),
+                            'accountNumber' => $this->getParameter('accountNumber'),
+                            'nameOnAccount' => $this->getParameter('nameOnAccount'),
+                            'echeckType'    => $this->getParameter('echeckType'),
+                            'bankName'      => $this->getParameter('bankName'),
+                        ],
+                    ];
+                }
+
+                $params['profile'] = [
+                    'createProfile' => 'true',
+                ];
+            } else {
+                /**
+                 * Otherwise, send the tokens we already have.
+                 */
+                $params['profile'] = [
+                    'customerProfileId' => $this->getParameter('customerProfileId'),
+                    'paymentProfile'    => [
+                        'paymentProfileId' => $this->getParameter('customerPaymentProfileId'),
+                    ],
+                ];
+
+                // Include CCV if available.
+                if ($this->hasParameter('cardCode') && $type != 'priorAuthCaptureTransaction') {
+                    $params['profile']['paymentProfile']['cardCode'] = $this->getParameter('cardCode');
+                }
+
+                // Include shipping profile if available.
+                if ($this->hasParameter('customerShippingAddressId')) {
+                    $params['profile']['shippingProfileId'] = $this->hasParameter('customerShippingAddressId');
+                }
+            }
+
+            // Set order identifiers!
             $params['solution'] = [
                 'id' => self::SOLUTION_ID,
             ];
@@ -1246,7 +1226,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 $params['poNumber'] = $this->getParameter('purchaseOrderNumber');
             }
 
-            // Add customer info
+            // Add customer info!
             $params['customer'] = [
                 'id'    => $this->getParameter('merchantCustomerId'),
                 'email' => $this->getParameter('email'),
@@ -1258,7 +1238,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     ] + $params['customer'];
             }
 
-            // TODO: Add address info up the chain
+            // Add billing address?
             if ($isNewCard === true) {
                 $params['billTo'] = [
                     'firstName'   => $this->getParameter('billToFirstName'),
@@ -1274,17 +1254,17 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 ];
             }
 
-            // TODO: Add settings check somewhere in the process, don't always want to send
-            if ($this->hasParameter('customerShippingAddressId') === false) {
+            // Add shipping address?
+            if (!$this->hasParameter('customerShippingAddressId') && $this->hasParameter('shipToAddress')) {
                 $params['shipTo'] = [
-                    'firstName'   => $this->getParameter('shipToFirstName'),
-                    'lastName'    => $this->getParameter('shipToLastName'),
-                    'company'     => $this->getParameter('shipToCompany'),
-                    'address'     => $this->getParameter('shipToAddress'),
-                    'city'        => $this->getParameter('shipToCity'),
-                    'state'       => $this->getParameter('shipToState'),
-                    'zip'         => $this->getParameter('shipToZip'),
-                    'country'     => $this->getParameter('shipToCountry'),
+                    'firstName' => $this->getParameter('shipToFirstName'),
+                    'lastName'  => $this->getParameter('shipToLastName'),
+                    'company'   => $this->getParameter('shipToCompany'),
+                    'address'   => $this->getParameter('shipToAddress'),
+                    'city'      => $this->getParameter('shipToCity'),
+                    'state'     => $this->getParameter('shipToState'),
+                    'zip'       => $this->getParameter('shipToZip'),
+                    'country'   => $this->getParameter('shipToCountry'),
                 ];
             }
 
@@ -1293,23 +1273,24 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 $params['customerIP'] = $this->getParameter('customerIp');
             }
 
+            // Add misc settings.
             $params['transactionSettings'] = [
                 'setting' => [],
             ];
 
             $params['transactionSettings']['setting'][] = [
-                'settingName'   => 'allowPartialAuth',
-                'settingValue'  => $this->getParameter('allowPartialAuth', 'false'),
+                'settingName'  => 'allowPartialAuth',
+                'settingValue' => $this->getParameter('allowPartialAuth', 'false'),
             ];
 
             $params['transactionSettings']['setting'][] = [
-                'settingName'   => 'duplicatWindow',
-                'settingValue'  => $this->getParameter('duplicateWindow', '15'),
+                'settingName'  => 'duplicateWindow',
+                'settingValue' => $this->getParameter('duplicateWindow', '15'),
             ];
 
             $params['transactionSettings']['setting'][] = [
-                'settingName'   => 'emailCustomer',
-                'settingValue'  => $this->getParameter('emailCustomer', 'false'),
+                'settingName'  => 'emailCustomer',
+                'settingValue' => $this->getParameter('emailCustomer', 'false'),
             ];
         }
 
@@ -1543,5 +1524,165 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         );
 
         return $this->runTransaction('validateCustomerPaymentProfileRequest', $params);
+    }
+
+    /**
+     * Turn the direct response string into an array, as best we can.
+     *
+     * @param string $directResponse
+     * @return array
+     * @throws PaymentException
+     */
+    private function getDataFromDirectResponse($directResponse)
+    {
+        if (strlen($directResponse) > 1) {
+            // Strip out quotes, we don't want any.
+            $directResponse = str_replace('"', '', $directResponse);
+
+            // Use the second character as the delimiter. The first will always be the one-digit response code.
+            $directResponse = explode(substr($directResponse, 1, 1), $directResponse);
+        }
+
+        if (empty($directResponse) || count($directResponse) == 0) {
+            $this->helper->log(
+                $this->code,
+                sprintf("Authorize.Net CIM Gateway: Transaction failed; no direct response.\n%s", $this->log)
+            );
+
+            throw new PaymentException(
+                __('Authorize.Net CIM Gateway: Transaction failed; no direct response. '
+                    . 'Please re-enter your payment info and try again.')
+            );
+        }
+
+        /**
+         * Turn the array into a keyed object and infer some things.
+         */
+        $data = [
+            'response_code'           => (int)$directResponse[0],
+            'response_subcode'        => (int)$directResponse[1],
+            'response_reason_code'    => (int)$directResponse[2],
+            'response_reason_text'    => $directResponse[3],
+            'approval_code'           => $directResponse[4],
+            'auth_code'               => $directResponse[4],
+            'avs_result_code'         => $directResponse[5],
+            'transaction_id'          => $directResponse[6],
+            'invoice_number'          => $directResponse[7],
+            'description'             => $directResponse[8],
+            'amount'                  => $directResponse[9],
+            'method'                  => $directResponse[10],
+            'transaction_type'        => $directResponse[11],
+            'customer_id'             => $directResponse[12],
+            'md5_hash'                => $directResponse[37],
+            'card_code_response_code' => $directResponse[38],
+            'cavv_response_code'      => $directResponse[39],
+            'acc_number'              => $directResponse[50],
+            'card_type'               => $directResponse[51],
+            'split_tender_id'         => $directResponse[52],
+            'requested_amount'        => $directResponse[53],
+            'balance_on_card'         => $directResponse[54],
+            'profile_id'              => $this->getParameter('customerProfileId'),
+            'payment_id'              => $this->getParameter('customerPaymentProfileId'),
+            'is_fraud'                => false,
+            'is_error'                => false,
+        ];
+
+        return $data;
+    }
+
+    /**
+     * Turn the direct response string into an array, as best we can.
+     *
+     * @param string $response
+     * @return array
+     * @throws PaymentException
+     */
+    private function getDataFromTransactionResponse($response)
+    {
+        if (empty($response)) {
+            $this->helper->log(
+                $this->code,
+                sprintf("Authorize.Net CIM Gateway: Transaction failed; no response.\n%s", $this->log)
+            );
+
+            throw new PaymentException(
+                __('Authorize.Net CIM Gateway: Transaction failed; no response. '
+                    . 'Please re-enter your payment info and try again.')
+            );
+        }
+
+        $txnTypeMap = [
+            'authCaptureTransaction'      => 'AUTH_CAPTURE',
+            'authOnlyTransaction'         => 'AUTH_ONLY',
+            'captureOnlyTransaction'      => 'CAPTURE_ONLY',
+            'priorAuthCaptureTransaction' => 'PRIOR_AUTH_CAPTURE',
+            'refundTransaction'           => 'CREDIT',
+            'voidTransaction'             => 'VOID',
+        ];
+
+        /**
+         * Turn the array into a keyed object and infer some things.
+         * We try to keep the values consistent with the directResponse data. Some translation required.
+         */
+        $data = [
+            'response_code'            => (int)$response['responseCode'],
+            'response_subcode'         => '',
+            'response_reason_code'     => (int)$response['messages']['message']['code'],
+            'response_reason_text'     => $response['messages']['message']['description'],
+            'auth_code'                => isset($response['authCode']) ? $response['authCode'] : '',
+            'avs_result_code'          => isset($response['avsResultCode']) ? $response['avsResultCode'] : '',
+            'transaction_id'           => isset($response['transId']) ? $response['transId'] : '',
+            'reference_transaction_id' => isset($response['reftransId']) ? $response['reftransId'] : '',
+            'invoice_number'           => $this->getParameter('invoiceNumber'),
+            'description'              => $this->getParameter('description'),
+            'amount'                   => $this->getParameter('amount'),
+            'method'                   => ($response['accountType'] == 'eCheck') ? 'ECHECK' : 'CC',
+            'transaction_type'         => $txnTypeMap[ $this->getParameter('transactionType') ],
+            'customer_id'              => $this->getParameter('merchantCustomerId'),
+            'md5_hash'                 => $response['transHash'],
+            'card_code_response_code'  => isset($response['cvvResultCode']) ? $response['cvvResultCode'] : '',
+            'cavv_response_code'       => isset($response['cavvResultCode']) ? $response['cavvResultCode'] : '',
+            'acc_number'               => $response['accountNumber'],
+            'card_type'                => $response['accountType'],
+            'split_tender_id'          => '',
+            'requested_amount'         => '',
+            'balance_on_card'          => '',
+            'profile_id'               => $this->getParameter('customerProfileId'),
+            'payment_id'               => $this->getParameter('customerPaymentProfileId'),
+            'is_fraud'                 => false,
+            'is_error'                 => false,
+        ];
+
+        /**
+         * Pull CIM profile data out of the response, if any.
+         */
+        if (isset($response['profileResponse'])) {
+            $data['profile_results'] = $response['profileResponse']['messages'];
+
+            if (isset($response['profileResponse']['customerProfileId'])) {
+                $data['profile_id'] = $response['profileResponse']['customerProfileId'];
+            }
+
+            if (isset($response['profileResponse']['customerPaymentProfileIdList'])
+                && isset($response['profileResponse']['customerPaymentProfileIdList']['numericString'])) {
+                $data['payment_id'] = $response['profileResponse']['customerPaymentProfileIdList']['numericString'];
+            }
+
+            if (isset($response['profileResponse']['customerShippingAddressIdList'])
+                && isset($response['profileResponse']['customerShippingAddressIdList']['numericString'])) {
+                $data['shipping_id'] = $response['profileResponse']['customerShippingAddressIdList']['numericString'];
+            }
+
+            /**
+             * Handle error cases
+             *
+             * ...
+             *
+             * Not a priority right now, since the API's error handling is not robust enough
+             * for us to actually use this behavior reliably.
+             */
+        }
+
+        return $data;
     }
 }

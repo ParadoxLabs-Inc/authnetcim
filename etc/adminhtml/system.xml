@@ -2,9 +2,18 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../Magento/Config/etc/system_file.xsd">
     <system>
         <section id="payment">
-            <group id="authnetcim" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="authnetcim" translate="label" type="text" sortOrder="500" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Authorize.Net CIM</label>
+                <comment><![CDATA[<div style="float:right;text-align:center;"><img src="https://store.paradoxlabs.com/media/wysiwyg/AuthorizeNetCertified.gif" width="140" height="50" border="0" alt="Authorize.Net Certified Solution" /><br />by <a href="https://store.paradoxlabs.com/magento-authorize-net-cim-payment-module.html" target="_blank">ParadoxLabs, inc.</a></div>]]></comment>
                 <!-- TODO: Implement all settings -->
+                <field id="version" translate="label" type="label" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Version Installed</label>
+                    <backend_model>ParadoxLabs\Authnetcim\Model\Config\Version</backend_model>
+                </field>
+                <field id="apitest" translate="label" type="label" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>API Test Results</label>
+                    <frontend_model>ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ApiTest</frontend_model>
+                </field>
                 <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Enabled</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
@@ -39,10 +48,9 @@
                 </field>
                 <field id="validation_type" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Validation Type</label>
-                    <!-- TODO: Source model -->
-                    <source_model>ParadoxLabs\TokenBase\Model\Source\ValidationType</source_model>
+                    <source_model>ParadoxLabs\Authnetcim\Model\Source\ValidationType</source_model>
                     <attribute type="shared">1</attribute>
-                    <comment>'Live' to run a test transaction when storing new cards. This will incur an extra txn fee.</comment>
+                    <comment>'Live' to verify new cards are real before storing. This will incur an extra txn fee.</comment>
                 </field>
                 <field id="heading_cc" translate="label" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Credit Card Settings</label>
@@ -108,7 +116,7 @@
                 <field id="send_shipping_address" translate="label" type="select" sortOrder="190" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Send Shipping Address</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>If yes, shipping address will be sent with each transaction. Required for some fraud filters, but it will add an extra API request and slow down checkout.</comment>
+                    <comment>If yes, shipping address will be sent with each transaction. Required for some fraud filters.</comment>
                 </field>
                 <field id="send_line_items" translate="label" type="select" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Send Line Items</label>

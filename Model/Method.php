@@ -79,56 +79,29 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
     }
 
     /**
-     * Create shipping address record before running the transaction.
+     * Set shipping address on the gateway before running the transaction.
      *
      * @param \Magento\Payment\Model\InfoInterface $payment
      * @return $this
      */
-    protected function createShippingAddress(\Magento\Payment\Model\InfoInterface $payment)
+    protected function handleShippingAddress(\Magento\Payment\Model\InfoInterface $payment)
     {
+        /** @var \Magento\Sales\Model\Order\Payment $payment */
+
         if ($this->getConfigData('send_shipping_address') && $payment->getOrder()->getIsVirtual() == false) {
             /** @var \Magento\Sales\Model\Order\Address $address */
             $address = $payment->getOrder()->getShippingAddress();
 
-            // TODO: Is any of this needed anymore? Probably used to get authnetcim_shipping_id on the address
-//            if ($address->getCustomerAddressId() != '') {
-//                // TODO: fixme
-//                $customerAddress = $this->addressFactory->create();
-//                $customerAddress->load($address->getCustomerAddressId());
-//
-//                if ($customerAddress
-//                    && $customerAddress->getId() == $address->getCustomerAddressId()
-//                    && $customerAddress->getStreet(1) != '') {
-//                    $address = $customerAddress;
-//                }
-//            }
-
-            if ($address->getData('authnetcim_shipping_id') == '' && $address->getStreetLine(1) != '') {
-                $this->log(sprintf('_createShippingAddress(%s %s)', get_class($address), $address->getId()));
-
-                $this->gateway()->setParameter('customerProfileId', $this->getCard()->getProfileId());
-
-                $this->gateway()->setParameter('shipToFirstName', $address->getFirstname());
-                $this->gateway()->setParameter('shipToLastName', $address->getLastname());
-                $this->gateway()->setParameter('shipToCompany', $address->getCompany());
-                $this->gateway()->setParameter('shipToAddress', implode(' ', $address->getStreet()));
-                $this->gateway()->setParameter('shipToCity', $address->getCity());
-                $this->gateway()->setParameter('shipToState', $address->getRegion());
-                $this->gateway()->setParameter('shipToZip', $address->getPostcode());
-                $this->gateway()->setParameter('shipToCountry', $address->getCountryId());
-                $this->gateway()->setParameter('shipToPhoneNumber', $address->getTelephone());
-                $this->gateway()->setParameter('shipToFaxNumber', $address->getFax());
-
-                $shippingId = $this->gateway()->createCustomerShippingAddress();
-
-                $address->setData('authnetcim_shipping_id', $shippingId)->save();
-            } else {
-                $shippingId = $address->getData('authnetcim_shipping_id');
-            }
-
-            if (!empty($shippingId)) {
-                $this->gateway()->setParameter('customerShippingAddressId', $shippingId);
-            }
+            $this->gateway()->setParameter('shipToFirstName', $address->getFirstname());
+            $this->gateway()->setParameter('shipToLastName', $address->getLastname());
+            $this->gateway()->setParameter('shipToCompany', $address->getCompany());
+            $this->gateway()->setParameter('shipToAddress', implode(' ', $address->getStreet()));
+            $this->gateway()->setParameter('shipToCity', $address->getCity());
+            $this->gateway()->setParameter('shipToState', $address->getRegion());
+            $this->gateway()->setParameter('shipToZip', $address->getPostcode());
+            $this->gateway()->setParameter('shipToCountry', $address->getCountryId());
+            $this->gateway()->setParameter('shipToPhoneNumber', $address->getTelephone());
+            $this->gateway()->setParameter('shipToFaxNumber', $address->getFax());
         }
 
         return $this;
@@ -143,7 +116,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
      */
     protected function beforeAuthorize(\Magento\Payment\Model\InfoInterface $payment, $amount)
     {
-        $this->createShippingAddress($payment);
+        $this->handleShippingAddress($payment);
 
         parent::beforeAuthorize($payment, $amount);
     }
@@ -176,7 +149,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
      */
     protected function beforeCapture(\Magento\Payment\Model\InfoInterface $payment, $amount)
     {
-        $this->createShippingAddress($payment);
+        $this->handleShippingAddress($payment);
 
         parent::beforeCapture($payment, $amount);
     }

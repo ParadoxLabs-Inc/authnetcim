@@ -21,6 +21,13 @@ use Magento\Framework\Exception\LocalizedException;
 class Card extends \ParadoxLabs\TokenBase\Model\Card
 {
     /**
+     * Don't enable this. Really. Just don't.
+     *
+     * @var bool
+     */
+    const USE_NEW_CREATE = false;
+
+    /**
      * Try to create a card record from legacy data.
      *
      * @param \Magento\Payment\Model\InfoInterface $payment
@@ -85,7 +92,13 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
     {
         // Sync only if we have an info instance for payment data, and haven't already.
         if ($this->hasData('info_instance') && $this->getData('no_sync') !== true) {
-            $this->createCustomerPaymentProfile();
+            if (self::USE_NEW_CREATE === true
+                && $this->getInfoInstance()->hasData('order')
+                && $this->getPaymentId() == '') {
+                $this->setPaymentInfoForCreation();
+            } else {
+                $this->syncCustomerPaymentProfile();
+            }
         }
 
         return parent::beforeSave();
@@ -102,6 +115,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
          * Delete from Authorize.Net if we have a valid record.
          */
         if ($this->getProfileId() != '' && $this->getPaymentId() != '') {
+            /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
             $gateway = $this->getMethodInstance()->gateway();
 
             $gateway->setCard($this);
@@ -129,6 +143,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
     protected function createCustomerProfile()
     {
         if ($this->getCustomerId() > 0 || $this->getCustomerEmail() != '') {
+            /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
             $gateway = $this->getMethodInstance()->gateway();
 
             $gateway->setParameter('merchantCustomerId', $this->getCustomerId());
@@ -138,8 +153,8 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
 
             if (!empty($profileId)) {
                 $this->setProfileId($profileId);
-                $this->getCustomer()->setAuthnetcimProfileId($profileId)
-                                    ->setAuthnetcimProfileVersion(200);
+                $this->getCustomer()->setData('authnetcim_profile_id', $profileId)
+                                    ->setData('authnetcim_profile_version', 200);
 
                 if ($this->getCustomer()->getId() > 0) {
                     $this->getCustomer()->save();
@@ -173,7 +188,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
      * @return $this
      * @throws LocalizedException
      */
-    protected function createCustomerPaymentProfile($retry = true)
+    protected function syncCustomerPaymentProfile($retry = true)
     {
         $this->helper->log(
             $this->getMethod(),
@@ -187,6 +202,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
 
         $this->getMethodInstance()->setCard($this);
 
+        /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
         $gateway = $this->getMethodInstance()->gateway();
 
         /**
@@ -194,8 +210,8 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
          */
         if ($this->getProfileId() == '') {
             // Does the customer have a profile ID? Try to import it.
-            if ($this->getCustomer()->getId() > 0 && $this->getCustomer()->getAuthnetcimProfileId() != '') {
-                $this->setProfileId($this->getCustomer()->getAuthnetcimProfileId());
+            if ($this->getCustomer()->getId() > 0 && $this->getCustomer()->getData('authnetcim_profile_id') != '') {
+                $this->setProfileId($this->getCustomer()->getData('authnetcim_profile_id'));
             } else {
                 // No profile ID, so create one.
                 $this->createCustomerProfile();
@@ -268,7 +284,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
                 $this->getCustomer()->setData('authnetcim_profile_id', '');
             }
 
-            return $this->createCustomerPaymentProfile(false);
+            return $this->syncCustomerPaymentProfile(false);
         }
 
         if (!empty($paymentId)) {
@@ -282,6 +298,39 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
 
             throw new LocalizedException(__('Authorize.Net CIM Gateway: Unable to create payment record.'));
         }
+
+        return $this;
+    }
+
+    /**
+     * Set payment data and billing address on the gateway for profile creation during transaction.
+     *
+     * @return $this
+     */
+    protected function setPaymentInfoForCreation()
+    {
+        $this->helper->log(
+            $this->getMethod(),
+            'setPaymentInfoForCreation()'
+        );
+
+        $this->getMethodInstance()->setCard($this);
+
+        $gateway = $this->getMethodInstance()->gateway();
+        $address = $this->getAddressObject();
+
+        $gateway->setParameter('billToFirstName', $address->getFirstname());
+        $gateway->setParameter('billToLastName', $address->getLastname());
+        $gateway->setParameter('billToCompany', $address->getData('company'));
+        $gateway->setParameter('billToAddress', $address->getStreetFull());
+        $gateway->setParameter('billToCity', $address->getCity());
+        $gateway->setParameter('billToState', $address->getRegion());
+        $gateway->setParameter('billToZip', $address->getPostcode());
+        $gateway->setParameter('billToCountry', $address->getCountry());
+        $gateway->setParameter('billToPhoneNumber', $address->getTelephone());
+        $gateway->setParameter('billToFaxNumber', $address->getData('fax'));
+
+        $this->setPaymentInfoOnCreate($gateway);
 
         return $this;
     }
