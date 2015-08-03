@@ -23,11 +23,11 @@
                 </field>
                 <field id="login" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Api Login ID</label>
-                    <backend_model>Magento\Backend\Model\Config\Backend\Encrypted</backend_model>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                 </field>
                 <field id="trans_key" translate="label" type="obscure" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Transaction Key</label>
-                    <backend_model>Magento\Backend\Model\Config\Backend\Encrypted</backend_model>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                     <comment>Get these from your Authorize.Net account settings.</comment>
                 </field>
                 <field id="test" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
@@ -52,6 +52,11 @@
                     <attribute type="shared">1</attribute>
                     <comment>'Live' to verify new cards are real before storing. This will incur an extra txn fee.</comment>
                 </field>
+                <field id="show_branding" translate="label" type="select" sortOrder="85" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Show Authorize.Net logo</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Show an Authorize.Net logo on the payment form.</comment>
+                </field>
                 <field id="heading_cc" translate="label" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Credit Card Settings</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
@@ -67,12 +72,12 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>'Yes' to require the CCV code when using new cards (recommended).</comment>
                 </field>
-                <field id="allow_unsaved" translate="label" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="allow_unsaved" translate="label" type="select" sortOrder="113" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Allow cards to not be stored</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, customers can choose whether to save their credit card during checkout.</comment>
                 </field>
-                <field id="currency" translate="label" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="currency" translate="label" type="select" sortOrder="117" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Accepted Currency</label>
                     <source_model>Magento\Config\Model\Config\Source\Locale\Currency</source_model>
                 </field>
@@ -87,11 +92,6 @@
                     <depends>
                         <field id="allowspecific">1</field>
                     </depends>
-                </field>
-                <field id="show_branding" translate="label" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Show Authorize.Net logo</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Show an Authorize.Net logo on the payment form.</comment>
                 </field>
                 <field id="min_order_total" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Minimum Order Total</label>

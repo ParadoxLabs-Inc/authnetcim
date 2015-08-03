@@ -147,8 +147,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         parent::clearParameters();
 
-        $this->setParameter('loginId', $this->defaults['login']);
-        $this->setParameter('transactionKey', $this->defaults['password']);
+        if (isset($this->defaults['login']) && isset($this->defaults['password'])) {
+            $this->setParameter('loginId', $this->defaults['login']);
+            $this->setParameter('transactionKey', $this->defaults['password']);
+        }
 
         return $this;
     }
@@ -178,7 +180,6 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         $this->lastRequest = $xml;
 
-        // TODO: Need to package SSL CA?
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, $this->endpoint);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
@@ -187,6 +188,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         curl_setopt($curl, CURLOPT_POSTFIELDS, $xml);
         curl_setopt($curl, CURLOPT_POST, 1);
         curl_setopt($curl, CURLOPT_TIMEOUT, 15);
+        curl_setopt($curl, CURLOPT_CAINFO, dirname(dirname(__FILE__)) . '/authorizenet-cert.pem');
         $this->lastResponse = curl_exec($curl);
 
         if ($this->lastResponse && !curl_errno($curl)) {

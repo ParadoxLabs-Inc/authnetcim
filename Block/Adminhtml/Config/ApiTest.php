@@ -16,7 +16,7 @@ namespace ParadoxLabs\Authnetcim\Block\Adminhtml\Config;
 /**
  * ApiTest Class
  */
-class ApiTest extends \Magento\Framework\View\Element\Text
+class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
 {
     /**
      * @var string
