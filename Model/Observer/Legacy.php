@@ -135,16 +135,18 @@ class Legacy
                 $db             = $this->resource->getConnection('read');
                 $cardTable      = $this->resource->getTableName('authnetcim_card_exclude');
 
-                $sql            = $db->select()
-                                     ->from($cardTable, ['profile_id', 'payment_id', 'added'])
-                                     ->where('customer_id=' . $customer->getId());
+                if ($db->isTableExists($cardTable) === true) {
+                    $sql = $db->select()
+                              ->from($cardTable, ['profile_id', 'payment_id', 'added'])
+                              ->where('customer_id=' . $customer->getId());
 
-                $excludedCards    = $db->fetchAll($sql);
-                if (count($excludedCards) > 0) {
-                    foreach ($excludedCards as $excluded) {
-                        if (isset($cards[ $excluded['payment_id'] ]) && $excluded['profile_id'] == $profileId) {
-                            $cards[ $excluded['payment_id'] ]['active']   = false;
-                            $cards[ $excluded['payment_id'] ]['last_use'] = strtotime($excluded['added']);
+                    $excludedCards = $db->fetchAll($sql);
+                    if (count($excludedCards) > 0) {
+                        foreach ($excludedCards as $excluded) {
+                            if (isset($cards[$excluded['payment_id']]) && $excluded['profile_id'] == $profileId) {
+                                $cards[$excluded['payment_id']]['active'] = false;
+                                $cards[$excluded['payment_id']]['last_use'] = strtotime($excluded['added']);
+                            }
                         }
                     }
                 }
