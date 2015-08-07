@@ -59,18 +59,18 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
 
             if (in_array($errorCode, array( 'E00005', 'E00006', 'E00007', 'E00008' ))) {
                 // Bad login ID / trans key
-                return __('Your API credentials are invalid. (%s)', $errorCode);
+                return __('Your API credentials are invalid. (%1)', $errorCode);
             } elseif ($errorCode == 'E00009') {
                 // Test mode active
                 return __(
-                    'Your account has test mode enabled. It must be disabled for CIM to work properly. (%s)',
+                    'Your account has test mode enabled. It must be disabled for CIM to work properly. (%1)',
                     $errorCode
                 );
             } elseif ($errorCode == 'E00044') {
                 // CIM not enabled
                 return __(
                     'Your account does not have CIM enabled. Please contact your Authorize.Net support rep '
-                        . 'to resolve this. (%s)',
+                        . 'to resolve this. (%1)',
                     $errorCode
                 );
             }

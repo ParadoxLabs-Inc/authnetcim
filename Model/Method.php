@@ -51,7 +51,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
     protected function loadOrCreateCard(\Magento\Payment\Model\InfoInterface $payment)
     {
         if (!is_null($this->card)) {
-            $this->log(sprintf('_loadOrCreateCard(%s %s)', get_class($payment), $payment->getId()));
+            $this->log(sprintf('loadOrCreateCard(%s %s)', get_class($payment), $payment->getId()));
 
             $this->setCard($this->getCard());
 
@@ -59,7 +59,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
         } elseif ($payment->hasTokenbaseId() !== true
             && $payment->getOrder()
             && $payment->getOrder()->getExtCustomerId() != '') {
-            $this->log(sprintf('_loadOrCreateCard(%s %s)', get_class($payment), $payment->getId()));
+            $this->log(sprintf('loadOrCreateCard(%s %s)', get_class($payment), $payment->getId()));
 
             /** @var \ParadoxLabs\Authnetcim\Model\Card $card */
             $card = $this->cardFactory->create();

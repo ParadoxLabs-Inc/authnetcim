@@ -363,7 +363,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         /**
          * Response 54 is 'can't refund; txn has not settled.' 16 is 'cannot find txn' (expired). We deal with them.
          */
-        if (!in_array($response->getResponseReasonCode(), array(16, 54))) {
+        if (!in_array($response->getResponseReasonCode(), [16, 54])) {
             /**
              * Fail if:
              * Error result
@@ -371,8 +371,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
              * OR no transID or auth code on a charge txn
              */
             if ($transactionResult['messages']['resultCode'] != 'Ok'
-                || in_array($response->getResponseCode(), array(2, 3))
-                || (!in_array($response->getTransactionType(), array('credit', 'void'))
+                || in_array($response->getResponseCode(), [2, 3])
+                || (!in_array($response->getTransactionType(), ['credit', 'void'])
                     && ($response->getTransactionId() == ''
                         || ($response->getAuthCode() == '' && $response->getMethod() != 'ECHECK')))
             ) {
@@ -461,7 +461,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
 
-        if ($this->getHaveAuthorized() && $this->hasParameter('authcode')) {
+        if ($this->getHaveAuthorized()) {
             $this->setParameter('transactionType', 'priorAuthCaptureTransaction');
 
             if (!is_null($transactionId)) {
@@ -469,8 +469,6 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             } elseif ($payment->getData('transaction_id') != '') {
                 $this->setParameter('transId', $payment->getData('transaction_id'));
             }
-        } elseif ($this->getHaveAuthorized()) {
-            $this->setParameter('transactionType', 'captureOnlyTransaction');
         } else {
             $this->setParameter('transactionType', 'authCaptureTransaction');
         }
@@ -661,6 +659,16 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     }
 
     /**
+     * Get transaction ID.
+     *
+     * @return string
+     */
+    public function getTransactionId()
+    {
+        return $this->getParameter('transId');
+    }
+
+    /**
      * Set prior transaction ID for next transaction.
      *
      * @param $transactionId
@@ -708,7 +716,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
             throw new LocalizedException(
                 __(
-                    'Authorize.Net CIM Gateway: Unable to create customer profile. %s',
+                    'Authorize.Net CIM Gateway: Unable to create customer profile. %1',
                     $result['messages']['message']['text']
                 )
             );
@@ -1047,7 +1055,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         $type = $this->getParameter('transactionType');
 
-        if (in_array($type, ['authOnlyTransaction', 'authCaptureTransaction', 'captureOnlyTransaction'])) {
+        if (
+            in_array(
+                $type,
+                ['authOnlyTransaction', 'authCaptureTransaction', 'captureOnlyTransaction', 'refundTransaction']
+            )
+        ) {
             $isNewTxn = true;
         } else {
             $isNewTxn = false;
@@ -1121,7 +1134,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 $params['profile'] = [
                     'createProfile' => 'true',
                 ];
-            } else {
+            } elseif ($type != 'captureOnlyTransaction') {
                 /**
                  * Otherwise, send the tokens we already have.
                  */
@@ -1157,7 +1170,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
             // Add line items?
             if (!is_null($this->lineItems) && count($this->lineItems) > 0) {
-                $params['lineItems'] = [];
+                $params['lineItems'] = [
+                    'lineItem'  => [],
+                ];
 
                 $count = 0;
                 foreach ($this->lineItems as $item) {
@@ -1182,7 +1197,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     // Discount amount is per-line, not per-unit (???). Math it out.
                     $unitPrice = max(0, $item->getPrice() - ($item->getDiscountAmount() / $qty));
 
-                    $params['lineItems'][] = [
+                    $params['lineItems']['lineItem'][] = [
                         // We're sending SKU and name through parameters to filter characters and length.
                         'itemId'    => $this->setParameter('itemName', $item->getSku())->getParameter('itemName'),
                         'name'      => $this->setParameter('itemName', $item->getName())->getParameter('itemName'),
@@ -1191,7 +1206,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     ];
                 }
 
-                if (count($params['lineItems']) < 1) {
+                if (count($params['lineItems']['lineItem']) < 1) {
                     unset($params['lineItems']);
                 }
             }
@@ -1614,12 +1629,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         $txnTypeMap = [
-            'authCaptureTransaction'      => 'AUTH_CAPTURE',
-            'authOnlyTransaction'         => 'AUTH_ONLY',
-            'captureOnlyTransaction'      => 'CAPTURE_ONLY',
-            'priorAuthCaptureTransaction' => 'PRIOR_AUTH_CAPTURE',
-            'refundTransaction'           => 'CREDIT',
-            'voidTransaction'             => 'VOID',
+            'authCaptureTransaction'      => 'auth_capture',
+            'authOnlyTransaction'         => 'auth_only',
+            'captureOnlyTransaction'      => 'capture_only',
+            'priorAuthCaptureTransaction' => 'prior_auth_capture',
+            'refundTransaction'           => 'credit',
+            'voidTransaction'             => 'void',
         ];
 
         /**
