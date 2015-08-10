@@ -47,6 +47,11 @@ class ConfigProvider extends CcGenericConfigProvider
     protected $paymentConfig;
 
     /**
+     * @var \Magento\Payment\Model\MethodInterface
+     */
+    protected $method;
+
+    /**
      * @param CcConfig $ccConfig
      * @param \Magento\Payment\Helper\Data $paymentHelper
      * @param \Magento\Checkout\Model\Session $checkoutSession
@@ -69,6 +74,8 @@ class ConfigProvider extends CcGenericConfigProvider
         $this->customerSession  = $customerSession;
         $this->dataHelper       = $dataHelper;
         $this->paymentConfig    = $paymentConfig;
+
+        $this->method           = $this->paymentHelper->getMethodInstance('authnetcim');
 
         parent::__construct($ccConfig, $paymentHelper, $methodCodes);
     }
@@ -101,10 +108,9 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function getConfig()
     {
-        // TODO: Do we need to worry about this?
-        //        if (!$this->config->isActive()) {
-//            return [];
-//        }
+        if (!$this->method->isAvailable()) {
+            return [];
+        }
 
         $config             = parent::getConfig();
         $selected           = null;
@@ -128,14 +134,51 @@ class ConfigProvider extends CcGenericConfigProvider
                 'authnetcim' => [
                     'useVault'                => true,
                     'canSaveCard'             => $this->canSaveCard(),
+                    'forceSaveCard'           => $this->forceSaveCard(),
                     'storedCards'             => $storedCardOptions,
                     'selectedCard'            => $selected,
                     'isCcDetectionEnabled'    => true,
                     'availableCardTypes'      => $this->getCcAvailableTypes('authnetcim'),
+                    'logoImage'               => $this->getLogoImage(),
+                    'requireCcv'              => $this->requireCcv(),
                 ],
             ],
         ]);
 
         return $config;
+    }
+
+    /**
+     * Whether to give customers the 'save this card' option, or just assume yes.
+     *
+     * @return bool
+     */
+    public function forceSaveCard()
+    {
+        return $this->method->getConfigData('allow_unsaved') ? false : true;
+    }
+
+    /**
+     * Whether to force customers to enter CCV when using a stored card.
+     *
+     * @return bool
+     */
+    public function requireCcv()
+    {
+        return $this->method->getConfigData('require_ccv') ? true : false;
+    }
+
+    /**
+     * Get payment method logo URL (if enabled)
+     *
+     * @return string|false
+     */
+    public function getLogoImage()
+    {
+        if ($this->method->getConfigData('show_branding')) {
+            return $this->ccConfig->getViewFileUrl('ParadoxLabs_Authnetcim::images/logo.png');
+        }
+
+        return false;
     }
 }

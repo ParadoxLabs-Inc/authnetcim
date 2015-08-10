@@ -22,6 +22,11 @@
             <!-- ko if: (isShowLegend())-->
             <legend class="legend"><span><!-- ko text: $t('Credit Card Information')--><!-- /ko --></span></legend><br />
             <!-- /ko -->
+            <!-- ko if: (getLogoImage())-->
+            <div class="sorter">
+                <img data-bind="attr: {'src': getLogoImage()}" />
+            </div>
+            <!--/ko-->
             <!-- ko if: (useVault()) -->
             <div>
                 <label data-bind="attr: {for: getCode() + '_card_id'}" class="label">
@@ -116,7 +121,7 @@
                 </div>
             </div>
             <!-- ko if: (hasVerification())-->
-            <div class="field cvv required" data-bind="attr: {id: getCode() + '_cc_type_cvv_div'}, visible: isCcFormShown">
+            <div class="field cvv required" data-bind="attr: {id: getCode() + '_cc_type_cvv_div'}, visible: (isCcvShown)">
                 <label data-bind="attr: {for: getCode() + '_cc_cid'}" class="label">
                     <span><!-- ko text: $t('Card Verification Number')--><!-- /ko --></span>
                 </label>
@@ -151,6 +156,18 @@
                     <span></span>
                 </label>
                 <div class="control">
+                    <!-- ko if: (forceSaveCard)-->
+                    <input type="hidden"
+                           name="payment[save]"
+                           value="1"
+                           checked="checked"
+                           class="checkbox"
+                           data-bind="checked: save, id: getCode() + '_save'"/>
+                    <label class="label" data-bind="attr: {for: getCode() + '_save'}">
+                        <span><!-- ko text: $t('For your convenience, this data will be stored securely by our payment processor.')--><!-- /ko --></span>
+                    </label>
+                    <!-- /ko -->
+                    <!-- ko if: (!forceSaveCard)-->
                     <input type="checkbox"
                            name="payment[save]"
                            value="1"
@@ -160,6 +177,7 @@
                     <label class="label" data-bind="attr: {for: getCode() + '_save'}">
                         <span><!-- ko text: $t('Save this card for future use')--><!-- /ko --></span>
                     </label>
+                    <!-- /ko -->
                 </div>
             </div>
             <!-- /ko -->

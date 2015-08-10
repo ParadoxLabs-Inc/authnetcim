@@ -197,6 +197,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
             $this->lastResponse = $this->xmlToArray($this->lastResponse);
 
+            if ($this->testMode === true) {
+                $this->helper->log($this->code, $this->log, true);
+            }
+
             /**
              * Check for basic errors.
              */
