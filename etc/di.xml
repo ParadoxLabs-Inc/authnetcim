@@ -14,4 +14,10 @@
             <argument name="cardFactory" xsi:type="object">ParadoxLabs\Authnetcim\Model\CardFactory</argument>
         </arguments>
     </type>
+
+    <type name="ParadoxLabs\Authnetcim\Block\Info\Cc">
+        <arguments>
+            <argument name="helper" xsi:type="object">ParadoxLabs\Authnetcim\Helper\Data</argument>
+        </arguments>
+    </type>
 </config>
