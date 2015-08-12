@@ -65,7 +65,9 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $this->setAdditional('cc_type', $payment->getData('cc_type'));
         }
 
-        if ($payment->getData('cc_last4') != '') {
+        if ($payment->getData('cc_last_4') != '') {
+            $this->setAdditional('cc_last4', $payment->getData('cc_last_4'));
+        } elseif ($payment->getData('cc_last4') != '') {
             $this->setAdditional('cc_last4', $payment->getData('cc_last4'));
         }
 
@@ -323,16 +325,18 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
         $gateway = $this->getMethodInstance()->gateway();
         $address = $this->getAddressObject();
 
+        $region  = $address->getRegion()->getRegionCode() ?: $address->getRegion()->getRegion();
+
         $gateway->setParameter('billToFirstName', $address->getFirstname());
         $gateway->setParameter('billToLastName', $address->getLastname());
-        $gateway->setParameter('billToCompany', $address->getData('company'));
-        $gateway->setParameter('billToAddress', $address->getStreetFull());
+        $gateway->setParameter('billToCompany', $address->getCompany());
+        $gateway->setParameter('billToAddress', implode(", ", $address->getStreet()));
         $gateway->setParameter('billToCity', $address->getCity());
-        $gateway->setParameter('billToState', $address->getRegion());
+        $gateway->setParameter('billToState', $region);
         $gateway->setParameter('billToZip', $address->getPostcode());
-        $gateway->setParameter('billToCountry', $address->getCountry());
+        $gateway->setParameter('billToCountry', $address->getCountryId());
         $gateway->setParameter('billToPhoneNumber', $address->getTelephone());
-        $gateway->setParameter('billToFaxNumber', $address->getData('fax'));
+        $gateway->setParameter('billToFaxNumber', $address->getFax());
 
         $this->setPaymentInfoOnCreate($gateway);
 
@@ -366,6 +370,8 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
      */
     protected function setPaymentInfoOnUpdate(\ParadoxLabs\TokenBase\Model\AbstractGateway $gateway)
     {
+        /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
+
         if (strlen($this->getInfoInstance()->getCcNumber()) >= 12) {
             $gateway->setParameter('cardNumber', $this->getInfoInstance()->getCcNumber());
         } else {
