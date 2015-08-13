@@ -5,7 +5,7 @@ define([
 ], function($, tokenbaseFormCc) {
     "use strict";
 
-    $.widget('mage.authnetcimFormCc', $.extend( tokenbaseFormCc, {
+    $.widget('mage.authnetcimFormCc', $.extend(true, tokenbaseFormCc, {
         options: {
             code: "authnetcim"
         }
