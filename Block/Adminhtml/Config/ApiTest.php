@@ -30,7 +30,6 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
      */
     protected function testApi()
     {
-        // TODO: Make sure we're getting the right store ID here for config scope.
         /** @var \ParadoxLabs\Authnetcim\Model\Method $method */
         $method = $this->helper->getMethodInstance($this->code);
         $method->setStore($this->getStoreId());
