@@ -24,6 +24,25 @@
                 <send_line_items>1</send_line_items>
                 <group>tokenbase</group>
             </authnetcim>
+            <authnetcim_ach>
+                <active>0</active>
+                <title>Bank Account (eCheck)</title>
+                <login backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
+                <trans_key backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
+                <model>ParadoxLabs\Authnetcim\Model\Ach\Method</model>
+                <card_model>ParadoxLabs\Authnetcim\Model\Ach\Card</card_model>
+                <order_status>pending</order_status>
+                <payment_action>authorize</payment_action>
+                <test>0</test>
+                <validation_mode>liveMode</validation_mode>
+                <allowspecific>0</allowspecific>
+                <currency>USD</currency>
+                <allow_unsaved>1</allow_unsaved>
+                <show_branding>0</show_branding>
+                <send_shipping_address>1</send_shipping_address>
+                <send_line_items>1</send_line_items>
+                <group>tokenbase</group>
+            </authnetcim_ach>
         </payment>
     </default>
 </config>

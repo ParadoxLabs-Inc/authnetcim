@@ -22,6 +22,11 @@ use Magento\Payment\Model\CcConfig;
 class ConfigProvider extends CcGenericConfigProvider
 {
     /**
+     * @var string
+     */
+    protected $code = 'authnetcim';
+
+    /**
      * @var \Magento\Checkout\Model\Session
      */
     protected $checkoutSession;
@@ -47,11 +52,6 @@ class ConfigProvider extends CcGenericConfigProvider
     protected $paymentConfig;
 
     /**
-     * @var \Magento\Payment\Model\MethodInterface
-     */
-    protected $method;
-
-    /**
      * @param CcConfig $ccConfig
      * @param \Magento\Payment\Helper\Data $paymentHelper
      * @param \Magento\Checkout\Model\Session $checkoutSession
@@ -75,8 +75,6 @@ class ConfigProvider extends CcGenericConfigProvider
         $this->dataHelper       = $dataHelper;
         $this->paymentConfig    = $paymentConfig;
 
-        $this->method           = $this->paymentHelper->getMethodInstance('authnetcim');
-
         parent::__construct($ccConfig, $paymentHelper, $methodCodes);
     }
 
@@ -87,7 +85,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function getStoredCards()
     {
-        return $this->dataHelper->getActiveCustomerCardsByMethod('authnetcim');
+        return $this->dataHelper->getActiveCustomerCardsByMethod($this->code);
     }
 
     /**
@@ -108,7 +106,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function getConfig()
     {
-        if (!$this->method->isAvailable()) {
+        if (!$this->methods[$this->code]->isAvailable()) {
             return [];
         }
 
@@ -131,14 +129,14 @@ class ConfigProvider extends CcGenericConfigProvider
 
         $config = array_merge_recursive($config, [
             'payment' => [
-                'authnetcim' => [
+                $this->code => [
                     'useVault'                => true,
                     'canSaveCard'             => $this->canSaveCard(),
                     'forceSaveCard'           => $this->forceSaveCard(),
                     'storedCards'             => $storedCardOptions,
                     'selectedCard'            => $selected,
                     'isCcDetectionEnabled'    => true,
-                    'availableCardTypes'      => $this->getCcAvailableTypes('authnetcim'),
+                    'availableCardTypes'      => $this->getCcAvailableTypes($this->code),
                     'logoImage'               => $this->getLogoImage(),
                     'requireCcv'              => $this->requireCcv(),
                 ],
@@ -155,7 +153,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function forceSaveCard()
     {
-        return $this->method->getConfigData('allow_unsaved') ? false : true;
+        return $this->methods[$this->code]->getConfigData('allow_unsaved') ? false : true;
     }
 
     /**
@@ -165,7 +163,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function requireCcv()
     {
-        return $this->method->getConfigData('require_ccv') ? true : false;
+        return $this->methods[$this->code]->getConfigData('require_ccv') ? true : false;
     }
 
     /**
@@ -175,7 +173,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function getLogoImage()
     {
-        if ($this->method->getConfigData('show_branding')) {
+        if ($this->methods[$this->code]->getConfigData('show_branding')) {
             return $this->ccConfig->getViewFileUrl('ParadoxLabs_Authnetcim::images/logo.png');
         }
 

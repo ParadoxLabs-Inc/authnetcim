@@ -77,15 +77,6 @@ class Data extends \ParadoxLabs\TokenBase\Helper\Data
     );
 
     /**
-     * @var array
-     */
-    protected $achAccountTypes = array(
-        'checking'         => 'Checking',
-        'savings'          => 'Savings',
-        'businessChecking' => 'Business Checking',
-    );
-
-    /**
      * Translate AVS response codes shown on admin order pages.
      *
      * @param string $code
@@ -143,24 +134,5 @@ class Data extends \ParadoxLabs\TokenBase\Helper\Data
         }
 
         return null;
-    }
-
-    /**
-     * Return valid ACH account types.
-     *
-     * @param string $code
-     * @return string|array|null
-     */
-    public function getAchAccountTypes($code = null)
-    {
-        if (!is_null($code)) {
-            if (isset($this->achAccountTypes[$code])) {
-                return $this->achAccountTypes[$code];
-            }
-
-            return $code;
-        }
-
-        return $this->achAccountTypes;
     }
 }

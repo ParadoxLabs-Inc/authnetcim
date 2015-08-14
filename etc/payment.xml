@@ -4,5 +4,8 @@
         <method name="authnetcim">
             <allow_multiple_address>1</allow_multiple_address>
         </method>
+        <method name="authnetcim_ach">
+            <allow_multiple_address>1</allow_multiple_address>
+        </method>
     </methods>
 </payment>

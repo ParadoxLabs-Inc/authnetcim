@@ -1,17 +1,22 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../lib/internal/Magento/Framework/ObjectManager/etc/config.xsd">
-    <virtualType name="ParadoxLabs\Authnetcim\Block\Form" type="Magento\Payment\Block\Form" shared="false">
-        <arguments>
-            <argument name="data" xsi:type="array">
-                <item name="template" xsi:type="string">ParadoxLabs_TokenBase::form/cc.phtml</item>
-            </argument>
-        </arguments>
-    </virtualType>
-
     <type name="ParadoxLabs\Authnetcim\Model\Method">
         <arguments>
             <argument name="gateway" xsi:type="object">ParadoxLabs\Authnetcim\Model\Gateway</argument>
             <argument name="cardFactory" xsi:type="object">ParadoxLabs\Authnetcim\Model\CardFactory</argument>
+        </arguments>
+    </type>
+
+    <type name="ParadoxLabs\Authnetcim\Model\Ach\Method">
+        <arguments>
+            <argument name="gateway" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\Gateway</argument>
+            <argument name="cardFactory" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\CardFactory</argument>
+        </arguments>
+    </type>
+
+    <type name="ParadoxLabs\Authnetcim\Block\Info\Ach">
+        <arguments>
+            <argument name="helper" xsi:type="object">ParadoxLabs\Authnetcim\Helper\Data</argument>
         </arguments>
     </type>
 

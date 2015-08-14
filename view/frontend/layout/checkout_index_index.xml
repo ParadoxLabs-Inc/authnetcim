@@ -24,6 +24,14 @@
                                                                         </item>
                                                                     </item>
                                                                 </item>
+                                                                <item name="tokenbase_authnetcim_ach" xsi:type="array">
+                                                                    <item name="component" xsi:type="string">ParadoxLabs_Authnetcim/js/view/payment/authnetcim-ach</item>
+                                                                    <item name="methods" xsi:type="array">
+                                                                        <item name="authnetcim_ach" xsi:type="array">
+                                                                            <item name="isBillingAddressRequired" xsi:type="boolean">true</item>
+                                                                        </item>
+                                                                    </item>
+                                                                </item>
                                                             </item>
                                                         </item>
                                                     </item>

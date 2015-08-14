@@ -11,12 +11,12 @@
  * @license     http://store.paradoxlabs.com/license.html
  */
 
-namespace ParadoxLabs\Authnetcim\Model;
+namespace ParadoxLabs\Authnetcim\Model\Ach;
 
 /**
- * Factory class for @see \ParadoxLabs\Authnetcim\Model\Card
+ * Factory class for @see \ParadoxLabs\Authnetcim\Model\Ach\Card
  */
-class CardFactory extends \ParadoxLabs\TokenBase\Model\CardFactory
+class CardFactory extends \ParadoxLabs\Authnetcim\Model\CardFactory
 {
     /**
      * Factory constructor
@@ -26,7 +26,7 @@ class CardFactory extends \ParadoxLabs\TokenBase\Model\CardFactory
      */
     public function __construct(
         \Magento\Framework\ObjectManagerInterface $objectManager,
-        $instanceName = '\\ParadoxLabs\\Authnetcim\\Model\\Card'
+        $instanceName = '\\ParadoxLabs\\Authnetcim\\Model\\Ach\\Card'
     ) {
         parent::__construct($objectManager, $instanceName);
     }
