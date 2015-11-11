@@ -11,12 +11,12 @@
  * @license     http://store.paradoxlabs.com/license.html
  */
 
-namespace ParadoxLabs\Authnetcim\Model\Observer;
+namespace ParadoxLabs\Authnetcim\Observer;
 
 /**
  * Convert old CIM 1.x data to 2.x+ (on demand at runtime, for practicality).
  */
-class Legacy
+class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\ObserverInterface
 {
     /**
      * @var \ParadoxLabs\Authnetcim\Helper\Data
@@ -69,9 +69,9 @@ class Legacy
      * If they have not, run the conversion process inline.
      *
      * @param \Magento\Framework\Event\Observer $observer
-     * @return $this
+     * @return void
      */
-    public function convertStoredData(\Magento\Framework\Event\Observer $observer)
+    public function execute(\Magento\Framework\Event\Observer $observer)
     {
         /** @var \Magento\Customer\Model\Customer $customer */
         $customer = $observer->getEvent()->getData('customer');
@@ -83,14 +83,14 @@ class Legacy
          * Short circuit if this isn't us.
          */
         if (is_null($method) || $method != 'authnetcim') {
-            return $this;
+            return;
         }
 
         /**
          * Short circuit if no customer.
          */
         if (!($customer instanceof \Magento\Customer\Model\Customer) || $customer->getId() < 1) {
-            return $this;
+            return;
         }
 
         /**
@@ -99,7 +99,7 @@ class Legacy
         $profileId = $customer->getData('authnetcim_profile_id');
 
         if (empty($profileId) || $customer->getData('authnetcim_profile_version') >= 200) {
-            return $this;
+            return;
         }
         
 
@@ -237,27 +237,6 @@ class Legacy
                 $affectedOrders++;
             }
 
-            /**
-             * Update any attached recurring profiles
-             * ... JK, there are no recurring profiles.
-             */
-//                $profiles = Mage::getModel('sales/recurring_profile')->getCollection()
-//                                ->addFieldToFilter('customer_id', $customer->getId())
-//                                ->addFieldToFilter('state', array('nin' => array('expired', 'canceled')));
-//
-//                foreach ($profiles as $profile) {
-//                    $adtl = unserialize($profile->getAdditionalInfo());
-//
-//                    if (isset($adtl['payment_id']) && isset($cards[$adtl['payment_id']])) {
-//                        $adtl['tokenbase_id'] = $cards[$adtl['payment_id']]['tokenbase_id'];
-//                    }
-//
-//                    $profile->setAdditionalInfo(serialize($adtl))
-//                            ->save();
-//
-//                    $affectedRps++;
-//                }
-
             $this->helper->log(
                 'authnetcim',
                 sprintf(
@@ -274,6 +253,6 @@ class Legacy
         $customer->setData('authnetcim_profile_version', 200)
                  ->save();
 
-        return $this;
+        return;
     }
 }

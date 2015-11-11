@@ -1060,12 +1060,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         $type = $this->getParameter('transactionType');
 
-        if (
-            in_array(
-                $type,
-                ['authOnlyTransaction', 'authCaptureTransaction', 'captureOnlyTransaction', 'refundTransaction']
-            )
-        ) {
+        if (in_array(
+            $type,
+            ['authOnlyTransaction', 'authCaptureTransaction', 'captureOnlyTransaction', 'refundTransaction']
+        )) {
             $isNewTxn = true;
         } else {
             $isNewTxn = false;

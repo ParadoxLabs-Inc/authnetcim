@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
     <event name="tokenbase_before_load_active_cards">
-        <observer name="authnetcim_loaded_cards" instance="ParadoxLabs\Authnetcim\Model\Observer\Legacy" method="convertStoredData" />
+        <observer name="authnetcim_loaded_cards" instance="ParadoxLabs\Authnetcim\Observer\ConvertLegacyStoredDataObserver" />
     </event>
     <event name="tokenbase_before_load_payment_info">
-        <observer name="authnetcim_loaded_cards" instance="ParadoxLabs\Authnetcim\Model\Observer\Legacy" method="convertStoredData" />
+        <observer name="authnetcim_loaded_cards" instance="ParadoxLabs\Authnetcim\Observer\ConvertLegacyStoredDataObserver" />
     </event>
 </config>

@@ -397,7 +397,8 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
                 sprintf(
                     "%04d-%02d",
                     $info->getCcExpYear(),
-                    $info->getCcExpMonth())
+                    $info->getCcExpMonth()
+                )
             );
         } else {
             $gateway->setParameter('expirationDate', 'XXXX');
