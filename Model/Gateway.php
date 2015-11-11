@@ -973,8 +973,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $params['transaction'][$type]['lineItems'] = [];
 
             $count = 0;
+            /** @var \Magento\Sales\Model\Order\Item $item */
             foreach ($this->lineItems as $item) {
-                if (($item instanceof \Magento\Framework\Object) == false) {
+                if (($item instanceof \Magento\Framework\DataObject) == false) {
                     continue;
                 }
 
@@ -1162,7 +1163,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
             // Set order identifiers!
             $params['solution'] = [
-                'id' => self::SOLUTION_ID,
+                'id' => static::SOLUTION_ID,
             ];
 
             if ($this->hasParameter('invoiceNumber') && $type != 'priorAuthCaptureTransaction') {
@@ -1179,8 +1180,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 ];
 
                 $count = 0;
+                /** @var \Magento\Sales\Model\Order\Item $item */
                 foreach ($this->lineItems as $item) {
-                    if (($item instanceof \Magento\Framework\Object) == false) {
+                    if (($item instanceof \Magento\Framework\DataObject) == false) {
                         continue;
                     }
 
@@ -1554,7 +1556,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      * @return array
      * @throws PaymentException
      */
-    private function getDataFromDirectResponse($directResponse)
+    protected function getDataFromDirectResponse($directResponse)
     {
         if (strlen($directResponse) > 1) {
             // Strip out quotes, we don't want any.
@@ -1612,13 +1614,13 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     }
 
     /**
-     * Turn the direct response string into an array, as best we can.
+     * Turn the transaction response into an array, as best we can.
      *
-     * @param string $response
+     * @param array $response
      * @return array
      * @throws PaymentException
      */
-    private function getDataFromTransactionResponse($response)
+    protected function getDataFromTransactionResponse($response)
     {
         if (empty($response)) {
             $this->helper->log(

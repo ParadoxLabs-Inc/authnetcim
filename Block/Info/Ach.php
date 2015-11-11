@@ -26,8 +26,8 @@ class Ach extends \ParadoxLabs\TokenBase\Block\Info\Ach
     /**
      * Prepare payment info
      *
-     * @param \Magento\Framework\Object|array $transport
-     * @return \Magento\Framework\Object
+     * @param \Magento\Framework\DataObject|array $transport
+     * @return \Magento\Framework\DataObject
      */
     protected function _prepareSpecificInformation($transport = null)
     {
@@ -35,7 +35,7 @@ class Ach extends \ParadoxLabs\TokenBase\Block\Info\Ach
         $data       = [];
 
         if ($this->helper->getIsFrontend() === false && $this->isEcheck() === true) {
-            /** @var \Magento\Sales\Model\Order\Payment\Info $info */
+            /** @var \Magento\Sales\Model\Order\Payment $info */
             $info = $this->getInfo();
 
             $type = $info->getAdditionalInformation('echeck_account_type');

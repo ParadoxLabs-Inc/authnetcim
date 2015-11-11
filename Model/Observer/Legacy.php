@@ -29,12 +29,12 @@ class Legacy
     protected $cardFactory;
 
     /**
-     * @var \Magento\Sales\Model\Resource\Order\CollectionFactory
+     * @var \Magento\Sales\Model\ResourceModel\Order\CollectionFactory
      */
     protected $orderCollectionFactory;
 
     /**
-     * @var \Magento\Framework\App\Resource
+     * @var \Magento\Framework\App\ResourceConnection
      */
     protected $resource;
 
@@ -46,16 +46,16 @@ class Legacy
     /**
      * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
      * @param \ParadoxLabs\TokenBase\Model\CardFactory $cardFactory
-     * @param \Magento\Sales\Model\Resource\Order\CollectionFactory $orderCollectionFactory
+     * @param \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory
      * @param \Magento\Directory\Model\RegionFactory $regionFactory
-     * @param \Magento\Framework\App\Resource $resource
+     * @param \Magento\Framework\App\ResourceConnection $resource
      */
     public function __construct(
         \ParadoxLabs\Authnetcim\Helper\Data $helper,
         \ParadoxLabs\TokenBase\Model\CardFactory $cardFactory,
-        \Magento\Sales\Model\Resource\Order\CollectionFactory $orderCollectionFactory,
+        \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory,
         \Magento\Directory\Model\RegionFactory $regionFactory,
-        \Magento\Framework\App\Resource $resource
+        \Magento\Framework\App\ResourceConnection $resource
     ) {
         $this->helper                   = $helper;
         $this->cardFactory              = $cardFactory;
@@ -273,5 +273,7 @@ class Legacy
 
         $customer->setData('authnetcim_profile_version', 200)
                  ->save();
+
+        return $this;
     }
 }

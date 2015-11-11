@@ -36,7 +36,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
      */
     public function importLegacyData(\Magento\Payment\Model\InfoInterface $payment)
     {
-        /** @var \Magento\Payment\Model\Info $payment */
+        /** @var \Magento\Sales\Model\Order\Payment $payment */
         
         // Customer ID -- pull from customer or payment if possible, otherwise go to Authorize.Net.
         if (intval($this->getCustomer()->getData('authnetcim_profile_id')) > 0) {
@@ -351,11 +351,14 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
      */
     protected function setPaymentInfoOnCreate(\ParadoxLabs\TokenBase\Model\AbstractGateway $gateway)
     {
-        $gateway->setParameter('cardNumber', $this->getInfoInstance()->getCcNumber());
-        $gateway->setParameter('cardCode', $this->getInfoInstance()->getCcCid());
+        /** @var \Magento\Sales\Model\Order\Payment $info */
+        $info = $this->getInfoInstance();
+
+        $gateway->setParameter('cardNumber', $info->getCcNumber());
+        $gateway->setParameter('cardCode', $info->getCcCid());
         $gateway->setParameter(
             'expirationDate',
-            sprintf("%04d-%02d", $this->getInfoInstance()->getCcExpYear(), $this->getInfoInstance()->getCcExpMonth())
+            sprintf("%04d-%02d", $info->getCcExpYear(), $info->getCcExpMonth())
         );
 
         return $this;
@@ -372,8 +375,11 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
     {
         /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
 
-        if (strlen($this->getInfoInstance()->getCcNumber()) >= 12) {
-            $gateway->setParameter('cardNumber', $this->getInfoInstance()->getCcNumber());
+        /** @var \Magento\Sales\Model\Order\Payment $info */
+        $info = $this->getInfoInstance();
+
+        if (strlen($info->getCcNumber()) >= 12) {
+            $gateway->setParameter('cardNumber', $info->getCcNumber());
         } else {
             // If we were not given a full CC number, grab the masked value from Authorize.Net.
             $profile = $gateway->getCustomerPaymentProfile();
@@ -385,19 +391,19 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             }
         }
 
-        if ($this->getInfoInstance()->getCcExpYear() != '' && $this->getInfoInstance()->getCcExpMonth() != '') {
+        if ($info->getCcExpYear() != '' && $info->getCcExpMonth() != '') {
             $gateway->setParameter(
                 'expirationDate',
                 sprintf(
                     "%04d-%02d",
-                    $this->getInfoInstance()->getCcExpYear(),
-                    $this->getInfoInstance()->getCcExpMonth())
+                    $info->getCcExpYear(),
+                    $info->getCcExpMonth())
             );
         } else {
             $gateway->setParameter('expirationDate', 'XXXX');
         }
 
-        $gateway->setParameter('cardCode', $this->getInfoInstance()->getCcCid());
+        $gateway->setParameter('cardCode', $info->getCcCid());
 
         return $this;
     }

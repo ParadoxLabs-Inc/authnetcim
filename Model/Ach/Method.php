@@ -50,7 +50,7 @@ class Method extends \ParadoxLabs\Authnetcim\Model\Method
      * @param \Magento\Quote\Api\Data\CartInterface|null $quote
      * @return bool
      */
-    public function isAvailable($quote = null)
+    public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null)
     {
         /**
          * Bypass the CC type check. sneaksy
@@ -61,13 +61,13 @@ class Method extends \ParadoxLabs\Authnetcim\Model\Method
     /**
      * Update info during the checkout process.
      *
-     * @param \Magento\Framework\Object|mixed $data
+     * @param \Magento\Framework\DataObject|mixed $data
      * @return $this
      */
-    public function assignData($data)
+    public function assignData(\Magento\Framework\DataObject $data)
     {
-        if (!($data instanceof \Magento\Framework\Object)) {
-            $data = new \Magento\Framework\Object($data);
+        if (!($data instanceof \Magento\Framework\DataObject)) {
+            $data = new \Magento\Framework\DataObject($data);
         }
 
         parent::assignData($data);

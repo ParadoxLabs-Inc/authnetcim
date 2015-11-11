@@ -50,13 +50,15 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
      */
     protected function loadOrCreateCard(\Magento\Payment\Model\InfoInterface $payment)
     {
+        /** @var \Magento\Sales\Model\Order\Payment $payment */
+
         if (!is_null($this->card)) {
             $this->log(sprintf('loadOrCreateCard(%s %s)', get_class($payment), $payment->getId()));
 
             $this->setCard($this->getCard());
 
             return $this->getCard();
-        } elseif ($payment->hasTokenbaseId() !== true
+        } elseif ($payment->hasData('tokenbase_id') !== true
             && $payment->getOrder()
             && $payment->getOrder()->getExtCustomerId() != '') {
             $this->log(sprintf('loadOrCreateCard(%s %s)', get_class($payment), $payment->getId()));
@@ -167,6 +169,8 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
         $amount,
         \ParadoxLabs\TokenBase\Model\Gateway\Response $response
     ) {
+        /** @var \Magento\Sales\Model\Order\Payment $payment */
+
         $outstanding = round($payment->getOrder()->getBaseTotalDue() - $amount, 4);
 
         /**
