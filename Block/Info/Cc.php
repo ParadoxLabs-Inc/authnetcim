@@ -47,7 +47,7 @@ class Cc extends \ParadoxLabs\TokenBase\Block\Info\Cc
             if ($info->getData('cc_cid_status')) {
                 $ccv = $info->getData('cc_cid_status');
             } else {
-                $cvv = $info->getAdditionalInformation('card_code_response_code');
+                $ccv = $info->getAdditionalInformation('card_code_response_code');
             }
 
             if ($info->getData('cc_status')) {
