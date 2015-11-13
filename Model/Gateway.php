@@ -90,7 +90,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'expirationDate'            => ['maxLength' => 7],
         'invoiceNumber'             => ['maxLength' => 20, 'noSymbols' => true],
         'itemName'                  => ['maxLength' => 31, 'noSymbols' => true],
-        'loginId'                   => ['maxLength' => 20, 'noSymbols' => true],
+        'loginId'                   => ['maxLength' => 20],
         'merchantCustomerId'        => ['maxLength' => 20],
         'nameOnAccount'             => ['maxLength' => 22],
         'purchaseOrderNumber'       => ['maxLength' => 25, 'noSymbols' => true],
@@ -186,9 +186,20 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         curl_setopt($curl, CURLOPT_HTTPHEADER, array("Content-Type: text/xml"));
         curl_setopt($curl, CURLOPT_HEADER, 0);
         curl_setopt($curl, CURLOPT_POSTFIELDS, $xml);
-        curl_setopt($curl, CURLOPT_POST, 1);
-        curl_setopt($curl, CURLOPT_TIMEOUT, 15);
+
+        if (!in_array($request, array( 'createTransactionRequest', 'createCustomerProfileTransactionRequest' ))) {
+            curl_setopt($curl, CURLOPT_TIMEOUT, 15);
+        }
+
         curl_setopt($curl, CURLOPT_CAINFO, dirname(dirname(__FILE__)) . '/authorizenet-cert.pem');
+
+        if ($this->verifySsl === true) {
+            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
+        } else {
+            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+        }
+
         $this->lastResponse = curl_exec($curl);
 
         if ($this->lastResponse && !curl_errno($curl)) {
@@ -205,8 +216,16 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
              * Check for basic errors.
              */
             if ($this->lastResponse['messages']['resultCode'] != 'Ok') {
-                $errorCode = $this->lastResponse['messages']['message']['code'];
-                $errorText = $this->lastResponse['messages']['message']['text'];
+                $errorCode  = $this->lastResponse['messages']['message']['code'];
+                $errorText  = $this->lastResponse['messages']['message']['text'];
+                $errorText2 = '';
+
+                if (isset($this->lastResponse['transactionResponse'])
+                    && isset($this->lastResponse['transactionResponse']['errors'])
+                    && isset($this->lastResponse['transactionResponse']['errors']['error']['errorText'])) {
+                    $errorText2 = $this->lastResponse['transactionResponse']['errors']['error']['errorText'];
+                    $errorText .= ' ' . $errorText2;
+                }
 
                 /**
                  * Log and spit out generic error. Skip certain warnings we can handle.
@@ -220,6 +239,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 if (!empty($errorCode)
                     && !in_array($errorCode, $okayErrorCodes)
                     && !in_array($errorText, $okayErrorTexts)
+                    && !in_array($errorText2, $okayErrorTexts)
                 ) {
                     $this->helper->log(
                         $this->code,
@@ -278,6 +298,20 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         return $string;
+    }
+
+    /**
+     * Convert XML string to array. See \ParadoxLabs\TokenBase\Model\Gateway\Xml
+     *
+     * @param string $xml
+     * @return array
+     */
+    protected function xmlToArray($xml)
+    {
+        // Strip bad namespace out before we try to parse it. ...
+        $xml = str_replace(' xmlns="AnetApi/xml/v1/schema/AnetApiSchema.xsd"', '', $xml);
+
+        return parent::xmlToArray($xml);
     }
 
     /**
@@ -1645,11 +1679,24 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
          * Turn the array into a keyed object and infer some things.
          * We try to keep the values consistent with the directResponse data. Some translation required.
          */
+
+        $responseCode = '';
+        $responseText = '';
+        if (isset($response['errors'])) {
+            if (isset($response['errors']['error']['errorCode'])) {
+                $responseCode = (int)$response['errors']['error']['errorCode'];
+            }
+
+            if (isset($response['errors']['error']['errorText'])) {
+                $responseText = $response['errors']['error']['errorText'];
+            }
+        }
+
         $data = [
             'response_code'            => (int)$response['responseCode'],
             'response_subcode'         => '',
-            'response_reason_code'     => (int)$response['messages']['message']['code'],
-            'response_reason_text'     => $response['messages']['message']['description'],
+            'response_reason_code'     => $responseCode,
+            'response_reason_text'     => $responseText,
             'auth_code'                => isset($response['authCode']) ? $response['authCode'] : '',
             'avs_result_code'          => isset($response['avsResultCode']) ? $response['avsResultCode'] : '',
             'transaction_id'           => isset($response['transId']) ? $response['transId'] : '',

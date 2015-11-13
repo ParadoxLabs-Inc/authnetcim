@@ -1,5 +1,5 @@
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright ï¿½ 2015 Magento. All rights reserved.
  * See COPYING.txt for license details.
  */
 define(
@@ -21,9 +21,10 @@ define(
                 logoImage: config ? config.logoImage : false
             },
             initVars: function() {
-                this.canSaveCard    = config ? config.canSaveCard : false;
-                this.forceSaveCard  = config ? config.forceSaveCard : false;
-                this.requireCcv     = config ? config.requireCcv : false;
+                this.canSaveCard     = config ? config.canSaveCard : false;
+                this.forceSaveCard   = config ? config.forceSaveCard : false;
+                this.defaultSaveCard = config ? config.defaultSaveCard : false;
+                this.requireCcv      = config ? config.requireCcv : false;
             },
             getCode: function () {
                 return 'authnetcim';

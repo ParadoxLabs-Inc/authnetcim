@@ -178,16 +178,13 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
          * try to reauthorize any remaining balance. So we have it.
          */
         if ($this->gateway()->getHaveAuthorized()
-            && $this->getConfigData('advanced/require_ccv') !== true
+            && $this->getConfigData('reauthorize_partial_invoice') == 1
             && $outstanding > 0) {
             try {
                 $this->log(sprintf('afterCapture(): Reauthorizing for %s', $outstanding));
 
-                $shippingId        = $this->gateway()->getParameter('customerShippingAddressId');
-
                 $this->gateway()->clearParameters();
                 $this->gateway()->setCard($this->gateway()->getCard());
-                $this->gateway()->setParameter('customerShippingAddressId', $shippingId);
                 $this->gateway()->setHaveAuthorized(true);
 
                 $authResponse    = $this->gateway()->authorize($payment, $outstanding);
@@ -195,6 +192,33 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
                 $payment->getOrder()->setExtOrderId(
                     sprintf('%s:%s', $authResponse->getTransactionId(), $authResponse->getAuthCode())
                 );
+
+                /**
+                 * Record new transaction
+                 */
+                $wasTransId = $payment->getTransactionId();
+
+                $payment->setTransactionId(
+                    $this->getValidTransactionId($payment, $authResponse->getTransactionId())
+                );
+                $payment->setIsTransactionClosed(0);
+                $payment->setTransactionAdditionalInfo(
+                    \Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS,
+                    $authResponse->getData()
+                );
+
+                $transaction = $payment->addTransaction(
+                    \Magento\Sales\Model\Order\Payment\Transaction::TYPE_AUTH,
+                    $payment->getOrder(),
+                    false
+                );
+
+                $message = __('Reauthorized outstanding balance.');
+                $message .= ' ' . __('Amount: %1.', $payment->formatPrice($outstanding));
+
+                $payment->addTransactionCommentsToOrder($transaction, $message);
+
+                $payment->setTransactionId($wasTransId);
             } catch (\Exception $e) {
                 $payment->getOrder()->setExtOrderId(sprintf('%s:', $response->getTransactionId()));
             }

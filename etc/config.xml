@@ -22,6 +22,9 @@
                 <require_ccv>0</require_ccv>
                 <send_shipping_address>1</send_shipping_address>
                 <send_line_items>1</send_line_items>
+                <reauthorize_partial_invoice>1</reauthorize_partial_invoice>
+                <savecard_opt_out>1</savecard_opt_out>
+                <verify_ssl>1</verify_ssl>
                 <group>tokenbase</group>
             </authnetcim>
             <authnetcim_ach>
@@ -41,6 +44,9 @@
                 <show_branding>0</show_branding>
                 <send_shipping_address>1</send_shipping_address>
                 <send_line_items>1</send_line_items>
+                <reauthorize_partial_invoice>1</reauthorize_partial_invoice>
+                <savecard_opt_out>1</savecard_opt_out>
+                <verify_ssl>1</verify_ssl>
                 <group>tokenbase</group>
             </authnetcim_ach>
         </payment>

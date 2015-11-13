@@ -67,7 +67,7 @@ class ConfigProvider extends CcGenericConfigProvider
         \Magento\Customer\Model\Session $customerSession,
         \Magento\Payment\Model\Config $paymentConfig,
         \ParadoxLabs\Authnetcim\Helper\Data $dataHelper,
-        array $methodCodes = ['authnetcim']
+        array $methodCodes = []
     ) {
         $this->paymentHelper    = $paymentHelper;
         $this->checkoutSession  = $checkoutSession;
@@ -75,7 +75,7 @@ class ConfigProvider extends CcGenericConfigProvider
         $this->dataHelper       = $dataHelper;
         $this->paymentConfig    = $paymentConfig;
 
-        parent::__construct($ccConfig, $paymentHelper, $methodCodes);
+        parent::__construct($ccConfig, $paymentHelper, [$this->code]);
     }
 
     /**
@@ -133,6 +133,7 @@ class ConfigProvider extends CcGenericConfigProvider
                     'useVault'                => true,
                     'canSaveCard'             => $this->canSaveCard(),
                     'forceSaveCard'           => $this->forceSaveCard(),
+                    'defaultSaveCard'         => $this->defaultSaveCard(),
                     'storedCards'             => $storedCardOptions,
                     'selectedCard'            => $selected,
                     'isCcDetectionEnabled'    => true,
@@ -164,6 +165,16 @@ class ConfigProvider extends CcGenericConfigProvider
     public function requireCcv()
     {
         return $this->methods[$this->code]->getConfigData('require_ccv') ? true : false;
+    }
+
+    /**
+     * Whether to default the save card option to yes or no.
+     *
+     * @return bool
+     */
+    public function defaultSaveCard()
+    {
+        return $this->methods[$this->code]->getConfigData('savecard_opt_out') ? true : false;
     }
 
     /**

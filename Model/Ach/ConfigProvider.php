@@ -39,7 +39,7 @@ class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
         \Magento\Customer\Model\Session $customerSession,
         \Magento\Payment\Model\Config $paymentConfig,
         \ParadoxLabs\Authnetcim\Helper\Data $dataHelper,
-        array $methodCodes = ['authnetcim_ach']
+        array $methodCodes = []
     ) {
         parent::__construct(
             $ccConfig,
@@ -80,6 +80,7 @@ class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
         $config['payment'][$this->code] = [
             'canSaveCard'               => $this->canSaveCard(),
             'forceSaveCard'             => $this->forceSaveCard(),
+            'defaultSaveCard'           => $this->defaultSaveCard(),
             'storedCards'               => $storedCardOptions,
             'selectedCard'              => $selected,
             'logoImage'                 => $this->getLogoImage(),

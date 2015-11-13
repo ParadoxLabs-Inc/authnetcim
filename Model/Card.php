@@ -268,6 +268,10 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $gateway->setParameter('billToPhoneNumber', $address->getTelephone());
             $gateway->setParameter('billToFaxNumber', $address->getFax());
 
+            if ($this->helper->getIsAccount()) {
+                $gateway->setParameter('validationMode', $this->getMethodInstance()->getConfigData('validation_mode'));
+            }
+
             $this->setPaymentInfoOnUpdate($gateway);
 
             $gateway->updateCustomerPaymentProfile();
@@ -291,6 +295,15 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             }
 
             return $this->syncCustomerPaymentProfile(false);
+        } elseif ($response['messages']['resultCode'] != 'Ok'
+            && ($response['messages']['message']['code'] != 'E00039' || empty($paymentId))) {
+            $errorCode = $response['messages']['message']['code'];
+            $errorText = $response['messages']['message']['text'];
+
+            $this->helper->log($this->getMethod(), sprintf("API error: %s: %s", $errorCode, $errorText));
+            $gateway->logLogs();
+
+            throw new LocalizedException(__(sprintf('Authorize.Net CIM Gateway: %s', $errorText)));
         }
 
         if (!empty($paymentId)) {

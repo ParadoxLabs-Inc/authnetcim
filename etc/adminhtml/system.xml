@@ -122,6 +122,27 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, the items will be included with each transaction. May not be desired for some accounting integrations.</comment>
                 </field>
+                <field id="reauthorize_partial_invoice" translate="label" type="select" sortOrder="210" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Reauthorize on Partial Invoice</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If yes, when you create a partial invoice, we will reauthorize any outstanding balance on the order. This helps guarantee funds, but can cause multiple holds on the card until transactions settle.</comment>
+                    <depends>
+                        <field id="payment_action">authorize</field>
+                    </depends>
+                </field>
+                <field id="savecard_opt_out" translate="label" type="select" sortOrder="220" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Auto-select 'save for next time'</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If yes, will be selected by default during checkout.</comment>
+                    <depends>
+                        <field id="allow_unsaved">1</field>
+                    </depends>
+                </field>
+                <field id="verify_ssl" translate="label" type="select" sortOrder="230" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Verify SSL</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Strongly recommended. Do not disable unless you get SSL errors and your host is unable to fix them.</comment>
+                </field>
             </group>
             <group id="authnetcim_ach" translate="label" type="text" sortOrder="510" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Authorize.Net CIM - ACH (eCheck)</label>
@@ -227,6 +248,27 @@
                     <label>Send Line Items</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, the items will be included with each transaction. May not be desired for some accounting integrations.</comment>
+                </field>
+                <field id="reauthorize_partial_invoice" translate="label" type="select" sortOrder="210" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Reauthorize on Partial Invoice</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If yes, when you create a partial invoice, we will reauthorize any outstanding balance on the order. This helps guarantee funds, but can cause multiple holds on the card until transactions settle.</comment>
+                    <depends>
+                        <field id="payment_action">authorize</field>
+                    </depends>
+                </field>
+                <field id="savecard_opt_out" translate="label" type="select" sortOrder="220" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Auto-select 'save for next time'</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If yes, will be selected by default during checkout.</comment>
+                    <depends>
+                        <field id="allow_unsaved">1</field>
+                    </depends>
+                </field>
+                <field id="verify_ssl" translate="label" type="select" sortOrder="230" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Verify SSL</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Strongly recommended. Do not disable unless you get SSL errors and your host is unable to fix them.</comment>
                 </field>
             </group>
         </section>
