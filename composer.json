@@ -3,7 +3,7 @@
     "description": "Authorize.Net CIM payment method for Magento 2.x by Paradox Labs",
     "keywords": ["payment", "authorize.net", "tokenization"],
     "require": {
-        "magento/framework": "~1.0",
+        "magento/framework": "~100.0",
         "paradoxlabs/tokenbase": "3.0.0"
     },
     "type": "magento2-module",
