@@ -69,7 +69,7 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
                 // CIM not enabled
                 return __(
                     'Your account does not have CIM enabled. Please contact your Authorize.Net support rep '
-                        . 'to resolve this. (%1)',
+                    . 'to resolve this. (%1)',
                     $errorCode
                 );
             }

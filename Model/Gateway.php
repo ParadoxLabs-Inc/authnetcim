@@ -495,7 +495,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      * @param string $transactionId
      * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
      */
-    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount, $transactionId)
+    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount, $transactionId = null)
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
 
@@ -569,11 +569,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
      * @throws LocalizedException
      */
-    public function refund(\Magento\Payment\Model\InfoInterface $payment, $amount, $transactionId)
+    public function refund(\Magento\Payment\Model\InfoInterface $payment, $amount, $transactionId = null)
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
 
-        $this->setParameter('transactionType', 'refundTransaction');
+        $this->setParameter('transactionType', 'profileTransRefund');
         $this->setParameter('amount', $amount);
         $this->setParameter('invoiceNumber', $payment->getOrder()->getIncrementId());
 
@@ -591,7 +591,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $this->setParameter('transId', $payment->getTransactionId());
         }
 
-        $result = $this->createTransaction();
+        $result = $this->createCustomerProfileTransaction();
         $response = $this->interpretTransaction($result);
 
         /**
@@ -787,7 +787,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 ],
                 'payment' => [],
             ],
-            'validationMode'    => $this->getParameter('validationMode'),
+            'validationMode'    => $this->getParameter('validationMode', 'testMode'),
         ];
 
         if ($this->hasParameter('customerType')) {
@@ -840,12 +840,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
              */
             if (empty($paymentId)) {
                 $paymentId = $this->findDuplicateCard();
+            }
 
-                if ($paymentId !== false) {
-                    // Update the card record to ensure CVV and expiry are up to date.
-                    $this->setParameter('customerPaymentProfileId', $paymentId);
-                    $this->updateCustomerPaymentProfile();
-                }
+            if (!empty($paymentId)) {
+                // Update the card record to ensure CCV and expiry are up to date.
+                $this->setParameter('customerPaymentProfileId', $paymentId);
+                $this->updateCustomerPaymentProfile();
             }
         }
 
@@ -951,6 +951,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
     /**
      * Run an actual transaction with Authorize.Net with stored data.
+     *
+     * Mostly deprecated by createTransaction() as of 2.2; still used for refunds.
      *
      * @return string Raw transaction result (XML)
      */
