@@ -46,12 +46,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * $fields defines validation for each API parameter or input.
      *
-     * key => array(
+     * key => [
      *    'maxLength' => int,
      *    'noSymbols' => true|false,
      *    'charMask'  => (allowed characters in regex form),
-     *    'enum'      => array( values )
-     * )
+     *    'enum'      => [ values ]
+     * ]
      *
      * @var array
      */
@@ -139,6 +139,18 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     ];
 
     /**
+     * @var array
+     */
+    protected $txnTypeMap = [
+        'authCaptureTransaction'      => 'auth_capture',
+        'authOnlyTransaction'         => 'auth_only',
+        'captureOnlyTransaction'      => 'capture_only',
+        'priorAuthCaptureTransaction' => 'prior_auth_capture',
+        'refundTransaction'           => 'credit',
+        'voidTransaction'             => 'void',
+    ];
+
+    /**
      * Set the API credentials so they go through validation.
      *
      * @return $this
@@ -183,11 +195,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, $this->endpoint);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($curl, CURLOPT_HTTPHEADER, array("Content-Type: text/xml"));
+        curl_setopt($curl, CURLOPT_HTTPHEADER, ["Content-Type: text/xml"]);
         curl_setopt($curl, CURLOPT_HEADER, 0);
         curl_setopt($curl, CURLOPT_POSTFIELDS, $xml);
 
-        if (!in_array($request, array( 'createTransactionRequest', 'createCustomerProfileTransactionRequest' ))) {
+        if (!in_array($request, ['createTransactionRequest', 'createCustomerProfileTransactionRequest'])) {
             curl_setopt($curl, CURLOPT_TIMEOUT, 15);
         }
 
@@ -216,14 +228,14 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
              * Check for basic errors.
              */
             if ($this->lastResponse['messages']['resultCode'] != 'Ok') {
-                $errorCode  = $this->lastResponse['messages']['message']['code'];
-                $errorText  = $this->lastResponse['messages']['message']['text'];
-                $errorText2 = '';
+                $errorCode  = $this->helper->getArrayValue($this->lastResponse, 'messages/message/code');
+                $errorText  = $this->helper->getArrayValue($this->lastResponse, 'messages/message/text');
+                $errorText2 = $this->helper->getArrayValue(
+                    $this->lastResponse,
+                    'transactionResponse/errors/error/errorText'
+                );
 
-                if (isset($this->lastResponse['transactionResponse'])
-                    && isset($this->lastResponse['transactionResponse']['errors'])
-                    && isset($this->lastResponse['transactionResponse']['errors']['error']['errorText'])) {
-                    $errorText2 = $this->lastResponse['transactionResponse']['errors']['error']['errorText'];
+                if ($errorText2 != '') {
                     $errorText .= ' ' . $errorText2;
                 }
 
@@ -573,7 +585,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
 
-        $this->setParameter('transactionType', 'profileTransRefund');
+        $this->setParameter('transactionType', 'refundTransaction');
         $this->setParameter('amount', $amount);
         $this->setParameter('invoiceNumber', $payment->getOrder()->getIncrementId());
 
@@ -591,7 +603,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $this->setParameter('transId', $payment->getTransactionId());
         }
 
-        $result = $this->createCustomerProfileTransaction();
+        $result = $this->createTransaction();
         $response = $this->interpretTransaction($result);
 
         /**
@@ -667,16 +679,34 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         $result = $this->getTransactionDetails();
 
+        foreach ($result as $k => $v) {
+            if (is_array($v)) {
+                foreach ($v as $l => $u) {
+                    if (is_array($u)) {
+                        $u = json_encode($u);
+                    }
+
+                    $result[ $k . '_' . $l ] = $u;
+
+                    unset($result[ $k ][ $l ]);
+                }
+
+                if (empty($result[ $k ])) {
+                    unset($result[ $k ]);
+                }
+            }
+        }
+
         /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
         $response = $this->responseFactory->create();
-        $response->setData(array('is_approved' => false, 'is_denied' => false));
+        $response->setData($result + ['is_approved' => false, 'is_denied' => false]);
 
-        if ((int)$result['transaction']['responseReasonCode'] == 254
-            || $result['transaction']['transactionStatus'] == 'voided'
+        if ((int)$response->getData('respon_response_code') == 254
+            || $response->getData('transaction_status') == 'voided'
         ) {
             // Transaction pending review -> denied
             $response->setData('is_denied', true);
-        } elseif ((int)$result['transaction']['responseCode'] == 1) {
+        } elseif ((int)$response->getData('response_code') == 1) {
             $response->setData('is_approved', true);
         }
 
@@ -743,12 +773,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         $result = $this->runTransaction('createCustomerProfileRequest', $params);
 
+        $text = $this->helper->getArrayValue($result, 'messages/message/text');
+
         if (isset($result['customerProfileId'])) {
             return $result['customerProfileId'];
-        } elseif (isset($result['messages']['message']['text'])
-            && strpos($result['messages']['message']['text'], 'duplicate') !== false
-        ) {
-            return preg_replace('/[^0-9]/', '', $result['messages']['message']['text']);
+        } elseif (strpos($text, 'duplicate') !== false) {
+            return preg_replace('/[^0-9]/', '', $text);
         } else {
             $this->logLogs();
 
@@ -825,14 +855,17 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         if (isset($result['customerPaymentProfileId'])) {
             $paymentId = $result['customerPaymentProfileId'];
-        } elseif (isset($result['messages']['message']['text'])
-            && strpos($result['messages']['message']['text'], 'duplicate') !== false
-        ) {
+        }
+
+        $text = $this->helper->getArrayValue($result, 'messages/message/text');
+
+        if (strpos($text, 'duplicate') !== false) {
             /**
              * Handle duplicate card errors. Painful process.
              */
-
-            $paymentId = preg_replace('/[^0-9]/', '', $result['messages']['message']['text']);
+            if (empty($paymentId)) {
+                $paymentId = preg_replace('/[^0-9]/', '', $text);
+            }
 
             /**
              * If we still have no payment ID, try to match the duplicate manually.
@@ -878,11 +911,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         $result = $this->runTransaction('createCustomerShippingAddressRequest', $params);
 
+        $text = $this->helper->getArrayValue($result, 'messages/message/text');
+
         if (isset($result['customerAddressId'])) {
             return $result['customerAddressId'];
-        } elseif (isset($result['messages']['message']['text'])
-            && strpos($result['messages']['message']['text'], 'duplicate') !== false
-        ) {
+        } elseif (strpos($text, 'duplicate') !== false) {
             /**
              * Handle duplicate address errors. blah.
              */
@@ -952,9 +985,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Run an actual transaction with Authorize.Net with stored data.
      *
-     * Mostly deprecated by createTransaction() as of 2.2; still used for refunds.
-     *
      * @return string Raw transaction result (XML)
+     * @deprecated since 2.2.4 - see createTransaction()
      */
     public function createCustomerProfileTransaction()
     {
@@ -1121,6 +1153,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $params['amount'] = $this->formatAmount($this->getParameter('amount'));
         }
 
+        // profile must be above refTransId. Placeholder to enforce that.
+        $params['profile'] = [];
+
         if ($isNewTxn === false) {
             if ($this->hasParameter('transId')) {
                 $params['refTransId'] = $this->getParameter('transId');
@@ -1170,18 +1205,14 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     ];
                 }
 
-                $params['profile'] = [
-                    'createProfile' => 'true',
-                ];
+                $params['profile']['createProfile'] = 'true';
             } elseif ($type != 'captureOnlyTransaction') {
                 /**
                  * Otherwise, send the tokens we already have.
                  */
-                $params['profile'] = [
-                    'customerProfileId' => $this->getParameter('customerProfileId'),
-                    'paymentProfile'    => [
-                        'paymentProfileId' => $this->getParameter('customerPaymentProfileId'),
-                    ],
+                $params['profile']['customerProfileId'] = $this->getParameter('customerProfileId');
+                $params['profile']['paymentProfile']    = [
+                    'paymentProfileId' => $this->getParameter('customerPaymentProfileId'),
                 ];
 
                 // Include CCV if available.
@@ -1351,6 +1382,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             ];
         }
 
+        if (empty($params['profile'])) {
+            unset($params['profile']);
+        }
+
         return $this->runTransaction('createTransactionRequest', ['transactionRequest' => $params]);
     }
 
@@ -1455,7 +1490,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Get current details for a given transaction ID.
      *
-     * @return string Raw transaction result (XML)
+     * @return array
      */
     public function getTransactionDetails()
     {
@@ -1463,7 +1498,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             'transId' => $this->getParameter('transId'),
         ];
 
-        return $this->runTransaction('getTransactionDetailsRequest', $params);
+        $details = $this->runTransaction('getTransactionDetailsRequest', $params);
+
+        return $this->mapTransactionDetails($details);
     }
 
     /**
@@ -1573,12 +1610,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      */
     public function validateCustomerPaymentProfile()
     {
-        $params = array(
+        $params = [
             'customerProfileId'         => $this->getParameter('customerProfileId'),
             'customerPaymentProfileId'  => $this->getParameter('customerPaymentProfileId'),
             'customerShippingAddressId' => $this->getParameter('customerShippingAddressId'),
             'validationMode'            => $this->getParameter('validationMode'),
-        );
+        ];
 
         return $this->runTransaction('validateCustomerPaymentProfileRequest', $params);
     }
@@ -1668,52 +1705,33 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             );
         }
 
-        $txnTypeMap = [
-            'authCaptureTransaction'      => 'auth_capture',
-            'authOnlyTransaction'         => 'auth_only',
-            'captureOnlyTransaction'      => 'capture_only',
-            'priorAuthCaptureTransaction' => 'prior_auth_capture',
-            'refundTransaction'           => 'credit',
-            'voidTransaction'             => 'void',
-        ];
-
         /**
          * Turn the array into a keyed object and infer some things.
          * We try to keep the values consistent with the directResponse data. Some translation required.
          */
-
-        $responseCode = '';
-        $responseText = '';
-        if (isset($response['errors'])) {
-            if (isset($response['errors']['error']['errorCode'])) {
-                $responseCode = (int)$response['errors']['error']['errorCode'];
-            }
-
-            if (isset($response['errors']['error']['errorText'])) {
-                $responseText = $response['errors']['error']['errorText'];
-            }
-        }
-
         $data = [
-            'response_code'            => (int)$response['responseCode'],
+            'response_code'            => (int)$this->helper->getArrayValue($response, 'responseCode'),
             'response_subcode'         => '',
-            'response_reason_code'     => $responseCode,
-            'response_reason_text'     => $responseText,
-            'auth_code'                => isset($response['authCode']) ? $response['authCode'] : '',
-            'avs_result_code'          => isset($response['avsResultCode']) ? $response['avsResultCode'] : '',
-            'transaction_id'           => isset($response['transId']) ? $response['transId'] : '',
-            'reference_transaction_id' => isset($response['reftransId']) ? $response['reftransId'] : '',
+            'response_reason_code'     => (int)$this->helper->getArrayValue($response, 'errors/error/errorCode'),
+            'response_reason_text'     => $this->helper->getArrayValue($response, 'errors/error/errorText'),
+            'approval_code'            => $this->helper->getArrayValue($response, 'authCode'),
+            'auth_code'                => $this->helper->getArrayValue($response, 'authCode'),
+            'avs_result_code'          => $this->helper->getArrayValue($response, 'avsResultCode'),
+            'transaction_id'           => $this->helper->getArrayValue($response, 'transId'),
+            'reference_transaction_id' => $this->helper->getArrayValue($response, 'refTransId'),
             'invoice_number'           => $this->getParameter('invoiceNumber'),
             'description'              => $this->getParameter('description'),
             'amount'                   => $this->getParameter('amount'),
-            'method'                   => ($response['accountType'] == 'eCheck') ? 'ECHECK' : 'CC',
-            'transaction_type'         => $txnTypeMap[ $this->getParameter('transactionType') ],
+            'method'                   => $this->helper->getArrayValue($response, 'accountType') == 'eCheck'
+                ? 'ECHECK'
+                : 'CC',
+            'transaction_type'         => $this->txnTypeMap[ $this->getParameter('transactionType') ],
             'customer_id'              => $this->getParameter('merchantCustomerId'),
-            'md5_hash'                 => $response['transHash'],
-            'card_code_response_code'  => isset($response['cvvResultCode']) ? $response['cvvResultCode'] : '',
-            'cavv_response_code'       => isset($response['cavvResultCode']) ? $response['cavvResultCode'] : '',
-            'acc_number'               => $response['accountNumber'],
-            'card_type'                => $response['accountType'],
+            'md5_hash'                 => $this->helper->getArrayValue($response, 'transHash'),
+            'card_code_response_code'  => $this->helper->getArrayValue($response, 'cvvResultCode'),
+            'cavv_response_code'       => $this->helper->getArrayValue($response, 'cavvResultCode'),
+            'acc_number'               => $this->helper->getArrayValue($response, 'accountNumber'),
+            'card_type'                => $this->helper->getArrayValue($response, 'accountType'),
             'split_tender_id'          => '',
             'requested_amount'         => '',
             'balance_on_card'          => '',
@@ -1729,18 +1747,33 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         if (isset($response['profileResponse'])) {
             $data['profile_results'] = $response['profileResponse']['messages'];
 
-            if (isset($response['profileResponse']['customerProfileId'])) {
-                $data['profile_id'] = $response['profileResponse']['customerProfileId'];
+            if ($this->helper->getArrayValue($response, 'profileResponse/customerProfileId', false) !== false) {
+                $data['profile_id'] = $this->helper->getArrayValue(
+                    $response,
+                    'profileResponse/customerProfileId'
+                );
             }
 
-            if (isset($response['profileResponse']['customerPaymentProfileIdList'])
-                && isset($response['profileResponse']['customerPaymentProfileIdList']['numericString'])) {
-                $data['payment_id'] = $response['profileResponse']['customerPaymentProfileIdList']['numericString'];
+            if ($this->helper->getArrayValue(
+                $response,
+                'profileResponse/customerPaymentProfileIdList/numericString',
+                false
+            ) !== false) {
+                $data['payment_id'] = $this->helper->getArrayValue(
+                    $response,
+                    'profileResponse/customerPaymentProfileIdList/numericString'
+                );
             }
 
-            if (isset($response['profileResponse']['customerShippingAddressIdList'])
-                && isset($response['profileResponse']['customerShippingAddressIdList']['numericString'])) {
-                $data['shipping_id'] = $response['profileResponse']['customerShippingAddressIdList']['numericString'];
+            if ($this->helper->getArrayValue(
+                $response,
+                'profileResponse/customerShippingAddressIdList/numericString',
+                false
+            ) !== false) {
+                $data['shipping_id'] = $this->helper->getArrayValue(
+                    $response,
+                    'profileResponse/customerShippingAddressIdList/numericString'
+                );
             }
 
             /**
@@ -1751,6 +1784,94 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
              * Not a priority right now, since the API's error handling is not robust enough
              * for us to actually use this behavior reliably.
              */
+        }
+
+        return $data;
+    }
+
+    /**
+     * Force a consistent data interface for the transaction data store.
+     * The data returned by API call getTransactionDetails does not match _getDataFromTransactionResponse.
+     *
+     * @param array $response Results of API call getTransactionDetails
+     * @return array Data keyed to match normal transaction responses.
+     * @throws PaymentException
+     */
+    protected function mapTransactionDetails($response)
+    {
+        if (empty($response)) {
+            $this->helper->log(
+                $this->code,
+                sprintf("Authorize.Net CIM Gateway: Transaction failed; no response.\n%s", $this->log)
+            );
+
+            throw new PaymentException(
+                __('Authorize.Net CIM Gateway: Transaction failed; no response. '
+                    . 'Please re-enter your payment info and try again.')
+            );
+        }
+
+        $txn     = $response['transaction'];
+        $eCheck  = $this->helper->getArrayValue($txn, 'payment/bankAccount', false) !== false ? true : false;
+
+        // Map data.
+        $data    = [
+            'response_code'            => (int)$this->helper->getArrayValue($txn, 'responseCode'),
+            'response_reason_code'     => (int)$this->helper->getArrayValue($txn, 'responseReasonCode'),
+            'response_reason_text'     => $this->helper->getArrayValue($txn, 'responseReasonDescription'),
+            'transaction_status'       => $this->helper->getArrayValue($txn, 'transactionStatus'),
+            'approval_code'            => $this->helper->getArrayValue($txn, 'authCode'),
+            'auth_code'                => $this->helper->getArrayValue($txn, 'authCode'),
+            'avs_result_code'          => $this->helper->getArrayValue($txn, 'AVSResponse'),
+            'transaction_id'           => $this->helper->getArrayValue($txn, 'transId'),
+            'reference_transaction_id' => $this->helper->getArrayValue($txn, 'refTransId'),
+            'invoice_number'           => $this->helper->getArrayValue($txn, 'order/invoiceNumber'),
+            'description'              => $this->helper->getArrayValue($txn, 'order/description'),
+            'amount'                   => $this->helper->getArrayValue($txn, 'authAmount'),
+            'method'                   => $eCheck ? 'ECHECK' : 'CC',
+            'transaction_type'         => $this->helper->getArrayValue(
+                $this->txnTypeMap,
+                $this->helper->getArrayValue($txn, 'transactionType')
+            ),
+            'customer_id'              => $this->helper->getArrayValue($txn, 'customer/id'),
+            'card_code_response_code'  => $this->helper->getArrayValue($txn, 'cardCodeResponse'),
+            'cavv_response_code'       => $this->helper->getArrayValue($txn, 'CAVVResponse'),
+            'acc_number'               => $this->helper->getArrayValue(
+                $txn,
+                $eCheck ? 'payment/bankAccount/accountNumber' : 'payment/creditCard/cardNumber'
+            ),
+            'card_type'                => $this->helper->getArrayValue(
+                $txn,
+                $eCheck ? 'payment/bankAccount/echeckType' : 'payment/creditCard/accountType'
+            ),
+            'submit_time_utc'          => $this->helper->getArrayValue($txn, 'submitTimeUTC'),
+            'amount_settled'           => $this->helper->getArrayValue($txn, 'settleAmount'),
+            'amount_tax'               => $this->helper->getArrayValue($txn, 'tax/amount'),
+            'amount_shipping'          => $this->helper->getArrayValue($txn, 'shipping/amount'),
+            'amount_duty'              => $this->helper->getArrayValue($txn, 'duty/amount'),
+            'line_items'               => $this->helper->getArrayValue(
+                $txn,
+                'lineItems/lineItem/itemId',
+                false
+            ) !== false
+                ? [$this->helper->getArrayValue($txn, 'lineItems/lineItem')]
+                : $this->helper->getArrayValue($txn, 'lineItems/lineItem'),
+            'tax_exempt'               => $this->helper->getArrayValue($txn, 'taxExempt'),
+            'expiration_date'          => $this->helper->getArrayValue($txn, 'payment/creditCard/expirationDate'),
+            'customer_email'           => $this->helper->getArrayValue($txn, 'customer/email'),
+            'customer_ip'              => $this->helper->getArrayValue($txn, 'customerIP'),
+            'batch_id'                 => $this->helper->getArrayValue($txn, 'batch/batchId'),
+            'settlement_time_utc'      => $this->helper->getArrayValue($txn, 'batch/settlementTimeUTC'),
+            'settlement_state'         => $this->helper->getArrayValue($txn, 'batch/settlementState'),
+            'fraud_filter_action'      => $this->helper->getArrayValue($txn, 'FDSFilterAction'),
+            'fraud_filter'             => $this->helper->getArrayValue($txn, 'FDSFilters'),
+        ];
+
+        // Clean out empties.
+        foreach ($data as $key => $value) {
+            if ($value === '') {
+                unset($data[ $key ]);
+            }
         }
 
         return $data;
