@@ -54,7 +54,7 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
              */
 
             $result       = $gateway->getLastResponse();
-            $errorCode    = $result['messages']['message']['code'];
+            $errorCode    = $this->helper->getArrayValue($result, 'message/message/code');
 
             if (in_array($errorCode, array( 'E00005', 'E00006', 'E00007', 'E00008' ))) {
                 // Bad login ID / trans key

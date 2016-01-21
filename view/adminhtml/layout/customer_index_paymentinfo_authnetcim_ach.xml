@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<layout xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/layout_generic.xsd">
+    <referenceBlock name="tokenbase_customer_wrapper">
+        <block class="Magento\Framework\View\Element\Template" name="tokenbase_manage_authnetcim_ach" template="ParadoxLabs_TokenBase::customer/method.phtml" cacheable="false">
+            <block class="ParadoxLabs\TokenBase\Block\Customer\Cards" name="tokenbase_manage_authnetcim_ach_cards" as="tokenbase_customer_method_left" template="ParadoxLabs_TokenBase::customer/cards.phtml" />
+            <block class="ParadoxLabs\TokenBase\Block\Customer\Form" name="tokenbase_manage_authnetcim_ach_form" as="tokenbase_customer_method_right" template="ParadoxLabs_TokenBase::customer/form/ach.phtml" />
+        </block>
+    </referenceBlock>
+</layout>
