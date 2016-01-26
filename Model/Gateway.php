@@ -450,10 +450,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * These should be implemented by the child gateway.
      *
-     * @param \ParadoxLabs\Tokenbase\Model\Card $card
+     * @param \ParadoxLabs\Tokenbase\Api\Data\CardInterface $card
      * @return $this
      */
-    public function setCard(\ParadoxLabs\Tokenbase\Model\Card $card)
+    public function setCard(\ParadoxLabs\Tokenbase\Api\Data\CardInterface $card)
     {
         $this->setParameter('email', $card->getCustomerEmail());
         $this->setParameter('merchantCustomerId', $card->getCustomerId());

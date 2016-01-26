@@ -44,7 +44,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
      * Try to convert legacy data inline.
      *
      * @param \Magento\Payment\Model\InfoInterface $payment
-     * @return \ParadoxLabs\TokenBase\Model\Card
+     * @return \ParadoxLabs\TokenBase\Api\Data\CardInterface
      */
     protected function loadOrCreateCard(\Magento\Payment\Model\InfoInterface $payment)
     {

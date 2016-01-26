@@ -16,7 +16,7 @@ namespace ParadoxLabs\Authnetcim\Model;
 /**
  * Factory class for @see \ParadoxLabs\Authnetcim\Model\Card
  */
-class CardFactory extends \ParadoxLabs\TokenBase\Model\CardFactory
+class CardFactory extends \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory
 {
     /**
      * Factory constructor

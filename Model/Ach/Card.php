@@ -73,10 +73,10 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
     /**
      * On card save, set payment data to the gateway. (Broken out for extensibility)
      *
-     * @param \ParadoxLabs\TokenBase\Model\AbstractGateway $gateway
+     * @param \ParadoxLabs\TokenBase\Api\GatewayInterface $gateway
      * @return $this
      */
-    protected function setPaymentInfoOnCreate(\ParadoxLabs\TokenBase\Model\AbstractGateway $gateway)
+    protected function setPaymentInfoOnCreate(\ParadoxLabs\TokenBase\Api\GatewayInterface $gateway)
     {
         /** @var \Magento\Payment\Model\Info $info */
         $info = $this->getInfoInstance();
@@ -99,10 +99,10 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
     /**
      * On card update, set payment data to the gateway. (Broken out for extensibility)
      *
-     * @param \ParadoxLabs\TokenBase\Model\AbstractGateway $gateway
+     * @param \ParadoxLabs\TokenBase\Api\GatewayInterface $gateway
      * @return $this
      */
-    protected function setPaymentInfoOnUpdate(\ParadoxLabs\TokenBase\Model\AbstractGateway $gateway)
+    protected function setPaymentInfoOnUpdate(\ParadoxLabs\TokenBase\Api\GatewayInterface $gateway)
     {
         /** @var \Magento\Payment\Model\Info $info */
         $info = $this->getInfoInstance();

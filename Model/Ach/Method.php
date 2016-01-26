@@ -102,10 +102,10 @@ class Method extends \ParadoxLabs\Authnetcim\Model\Method
     /**
      * Set the current payment card
      *
-     * @param \ParadoxLabs\TokenBase\Model\Card $card
+     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterface $card
      * @return $this
      */
-    public function setCard(\ParadoxLabs\TokenBase\Model\Card $card)
+    public function setCard(\ParadoxLabs\TokenBase\Api\Data\CardInterface $card)
     {
         parent::setCard($card);
 
