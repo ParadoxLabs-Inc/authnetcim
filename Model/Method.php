@@ -175,35 +175,57 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
          * If this is a pre-auth capture for less than the total value of the order,
          * try to reauthorize any remaining balance. So we have it.
          */
-        if ($this->gateway()->getHaveAuthorized()
-            && $this->getConfigData('reauthorize_partial_invoice') == 1
-            && $outstanding > 0) {
-            try {
-                $this->log(sprintf('afterCapture(): Reauthorizing for %s', $outstanding));
+        if ($outstanding > 0) {
+            $wasTransId   = $payment->getTransactionId();
+            $wasParentId  = $payment->getParentTransactionId();
+            $authResponse = null;
+            $message      = false;
 
-                $this->gateway()->clearParameters();
-                $this->gateway()->setCard($this->gateway()->getCard());
-                $this->gateway()->setHaveAuthorized(true);
+            if ($this->getConfigData('reauthorize_partial_invoice') == 1) {
+                try {
+                    $this->log(sprintf('afterCapture(): Reauthorizing for %s', $outstanding));
 
-                $authResponse    = $this->gateway()->authorize($payment, $outstanding);
+                    $this->gateway()->clearParameters();
+                    $this->gateway()->setCard($this->gateway()->getCard());
+                    $this->gateway()->setHaveAuthorized(true);
 
-                $payment->getOrder()->setExtOrderId(
-                    sprintf('%s:%s', $authResponse->getTransactionId(), $authResponse->getAuthCode())
-                );
+                    $authResponse    = $this->gateway()->authorize($payment, $outstanding);
+
+                    $payment->getOrder()->setExtOrderId(
+                        sprintf('%s:%s', $authResponse->getTransactionId(), $authResponse->getAuthCode())
+                    );
+                } catch (\Exception $e) {
+                    $payment->getOrder()->setExtOrderId(
+                        sprintf('%s:', $response->getTransactionId())
+                    );
+                }
 
                 /**
-                 * Record new transaction
+                 * Even if the auth didn't go through, we need to create a new 'transaction'
+                 * so we can still do an online capture for the remainder.
                  */
-                $wasTransId = $payment->getTransactionId();
+                if (!is_null($authResponse)) {
+                    $payment->setTransactionId(
+                        $this->getValidTransactionId($payment, $authResponse->getTransactionId())
+                    );
 
-                $payment->setTransactionId(
-                    $this->getValidTransactionId($payment, $authResponse->getTransactionId())
-                );
+                    $payment->setTransactionAdditionalInfo(
+                        \Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS,
+                        $authResponse->getData()
+                    );
+
+                    $message = __(
+                        'Reauthorized outstanding amount of %s.',
+                        $payment->formatPrice($outstanding)
+                    );
+                } else {
+                    $payment->setTransactionId(
+                        $this->getValidTransactionId($payment, $response->getTransactionId() . '-auth')
+                    );
+                }
+
+                $payment->setData('parent_transaction_id', null);
                 $payment->setIsTransactionClosed(0);
-                $payment->setTransactionAdditionalInfo(
-                    \Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS,
-                    $authResponse->getData()
-                );
 
                 $transaction = $payment->addTransaction(
                     \Magento\Sales\Model\Order\Payment\Transaction::TYPE_AUTH,
@@ -211,14 +233,12 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
                     false
                 );
 
-                $message = __('Reauthorized outstanding balance.');
-                $message .= ' ' . __('Amount: %1.', $payment->formatPrice($outstanding));
-
-                $payment->addTransactionCommentsToOrder($transaction, $message);
+                if (!is_null($message)) {
+                    $payment->addTransactionCommentsToOrder($transaction, $message);
+                }
 
                 $payment->setTransactionId($wasTransId);
-            } catch (\Exception $e) {
-                $payment->getOrder()->setExtOrderId(sprintf('%s:', $response->getTransactionId()));
+                $payment->setData('parent_transaction_id', $wasParentId);
             }
         } else {
             $payment->getOrder()->setExtOrderId(sprintf('%s:', $response->getTransactionId()));
@@ -241,6 +261,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
         \Magento\Payment\Model\InfoInterface $payment,
         \ParadoxLabs\TokenBase\Model\Gateway\Response $response
     ) {
+        /** @var \Magento\Sales\Model\Order\Payment $payment */
         if ($this->getCard()->getAdditional('cc_type') == null && $response->getCardType() != '') {
             $ccType = $this->helper->mapCcTypeToMagento($response->getCardType());
 
@@ -267,6 +288,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
         \Magento\Payment\Model\InfoInterface $payment,
         \ParadoxLabs\TokenBase\Model\Gateway\Response $response
     ) {
+        /** @var \Magento\Sales\Model\Order\Payment $payment */
         if ($payment->getData('cc_avs_status') == '' && $response->getData('avs_result_code') != '') {
             $payment->setData('cc_avs_status', $response->getData('avs_result_code'));
         }
