@@ -45,7 +45,7 @@
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
                     <comment>Normally 'Pending' if 'Authorize Only' above; 'Processing' if not.</comment>
                 </field>
-                <field id="validation_type" translate="label comment" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="validation_mode" translate="label comment" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Validation Type</label>
                     <source_model>ParadoxLabs\Authnetcim\Model\Source\ValidationType</source_model>
                     <attribute type="shared">1</attribute>
@@ -187,7 +187,7 @@
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
                     <comment>Normally 'Pending' if 'Authorize Only' above; 'Processing' if not.</comment>
                 </field>
-                <field id="validation_type" translate="label comment" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="validation_mode" translate="label comment" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Validation Type</label>
                     <source_model>ParadoxLabs\Authnetcim\Model\Source\ValidationType</source_model>
                     <attribute type="shared">1</attribute>

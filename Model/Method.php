@@ -190,14 +190,8 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
                     $this->gateway()->setHaveAuthorized(true);
 
                     $authResponse    = $this->gateway()->authorize($payment, $outstanding);
-
-                    $payment->getOrder()->setExtOrderId(
-                        sprintf('%s:%s', $authResponse->getTransactionId(), $authResponse->getAuthCode())
-                    );
                 } catch (\Exception $e) {
-                    $payment->getOrder()->setExtOrderId(
-                        sprintf('%s:', $response->getTransactionId())
-                    );
+                    // Reauth failed: Take no action
                 }
 
                 /**
@@ -240,8 +234,6 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
                 $payment->setTransactionId($wasTransId);
                 $payment->setData('parent_transaction_id', $wasParentId);
             }
-        } else {
-            $payment->getOrder()->setExtOrderId(sprintf('%s:', $response->getTransactionId()));
         }
 
         $payment = $this->fixLegacyCcType($payment, $response);
@@ -299,6 +291,10 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
 
         if ($payment->getData('cc_status') == '' && $response->getData('cavv_response_code') != '') {
             $payment->setData('cc_status', $response->getData('cavv_response_code'));
+        }
+
+        if ($response->getData('auth_code') != '') {
+            $payment->setData('cc_approval', $response->getData('auth_code'));
         }
 
         return $payment;
