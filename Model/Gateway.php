@@ -450,10 +450,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * These should be implemented by the child gateway.
      *
-     * @param \ParadoxLabs\Tokenbase\Api\Data\CardInterface $card
+     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterface $card
      * @return $this
      */
-    public function setCard(\ParadoxLabs\Tokenbase\Api\Data\CardInterface $card)
+    public function setCard(\ParadoxLabs\TokenBase\Api\Data\CardInterface $card)
     {
         $this->setParameter('email', $card->getCustomerEmail());
         $this->setParameter('merchantCustomerId', $card->getCustomerId());
@@ -1094,6 +1094,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             ];
         }
 
+        if ($this->hasParameter('taxExempt') && $type != 'profileTransPriorAuthCapture') {
+            $params['transaction'][$type]['taxExempt'] = $this->getParameter('taxExempt');
+        }
+
         if ($this->hasParameter('cardCode') && $type != 'profileTransPriorAuthCapture') {
             $params['transaction'][$type]['cardCode'] = $this->getParameter('cardCode');
         }
@@ -1307,6 +1311,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     'name'        => $this->getParameter('shipName'),
                     'description' => $this->getParameter('shipDescription'),
                 ];
+            }
+
+            // Add tax exempt?
+            if ($this->hasParameter('taxExempt')) {
+                $params['taxExempt'] = $this->getParameter('taxExempt');
             }
 
             // Add PO number?

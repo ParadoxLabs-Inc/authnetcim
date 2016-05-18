@@ -69,6 +69,7 @@ class Data extends \ParadoxLabs\TokenBase\Helper\Data
      */
     protected $cimCardTypeMap = array(
         'American Express' => 'AE',
+        'AmericanExpress'  => 'AE',
         'Discover'         => 'DI',
         'Diners Club'      => 'DC',
         'JCB'              => 'JCB',
