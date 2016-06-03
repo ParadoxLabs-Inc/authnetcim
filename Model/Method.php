@@ -209,7 +209,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
                     );
 
                     $message = __(
-                        'Reauthorized outstanding amount of %s.',
+                        'Reauthorized outstanding amount of %1.',
                         $payment->formatPrice($outstanding)
                     );
                 } else {
