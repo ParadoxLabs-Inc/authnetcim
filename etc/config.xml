@@ -3,6 +3,8 @@
     <default>
         <payment>
             <authnetcim>
+                <version backend_model="ParadoxLabs\Authnetcim\Model\Config\Version" />
+                <apitest />
                 <active>0</active>
                 <title>Credit Card (Authorize.Net CIM)</title>
                 <cctypes>AE,VI,MC,DI</cctypes>
@@ -28,6 +30,8 @@
                 <group>tokenbase</group>
             </authnetcim>
             <authnetcim_ach>
+                <version backend_model="ParadoxLabs\Authnetcim\Model\Config\Version" />
+                <apitest />
                 <active>0</active>
                 <title>Bank Account (eCheck)</title>
                 <login backend_model="Magento\Config\Model\Config\Backend\Encrypted" />

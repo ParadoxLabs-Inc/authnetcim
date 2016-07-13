@@ -59,7 +59,7 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
      * Get card label (formatted number).
      *
      * @param bool $includeType
-     * @return \Magento\Framework\Phrase|string
+     * @return string|\Magento\Framework\Phrase
      */
     public function getLabel($includeType = true)
     {

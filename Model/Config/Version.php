@@ -16,7 +16,8 @@ namespace ParadoxLabs\Authnetcim\Model\Config;
 /**
  * Config backend model for version display.
  */
-class Version extends \Magento\Framework\App\Config\Value
+class Version extends \Magento\Framework\App\Config\Value implements
+    \Magento\Framework\App\Config\Data\ProcessorInterface
 {
     /**
      * @var \Magento\Framework\Module\ResourceInterface
@@ -57,14 +58,35 @@ class Version extends \Magento\Framework\App\Config\Value
     }
 
     /**
+     * Get module version
+     *
+     * @return string
+     */
+    public function _getDefaultValue()
+    {
+        return (string)$this->moduleResource->getDbVersion('ParadoxLabs_Authnetcim');
+    }
+
+    /**
      * Inject current installed module version as the config value.
      *
      * @return void
      */
-    public function afterLoad()
+    protected function _afterLoad()
     {
-        $version = $this->moduleResource->getDbVersion('ParadoxLabs_Authnetcim');
+        $this->setValue($this->_getDefaultValue());
 
-        $this->setValue($version);
+        return parent::_afterLoad();
+    }
+
+    /**
+     * Process config value
+     *
+     * @param string $value
+     * @return string
+     */
+    public function processValue($value)
+    {
+        return $this->_getDefaultValue();
     }
 }

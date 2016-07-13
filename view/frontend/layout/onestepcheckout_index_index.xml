@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceBlock name="onestepcheckout">
+            <arguments>
+                <argument name="jsLayout" xsi:type="array">
+                    <item name="components" xsi:type="array">
+                        <item name="payment" xsi:type="array">
+                            <item name="children" xsi:type="array">
+                                <item name="renders" xsi:type="array">
+                                    <item name="children" xsi:type="array">
+                                        <item name="tokenbase_authnetcim" xsi:type="array">
+                                            <item name="component" xsi:type="string">ParadoxLabs_Authnetcim/js/view/payment/authnetcim</item>
+                                            <item name="methods" xsi:type="array">
+                                                <item name="authnetcim" xsi:type="array">
+                                                    <item name="isBillingAddressRequired" xsi:type="boolean">true</item>
+                                                </item>
+                                            </item>
+                                        </item>
+                                        <item name="tokenbase_authnetcim_ach" xsi:type="array">
+                                            <item name="component" xsi:type="string">ParadoxLabs_Authnetcim/js/view/payment/authnetcim-ach</item>
+                                            <item name="methods" xsi:type="array">
+                                                <item name="authnetcim_ach" xsi:type="array">
+                                                    <item name="isBillingAddressRequired" xsi:type="boolean">true</item>
+                                                </item>
+                                            </item>
+                                        </item>
+                                    </item>
+                                </item>
+                            </item>
+                        </item>
+                    </item>
+                </argument>
+            </arguments>
+        </referenceBlock>
+    </body>
+</page>

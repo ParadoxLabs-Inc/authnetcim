@@ -56,7 +56,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      * @var array
      */
     protected $fields = [
-        'accountNumber'             => ['maxLength' => 17, 'charMask' => '\d'],
+        'accountNumber'             => ['maxLength' => 17, 'charMask' => 'X\d'],
         'accountType'               => ['enum' => ['checking', 'savings', 'businessChecking']],
         'allowPartialAuth'          => ['enum' => ['true', 'false']],
         'amount'                    => [],
@@ -74,6 +74,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'billToZip'                 => ['maxLength' => 20, 'noSymbols' => true],
         'cardCode'                  => ['maxLength' => 4, 'charMask' => '\d'],
         'cardNumber'                => ['maxLength' => 16, 'charMask' => 'X\d'],
+        'centinelAuthIndicator'     => ['maxLength' => 2, 'charMask' => '\d'],
+        'centinelAuthValue'         => [],
         'customerIp'                => [],
         'customerPaymentProfileId'  => [],
         'customerProfileId'         => [],
@@ -96,7 +98,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'purchaseOrderNumber'       => ['maxLength' => 25, 'noSymbols' => true],
         'recurringBilling'          => ['enum' => ['true', 'false']],
         'refId'                     => ['maxLength' => 20],
-        'routingNumber'             => ['maxLength' => 9, 'charMask' => '\d'],
+        'routingNumber'             => ['maxLength' => 9, 'charMask' => 'X\d'],
         'shipAmount'                => [],
         'shipDescription'           => ['maxLength' => 255],
         'shipName'                  => ['maxLength' => 31],
@@ -1134,7 +1136,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         if (in_array(
             $type,
-            ['authOnlyTransaction', 'authCaptureTransaction', 'captureOnlyTransaction', 'refundTransaction']
+            ['authOnlyTransaction', 'authCaptureTransaction', 'captureOnlyTransaction']
         )) {
             $isNewTxn = true;
         } else {
@@ -1145,6 +1147,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $isNewCard = false;
         } else {
             $isNewCard = true;
+        }
+
+        if ($type == 'refundTransaction') {
+            $isRefund = true;
+        } else {
+            $isRefund = false;
         }
 
         /**
@@ -1177,7 +1185,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         // Most of the data does not matter for follow-ups (capture, void, refund).
-        if ($isNewTxn === true) {
+        if ($isNewTxn === true || $isRefund === true) {
             /**
              * Add payment info.
              */
@@ -1230,10 +1238,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 }
             }
 
-            // Set order identifiers!
-            $params['solution'] = [
-                'id' => static::SOLUTION_ID,
-            ];
+            if ($isRefund !== true) {
+                // Set order identifiers!
+                $params['solution'] = [
+                    'id' => static::SOLUTION_ID,
+                ];
+            }
 
             if ($this->hasParameter('invoiceNumber') && $type != 'priorAuthCaptureTransaction') {
                 $params['order'] = [
@@ -1368,6 +1378,14 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             // Add customer IP?
             if ($this->hasParameter('customerIp')) {
                 $params['customerIP'] = $this->getParameter('customerIp');
+            }
+
+            // Add 3D Secure token?
+            if ($this->hasParameter('centinelAuthIndicator') && $this->hasParameter('centinelAuthValue')) {
+                $params['cardholderAuthentication'] = [
+                    'authenticationIndicator'       => $this->getParameter('centinelAuthIndicator'),
+                    'cardholderAuthenticationValue' => urlencode($this->getParameter('centinelAuthValue')),
+                ];
             }
 
             // Add misc settings.
