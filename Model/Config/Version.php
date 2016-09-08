@@ -70,7 +70,7 @@ class Version extends \Magento\Framework\App\Config\Value implements
     /**
      * Inject current installed module version as the config value.
      *
-     * @return void
+     * @return $this
      */
     protected function _afterLoad()
     {

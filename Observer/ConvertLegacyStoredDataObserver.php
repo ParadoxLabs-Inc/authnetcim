@@ -125,7 +125,6 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
         $cards = [];
 
         $affectedCards = 0;
-        $affectedOrders = 0;
         $affectedRps = 0;
 
         if (isset($profile['profile']['paymentProfiles']) && count($profile['profile']['paymentProfiles']) > 0) {
@@ -140,102 +139,17 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
         }
 
         if (count($cards) > 0) {
-            /**
-             * Fetch and merge in data from authnetcim/cards (deleted/unsaved cards)
-             */
-            $db             = $this->resource->getConnection('read');
-            $cardTable      = $this->resource->getTableName('authnetcim_card_exclude');
-
-            if ($db->isTableExists($cardTable) === true) {
-                $sql = $db->select()
-                          ->from($cardTable, ['profile_id', 'payment_id', 'added'])
-                          ->where('customer_id=' . $customer->getId());
-
-                $excludedCards = $db->fetchAll($sql);
-                if (count($excludedCards) > 0) {
-                    foreach ($excludedCards as $excluded) {
-                        if (isset($cards[$excluded['payment_id']]) && $excluded['profile_id'] == $profileId) {
-                            $cards[$excluded['payment_id']]['active'] = false;
-                            $cards[$excluded['payment_id']]['last_use'] = strtotime($excluded['added']);
-                        }
-                    }
-                }
-            }
+            $cards = $this->mergeHiddenCardData($customer, $cards, $profileId);
 
             /**
              * Create a card record for each
              */
-            foreach ($cards as $k => $card) {
-                if (!isset($card['payment']['creditCard'])) {
-                    continue;
-                }
-
-                /** @var \ParadoxLabs\TokenBase\Model\Card $storedCard */
-                $storedCard = $this->cardFactory->create();
-                $storedCard->setMethod('authnetcim')
-                           ->setCustomer($customer)
-                           ->setProfileId($profileId)
-                           ->setPaymentId($card['customerPaymentProfileId']);
-
-                if (isset($card['last_use'])) {
-                    $storedCard->setLastUse(strtotime($card['last_use']));
-                }
-
-                if (isset($card['active']) && $card['active'] == false) {
-                    $storedCard->setActive(0);
-                }
-
-                $region = $this->regionFactory->create();
-                $region->loadByName($card['billTo']['state'], $card['billTo']['country']);
-
-                $addressData = [
-                    'parent_id'   => $customer->getId(),
-                    'customer_id' => $customer->getId(),
-                    'firstname'   => $card['billTo']['firstName'],
-                    'lastname'    => $card['billTo']['lastName'],
-                    'street'      => $card['billTo']['address'],
-                    'city'        => $card['billTo']['city'],
-                    'country_id'  => $card['billTo']['country'],
-                    'region'      => $card['billTo']['state'],
-                    'region_id'   => $region->getId(),
-                    'postcode'    => $card['billTo']['zip'],
-                    'telephone'   => isset($card['billTo']['phoneNumber']) ? $card['billTo']['phoneNumber'] : '',
-                    'fax'         => isset($card['billTo']['faxNumber']) ? $card['billTo']['faxNumber'] : '',
-                ];
-
-                $storedCard->setData('address', serialize($addressData));
-
-                if (isset($card['payment']['creditCard'])) {
-                    $paymentData = [
-                        'cc_type'      => '',
-                        'cc_last4'     => substr($card['payment']['creditCard']['cardNumber'], -4),
-                        'cc_exp_year'  => '',
-                        'cc_exp_month' => '',
-                    ];
-
-                    $storedCard->setData('additional', serialize($paymentData));
-                }
-
-                $storedCard->save();
-
-                $cards[$k]['tokenbase_id'] = $storedCard->getId();
-
-                $affectedCards++;
-            }
+            $this->convertCards($cards, $customer, $profileId, $affectedCards);
 
             /**
              * Update any attached orders
              */
-            $orders = $this->orderCollectionFactory->create();
-            $orders->addFieldToFilter('ext_customer_id', array('in' => array_keys($cards)));
-
-            /** @var \Magento\Sales\Model\Order $order */
-            foreach ($orders as $order) {
-                $order->getPayment()->setData('tokenbase_id', $cards[$order->getExtCustomerId()]['tokenbase_id'])
-                                    ->save();
-
-                $affectedOrders++;
-            }
+            $affectedOrders = $this->updateOrders($cards);
 
             $this->helper->log(
                 'authnetcim',
@@ -252,7 +166,135 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
 
         $customer->setData('authnetcim_profile_version', 200)
                  ->save();
+    }
 
-        return;
+    /**
+     * Merge data on hidden cards onto the cards array.
+     *
+     * @param \Magento\Customer\Model\Customer $customer
+     * @param array $cards
+     * @param string $profileId
+     * @return array
+     */
+    protected function mergeHiddenCardData(\Magento\Customer\Model\Customer $customer, $cards, $profileId)
+    {
+        /**
+         * Fetch and merge in data from authnetcim/cards (deleted/unsaved cards)
+         */
+        $db = $this->resource->getConnection('read');
+        $cardTable = $this->resource->getTableName('authnetcim_card_exclude');
+
+        if ($db->isTableExists($cardTable) === true) {
+            $sql = $db->select()
+                      ->from($cardTable, ['profile_id', 'payment_id', 'added'])
+                      ->where('customer_id=' . $customer->getId());
+
+            $excludedCards = $db->fetchAll($sql);
+            if (count($excludedCards) > 0) {
+                foreach ($excludedCards as $excluded) {
+                    if (isset($cards[$excluded['payment_id']]) && $excluded['profile_id'] == $profileId) {
+                        $cards[$excluded['payment_id']]['active'] = false;
+                        $cards[$excluded['payment_id']]['last_use'] = strtotime($excluded['added']);
+                    }
+                }
+            }
+        }
+
+        return $cards;
+    }
+
+    /**
+     * Update orders attached to converted cards
+     *
+     * @param array $cards
+     * @param int $affectedOrders
+     * @return mixed
+     */
+    protected function updateOrders($cards)
+    {
+        $affectedOrders = 0;
+
+        $orders = $this->orderCollectionFactory->create();
+        $orders->addFieldToFilter('ext_customer_id', array('in' => array_keys($cards)));
+
+        /** @var \Magento\Sales\Model\Order $order */
+        foreach ($orders as $order) {
+            $order->getPayment()->setData('tokenbase_id', $cards[$order->getExtCustomerId()]['tokenbase_id'])
+                  ->save();
+
+            $affectedOrders++;
+        }
+
+        return $affectedOrders;
+    }
+
+    /**
+     * Create a tokenbase card for each legacy record.
+     *
+     * @param array $cards
+     * @param \Magento\Customer\Model\Customer $customer
+     * @param string $profileId
+     * @param int $affectedCards
+     * @return void
+     */
+    protected function convertCards(&$cards, \Magento\Customer\Model\Customer $customer, $profileId, &$affectedCards)
+    {
+        foreach ($cards as $k => $card) {
+            if (!isset($card['payment']['creditCard'])) {
+                continue;
+            }
+
+            /** @var \ParadoxLabs\TokenBase\Model\Card $storedCard */
+            $storedCard = $this->cardFactory->create();
+            $storedCard->setMethod('authnetcim')
+                       ->setCustomer($customer)
+                       ->setProfileId($profileId)
+                       ->setPaymentId($card['customerPaymentProfileId']);
+
+            if (isset($card['last_use'])) {
+                $storedCard->setLastUse(strtotime($card['last_use']));
+            }
+
+            if (isset($card['active']) && $card['active'] == false) {
+                $storedCard->setActive(0);
+            }
+
+            $region = $this->regionFactory->create();
+            $region->loadByName($card['billTo']['state'], $card['billTo']['country']);
+
+            $addressData = [
+                'parent_id'   => $customer->getId(),
+                'customer_id' => $customer->getId(),
+                'firstname'   => $card['billTo']['firstName'],
+                'lastname'    => $card['billTo']['lastName'],
+                'street'      => $card['billTo']['address'],
+                'city'        => $card['billTo']['city'],
+                'country_id'  => $card['billTo']['country'],
+                'region'      => $card['billTo']['state'],
+                'region_id'   => $region->getId(),
+                'postcode'    => $card['billTo']['zip'],
+                'telephone'   => isset($card['billTo']['phoneNumber']) ? $card['billTo']['phoneNumber'] : '',
+                'fax'         => isset($card['billTo']['faxNumber']) ? $card['billTo']['faxNumber'] : '',
+            ];
+
+            $storedCard->setData('address', serialize($addressData));
+
+            if (isset($card['payment']['creditCard'])) {
+                $paymentData = [
+                    'cc_type'      => '',
+                    'cc_last4'     => substr($card['payment']['creditCard']['cardNumber'], -4),
+                    'cc_exp_year'  => '',
+                    'cc_exp_month' => '',
+                ];
+
+                $storedCard->setData('additional', serialize($paymentData));
+            }
+
+            $storedCard->save();
+
+            $cards[$k]['tokenbase_id'] = $storedCard->getId();
+
+            $affectedCards++;
+        }
     }
 }

@@ -25,7 +25,7 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
     /**
      * @var CustomerSetupFactory
      */
-    private $customerSetupFactory;
+    protected $customerSetupFactory;
 
     /**
      * Init

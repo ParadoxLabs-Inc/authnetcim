@@ -24,7 +24,7 @@ class InstallData implements \Magento\Framework\Setup\InstallDataInterface
     /**
      * @var \Magento\Customer\Setup\CustomerSetupFactory
      */
-    private $customerSetupFactory;
+    protected $customerSetupFactory;
 
     /**
      * Init
