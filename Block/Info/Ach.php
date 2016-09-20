@@ -34,7 +34,7 @@ class Ach extends \ParadoxLabs\TokenBase\Block\Info\Ach
         $transport  = parent::_prepareSpecificInformation($transport);
         $data       = [];
 
-        if ($this->helper->getIsFrontend() === false && $this->isEcheck() === true) {
+        if ($this->getIsSecureMode() === false && $this->isEcheck() === true) {
             /** @var \Magento\Sales\Model\Order\Payment $info */
             $info = $this->getInfo();
 

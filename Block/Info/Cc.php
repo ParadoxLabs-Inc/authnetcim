@@ -34,7 +34,7 @@ class Cc extends \ParadoxLabs\TokenBase\Block\Info\Cc
         $transport  = parent::_prepareSpecificInformation($transport);
         $data       = [];
 
-        if ($this->helper->getIsFrontend() === false && $this->isEcheck() === false) {
+        if ($this->getIsSecureMode() === false && $this->isEcheck() === false) {
             /** @var \Magento\Sales\Model\Order\Payment\Info $info */
             $info = $this->getInfo();
 
