@@ -113,18 +113,21 @@ class ConfigProvider extends CcGenericConfigProvider
         $config             = parent::getConfig();
         $selected           = null;
         $storedCardOptions  = [];
-        $cards              = $this->getStoredCards();
+        
+        if ($this->canSaveCard()) {
+            $cards              = $this->getStoredCards();
 
-        /** @var \ParadoxLabs\TokenBase\Model\Card $card */
-        foreach ($cards as $card) {
-            $storedCardOptions[]    = [
-                'id'       => $card->getHash(),
-                'label'    => $card->getLabel(),
-                'selected' => false,
-                'type'     => $card->getAdditional('cc_type'),
-            ];
+            /** @var \ParadoxLabs\TokenBase\Model\Card $card */
+            foreach ($cards as $card) {
+                $storedCardOptions[]    = [
+                    'id'       => $card->getHash(),
+                    'label'    => $card->getLabel(),
+                    'selected' => false,
+                    'type'     => $card->getAdditional('cc_type'),
+                ];
 
-            $selected               = $card->getHash();
+                $selected               = $card->getHash();
+            }
         }
 
         $config = array_merge_recursive($config, [
