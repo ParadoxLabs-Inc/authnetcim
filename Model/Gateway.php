@@ -353,7 +353,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     /**
                      * We know the card is not valid, so hide and get rid of it. Except we're in the middle
                      * of a transaction... so any change will just be rolled back. Save it for a little later.
-                     * @see \ParadoxLabs\TokenBase\Model\Observer\CardLoad::checkQueuedForDeletion()
+                     * @see \ParadoxLabs\TokenBase\Observer\CardLoadProcessDeleteQueueObserver::checkQueuedForDeletion()
                      */
                     $this->_registry->unregister('queue_card_deletion');
                     $this->_registry->register('queue_card_deletion', $this->getData('card'));

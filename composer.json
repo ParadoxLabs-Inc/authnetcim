@@ -4,10 +4,10 @@
     "keywords": ["payment", "authorize.net", "tokenization"],
     "require": {
         "magento/framework": "~100.0",
-        "paradoxlabs/tokenbase": "3.0.3"
+        "paradoxlabs/tokenbase": "3.0.4"
     },
     "type": "magento2-module",
-    "version": "3.0.3",
+    "version": "3.0.4",
     "license": [
         "proprietary"
     ],

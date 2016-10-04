@@ -13,6 +13,7 @@
 
 namespace ParadoxLabs\Authnetcim\Setup;
 
+use Magento\Customer\Model\Customer;
 use Magento\Customer\Setup\CustomerSetupFactory;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
@@ -56,7 +57,7 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
          */
         if ($customerSetup->getAttributeId('customer', 'authnetcim_profile_id') === false) {
             $customerSetup->addAttribute(
-                'customer',
+                Customer::ENTITY,
                 'authnetcim_profile_id',
                 [
                     'label'            => 'Authorize.Net CIM: Profile ID',
@@ -66,19 +67,49 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
                     'position'         => 70,
                     'visible'          => true,
                     'required'         => false,
+                    'system'           => false,
                     'user_defined'     => true,
                     'visible_on_front' => false,
                 ]
             );
+
+            $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'authnetcim_profile_id')
+                          ->addData([
+                              'attribute_set_id' => $customerSetup->getDefaultAttributeSetId(Customer::ENTITY),
+                              'attribute_group_id' => $customerSetup->getDefaultAttributeGroupId(Customer::ENTITY),
+                              'used_in_forms' => [],
+                          ])
+                          ->save();
+        } else {
+            /**
+             * is_system must be 0 in order for attribute values to save.
+             */
+            $attribute = $customerSetup->getAttribute(Customer::ENTITY, 'authnetcim_profile_id');
+            if ($attribute['is_system'] != 0) {
+                $customerSetup->updateAttribute(
+                    Customer::ENTITY,
+                    $attribute['attribute_id'],
+                    'is_system',
+                    0
+                );
+
+                $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'authnetcim_profile_id')
+                              ->addData([
+                                  'attribute_set_id' => $customerSetup->getDefaultAttributeSetId(Customer::ENTITY),
+                                  'attribute_group_id' => $customerSetup->getDefaultAttributeGroupId(Customer::ENTITY),
+                                  'used_in_forms' => [],
+                              ])
+                              ->save();
+            }
         }
 
         /**
          * authnetcim_profile_version customer attribute: Indicates whether each customer needs
          * the card upgrade process run, to migrate data from CIM 1.x to CIM 2+.
          */
-        if ($customerSetup->getAttributeId('customer', 'authnetcim_profile_version') === false) {
+        if ($customerSetup->getAttributeId(Customer::ENTITY, 'authnetcim_profile_version') === false) {
             $customerSetup->addAttribute(
-                'customer',
+                Customer::ENTITY,
                 'authnetcim_profile_version',
                 [
                     'label'            => 'Authorize.Net CIM: Profile version (for updating legacy data)',
@@ -88,10 +119,40 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
                     'position'         => 71,
                     'visible'          => true,
                     'required'         => false,
+                    'system'           => false,
                     'user_defined'     => true,
                     'visible_on_front' => false,
                 ]
             );
+
+            $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'authnetcim_profile_version')
+                          ->addData([
+                              'attribute_set_id' => $customerSetup->getDefaultAttributeSetId(Customer::ENTITY),
+                              'attribute_group_id' => $customerSetup->getDefaultAttributeGroupId(Customer::ENTITY),
+                              'used_in_forms' => [],
+                          ])
+                          ->save();
+        } else {
+            /**
+             * is_system must be 0 in order for attribute values to save.
+             */
+            $attribute = $customerSetup->getAttribute(Customer::ENTITY, 'authnetcim_profile_version');
+            if ($attribute['is_system'] != 0) {
+                $customerSetup->updateAttribute(
+                    Customer::ENTITY,
+                    $attribute['attribute_id'],
+                    'is_system',
+                    0
+                );
+
+                $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'authnetcim_profile_version')
+                              ->addData([
+                                  'attribute_set_id' => $customerSetup->getDefaultAttributeSetId(Customer::ENTITY),
+                                  'attribute_group_id' => $customerSetup->getDefaultAttributeGroupId(Customer::ENTITY),
+                                  'used_in_forms' => [],
+                              ])
+                              ->save();
+            }
         }
 
         /**
