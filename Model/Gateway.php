@@ -1055,7 +1055,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     $qty = $item->getQtyOrdered();
                 }
 
-                if ($qty <= 0 || $item->getPrice() <= 0) {
+                if ($qty <= 0 || $item->getPrice() <= 0 || $item->getSku() == '') {
                     continue;
                 }
 
@@ -1271,7 +1271,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                         $qty = $item->getQtyOrdered();
                     }
 
-                    if ($qty <= 0 || $item->getPrice() <= 0) {
+                    if ($qty <= 0 || $item->getPrice() <= 0 || $item->getSku() == '') {
                         continue;
                     }
 

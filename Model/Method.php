@@ -92,12 +92,14 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
             /** @var \Magento\Sales\Model\Order\Address $address */
             $address = $payment->getOrder()->getShippingAddress();
 
+            $region  = $address->getRegionCode() ?: $address->getRegion();
+
             $this->gateway()->setParameter('shipToFirstName', $address->getFirstname());
             $this->gateway()->setParameter('shipToLastName', $address->getLastname());
             $this->gateway()->setParameter('shipToCompany', $address->getCompany());
             $this->gateway()->setParameter('shipToAddress', implode(' ', $address->getStreet()));
             $this->gateway()->setParameter('shipToCity', $address->getCity());
-            $this->gateway()->setParameter('shipToState', $address->getRegion());
+            $this->gateway()->setParameter('shipToState', $region);
             $this->gateway()->setParameter('shipToZip', $address->getPostcode());
             $this->gateway()->setParameter('shipToCountry', $address->getCountryId());
             $this->gateway()->setParameter('shipToPhoneNumber', $address->getTelephone());
