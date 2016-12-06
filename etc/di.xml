@@ -25,4 +25,16 @@
             <argument name="helper" xsi:type="object">ParadoxLabs\Authnetcim\Helper\Data</argument>
         </arguments>
     </type>
+
+    <virtualType name="ParadoxLabs\Authnetcim\Model\Ach\CardFactory" type="ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory">
+        <arguments>
+            <argument name="instanceName" xsi:type="string">\ParadoxLabs\Authnetcim\Model\Ach\Card</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="ParadoxLabs\Authnetcim\Model\CardFactory" type="ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory">
+        <arguments>
+            <argument name="instanceName" xsi:type="string">\ParadoxLabs\Authnetcim\Model\Card</argument>
+        </arguments>
+    </virtualType>
 </config>

@@ -66,10 +66,6 @@ class Method extends \ParadoxLabs\Authnetcim\Model\Method
      */
     public function assignData(\Magento\Framework\DataObject $data)
     {
-        if (!($data instanceof \Magento\Framework\DataObject)) {
-            $data = new \Magento\Framework\DataObject($data);
-        }
-
         parent::assignData($data);
 
         /** @var \Magento\Sales\Model\Order\Payment\Info $info */
@@ -144,77 +140,12 @@ class Method extends \ParadoxLabs\Authnetcim\Model\Method
          * If no tokenbase ID, we must have a new card. Make sure all the details look valid.
          */
         if ($info->hasData('tokenbase_id') === false) {
-            // Fields all present?
-            foreach ($this->achFields as $field) {
-                $value = trim($info->getData($field));
-
-                if (empty($value)) {
-                    throw new \Magento\Framework\Exception\PaymentException(
-                        __('Please complete all required fields.')
-                    );
-                }
-            }
-
-            // Field lengths?
-            if (strlen($info->getData('echeck_account_name')) > 22) {
-                throw new \Magento\Framework\Exception\PaymentException(
-                    __('Please limit your account name to 22 characters.')
-                );
-            } elseif (strlen($info->getData('echeck_routing_no')) != 9) {
-                throw new \Magento\Framework\Exception\PaymentException(
-                    __('Your routing number must be 9 digits long. Please recheck the value you entered.')
-                );
-            } elseif (strlen($info->getData('echeck_account_no')) < 5
-                || strlen($info->getData('echeck_account_no')) > 17) {
-                throw new \Magento\Framework\Exception\PaymentException(
-                    __('Your account number must be between 5 and 17 digits. Please recheck the value you entered.')
-                );
-            }
-
-            // Data types?
-            if (!is_numeric($info->getData('echeck_routing_no'))) {
-                throw new \Magento\Framework\Exception\PaymentException(
-                    __('Your routing number must be 9 digits long. Please recheck the value you entered.')
-                );
-            } elseif (!is_numeric($info->getData('echeck_account_no'))) {
-                throw new \Magento\Framework\Exception\PaymentException(
-                    __('Your account number must be between 5 and 17 digits. Please recheck the value you entered.')
-                );
-            }
-
-            return \Magento\Payment\Model\Method\AbstractMethod::validate();
+            $this->validateNewAccount($info);
         } else {
             /**
              * If there is an ID, this might be an edit. Validate there too, as much as we can.
              */
-            if ($info->getData('echeck_account_name') != '' && strlen($info->getData('echeck_account_name')) > 22) {
-                throw new \Magento\Framework\Exception\PaymentException(
-                    __('Please limit your account name to 22 characters.')
-                );
-            }
-
-            if ($info->getData('echeck_routing_no') != ''
-                && substr($info->getData('echeck_routing_no'), 0, 4) != 'XXXX') {
-                // If not masked and not 9 digits, or not numeric...
-                if (strlen($info->getData('echeck_routing_no')) != 9
-                    || !is_numeric($info->getData('echeck_routing_no'))) {
-                    throw new \Magento\Framework\Exception\PaymentException(
-                        __('Your routing number must be 9 digits long. Please recheck the value you entered.')
-                    );
-                }
-            }
-
-            if ($info->getData('echeck_account_no') != ''
-                && substr($info->getData('echeck_account_no'), 0, 4) != 'XXXX') {
-                // If not masked and not 5-17 digits, or not numeric...
-                if (strlen($info->getData('echeck_account_no')) < 5
-                    || strlen($info->getData('echeck_account_no')) > 17
-                    || !is_numeric($info->getData('echeck_account_no'))) {
-                    throw new \Magento\Framework\Exception\PaymentException(
-                        __('Your account number must be between 5 and 17 digits. Please recheck the value you entered.')
-                    );
-                }
-            }
+            $this->validateStoredAccount($info);
         }
 
         return $this;
@@ -253,5 +184,103 @@ class Method extends \ParadoxLabs\Authnetcim\Model\Method
          */
 
         return $payment;
+    }
+
+    /**
+     * Validate payment info for a new ACH account.
+     *
+     * @param \Magento\Payment\Model\InfoInterface $info
+     * @return $this
+     * @throws \Magento\Framework\Exception\PaymentException
+     */
+    protected function validateNewAccount(\Magento\Payment\Model\InfoInterface $info)
+    {
+        // Fields all present?
+        foreach ($this->achFields as $field) {
+            $value = trim($info->getData($field));
+
+            if (empty($value)) {
+                throw new \Magento\Framework\Exception\PaymentException(
+                    __('Please complete all required fields.')
+                );
+            }
+        }
+
+        // Field lengths?
+        if (strlen($info->getData('echeck_account_name')) > 22) {
+            throw new \Magento\Framework\Exception\PaymentException(
+                __('Please limit your account name to 22 characters.')
+            );
+        } elseif (strlen($info->getData('echeck_routing_no')) != 9) {
+            throw new \Magento\Framework\Exception\PaymentException(
+                __('Your routing number must be 9 digits long. Please recheck the value you entered.')
+            );
+        } elseif (strlen($info->getData('echeck_account_no')) < 5
+            || strlen($info->getData('echeck_account_no')) > 17
+        ) {
+            throw new \Magento\Framework\Exception\PaymentException(
+                __('Your account number must be between 5 and 17 digits. Please recheck the value you entered.')
+            );
+        }
+
+        // Data types?
+        if (!is_numeric($info->getData('echeck_routing_no'))) {
+            throw new \Magento\Framework\Exception\PaymentException(
+                __('Your routing number must be 9 digits long. Please recheck the value you entered.')
+            );
+        } elseif (!is_numeric($info->getData('echeck_account_no'))) {
+            throw new \Magento\Framework\Exception\PaymentException(
+                __('Your account number must be between 5 and 17 digits. Please recheck the value you entered.')
+            );
+        }
+
+        \Magento\Payment\Model\Method\AbstractMethod::validate();
+
+        return $this;
+    }
+
+    /**
+     * Validate payment info for a stored account.
+     *
+     * @param \Magento\Payment\Model\InfoInterface $info
+     * @return $this
+     * @throws \Magento\Framework\Exception\PaymentException
+     */
+    protected function validateStoredAccount(\Magento\Payment\Model\InfoInterface $info)
+    {
+        if ($info->getData('echeck_account_name') != '' && strlen($info->getData('echeck_account_name')) > 22) {
+            throw new \Magento\Framework\Exception\PaymentException(
+                __('Please limit your account name to 22 characters.')
+            );
+        }
+
+        if ($info->getData('echeck_routing_no') != ''
+            && substr($info->getData('echeck_routing_no'), 0, 4) != 'XXXX'
+        ) {
+            // If not masked and not 9 digits, or not numeric...
+            if (strlen($info->getData('echeck_routing_no')) != 9
+                || !is_numeric($info->getData('echeck_routing_no'))
+            ) {
+                throw new \Magento\Framework\Exception\PaymentException(
+                    __('Your routing number must be 9 digits long. Please recheck the value you entered.')
+                );
+            }
+        }
+
+        if ($info->getData('echeck_account_no') != ''
+            && substr($info->getData('echeck_account_no'), 0, 4) != 'XXXX'
+        ) {
+            // If not masked and not 5-17 digits, or not numeric...
+            if (strlen($info->getData('echeck_account_no')) < 5
+                || strlen($info->getData('echeck_account_no')) > 17
+                || !is_numeric($info->getData('echeck_account_no'))
+            ) {
+                throw new \Magento\Framework\Exception\PaymentException(
+                    __('Your account number must be between 5 and 17 digits. Please recheck the value you entered.')
+                );
+            }
+        }
+
+        return $this;
     }
 }

@@ -21,7 +21,7 @@ class Data extends \ParadoxLabs\TokenBase\Helper\Data
     /**
      * @var array
      */
-    protected $avsResponses = array(
+    protected $avsResponses = [
         'B' => 'No address submitted; could not perform AVS check.',
         'E' => 'AVS data invalid',
         'R' => 'AVS unavailable',
@@ -35,23 +35,23 @@ class Data extends \ParadoxLabs\TokenBase\Helper\Data
         'Y' => 'Perfect match',
         'X' => 'Perfect match',
         'P' => 'N/A',
-    );
+    ];
 
     /**
      * @var array
      */
-    protected $ccvResponses = array(
+    protected $ccvResponses = [
         'M' => 'Passed',
         'N' => 'Failed',
         'P' => 'Not processed',
         'S' => 'Not received',
         'U' => 'N/A',
-    );
+    ];
 
     /**
      * @var array
      */
-    protected $cavvResponses = array(
+    protected $cavvResponses = [
         '0' => 'Not validated; bad data',
         '1' => 'Failed',
         '2' => 'Passed',
@@ -62,12 +62,12 @@ class Data extends \ParadoxLabs\TokenBase\Helper\Data
         '9' => 'Failed (issuer unavailable)',
         'A' => 'Passed (issuer unavailable)',
         'B' => 'Passed (info only)',
-    );
+    ];
 
     /**
      * @var array
      */
-    protected $cimCardTypeMap = array(
+    protected $cimCardTypeMap = [
         'American Express' => 'AE',
         'AmericanExpress'  => 'AE',
         'Discover'         => 'DI',
@@ -75,7 +75,7 @@ class Data extends \ParadoxLabs\TokenBase\Helper\Data
         'JCB'              => 'JCB',
         'MasterCard'       => 'MC',
         'Visa'             => 'VI',
-    );
+    ];
 
     /**
      * Translate AVS response codes shown on admin order pages.

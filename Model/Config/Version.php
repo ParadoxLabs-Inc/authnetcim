@@ -76,7 +76,9 @@ class Version extends \Magento\Framework\App\Config\Value implements
     {
         $this->setValue($this->_getDefaultValue());
 
-        return parent::_afterLoad();
+        parent::_afterLoad();
+
+        return $this;
     }
 
     /**

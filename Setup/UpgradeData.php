@@ -29,13 +29,22 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
     protected $customerSetupFactory;
 
     /**
+     * @var \Magento\Eav\Api\AttributeRepositoryInterface
+     */
+    protected $attributeRepository;
+
+    /**
      * Init
      *
      * @param CustomerSetupFactory $customerSetupFactory
+     * @param \Magento\Eav\Api\AttributeRepositoryInterface $attributeRepository
      */
-    public function __construct(CustomerSetupFactory $customerSetupFactory)
-    {
+    public function __construct(
+        CustomerSetupFactory $customerSetupFactory,
+        \Magento\Eav\Api\AttributeRepositoryInterface $attributeRepository
+    ) {
         $this->customerSetupFactory = $customerSetupFactory;
+        $this->attributeRepository = $attributeRepository;
     }
 
     /**
@@ -73,13 +82,18 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
                 ]
             );
 
-            $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'authnetcim_profile_id')
-                          ->addData([
-                              'attribute_set_id' => $customerSetup->getDefaultAttributeSetId(Customer::ENTITY),
-                              'attribute_group_id' => $customerSetup->getDefaultAttributeGroupId(Customer::ENTITY),
-                              'used_in_forms' => [],
-                          ])
-                          ->save();
+            $profileIdAttr = $customerSetup->getEavConfig()->getAttribute(
+                Customer::ENTITY,
+                'authnetcim_profile_id'
+            );
+
+            $profileIdAttr->addData([
+                'attribute_set_id' => $customerSetup->getDefaultAttributeSetId(Customer::ENTITY),
+                'attribute_group_id' => $customerSetup->getDefaultAttributeGroupId(Customer::ENTITY),
+                'used_in_forms' => [],
+            ]);
+
+            $this->attributeRepository->save($profileIdAttr);
         } else {
             /**
              * is_system must be 0 in order for attribute values to save.
@@ -93,13 +107,18 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
                     0
                 );
 
-                $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'authnetcim_profile_id')
-                              ->addData([
-                                  'attribute_set_id' => $customerSetup->getDefaultAttributeSetId(Customer::ENTITY),
-                                  'attribute_group_id' => $customerSetup->getDefaultAttributeGroupId(Customer::ENTITY),
-                                  'used_in_forms' => [],
-                              ])
-                              ->save();
+                $profileIdAttr = $customerSetup->getEavConfig()->getAttribute(
+                    Customer::ENTITY,
+                    'authnetcim_profile_id'
+                );
+
+                $profileIdAttr->addData([
+                    'attribute_set_id' => $customerSetup->getDefaultAttributeSetId(Customer::ENTITY),
+                    'attribute_group_id' => $customerSetup->getDefaultAttributeGroupId(Customer::ENTITY),
+                    'used_in_forms' => [],
+                ]);
+
+                $this->attributeRepository->save($profileIdAttr);
             }
         }
 
@@ -125,13 +144,18 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
                 ]
             );
 
-            $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'authnetcim_profile_version')
-                          ->addData([
-                              'attribute_set_id' => $customerSetup->getDefaultAttributeSetId(Customer::ENTITY),
-                              'attribute_group_id' => $customerSetup->getDefaultAttributeGroupId(Customer::ENTITY),
-                              'used_in_forms' => [],
-                          ])
-                          ->save();
+            $profileVersionAttr = $customerSetup->getEavConfig()->getAttribute(
+                Customer::ENTITY,
+                'authnetcim_profile_version'
+            );
+
+            $profileVersionAttr->addData([
+                'attribute_set_id' => $customerSetup->getDefaultAttributeSetId(Customer::ENTITY),
+                'attribute_group_id' => $customerSetup->getDefaultAttributeGroupId(Customer::ENTITY),
+                'used_in_forms' => [],
+            ]);
+
+            $this->attributeRepository->save($profileVersionAttr);
         } else {
             /**
              * is_system must be 0 in order for attribute values to save.
@@ -145,13 +169,18 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
                     0
                 );
 
-                $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'authnetcim_profile_version')
-                              ->addData([
-                                  'attribute_set_id' => $customerSetup->getDefaultAttributeSetId(Customer::ENTITY),
-                                  'attribute_group_id' => $customerSetup->getDefaultAttributeGroupId(Customer::ENTITY),
-                                  'used_in_forms' => [],
-                              ])
-                              ->save();
+                $profileVersionAttr = $customerSetup->getEavConfig()->getAttribute(
+                    Customer::ENTITY,
+                    'authnetcim_profile_version'
+                );
+
+                $profileVersionAttr->addData([
+                    'attribute_set_id' => $customerSetup->getDefaultAttributeSetId(Customer::ENTITY),
+                    'attribute_group_id' => $customerSetup->getDefaultAttributeGroupId(Customer::ENTITY),
+                    'used_in_forms' => [],
+                ]);
+
+                $this->attributeRepository->save($profileVersionAttr);
             }
         }
 

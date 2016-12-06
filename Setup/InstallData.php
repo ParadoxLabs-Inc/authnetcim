@@ -28,13 +28,22 @@ class InstallData implements \Magento\Framework\Setup\InstallDataInterface
     protected $customerSetupFactory;
 
     /**
+     * @var \Magento\Eav\Api\AttributeRepositoryInterface
+     */
+    protected $attributeRepository;
+
+    /**
      * Init
      *
      * @param \Magento\Customer\Setup\CustomerSetupFactory $customerSetupFactory
+     * @param \Magento\Eav\Api\AttributeRepositoryInterface $attributeRepository
      */
-    public function __construct(\Magento\Customer\Setup\CustomerSetupFactory $customerSetupFactory)
-    {
+    public function __construct(
+        \Magento\Customer\Setup\CustomerSetupFactory $customerSetupFactory,
+        \Magento\Eav\Api\AttributeRepositoryInterface $attributeRepository
+    ) {
         $this->customerSetupFactory = $customerSetupFactory;
+        $this->attributeRepository = $attributeRepository;
     }
 
     /**
@@ -71,13 +80,18 @@ class InstallData implements \Magento\Framework\Setup\InstallDataInterface
             ]
         );
 
-        $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'authnetcim_profile_id')
-                      ->addData([
-                          'attribute_set_id' => $customerSetup->getDefaultAttributeSetId(Customer::ENTITY),
-                          'attribute_group_id' => $customerSetup->getDefaultAttributeGroupId(Customer::ENTITY),
-                          'used_in_forms' => [],
-                      ])
-                      ->save();
+        $profileIdAttr = $customerSetup->getEavConfig()->getAttribute(
+            Customer::ENTITY,
+            'authnetcim_profile_id'
+        );
+
+        $profileIdAttr->addData([
+            'attribute_set_id' => $customerSetup->getDefaultAttributeSetId(Customer::ENTITY),
+            'attribute_group_id' => $customerSetup->getDefaultAttributeGroupId(Customer::ENTITY),
+            'used_in_forms' => [],
+        ]);
+
+        $this->attributeRepository->save($profileIdAttr);
 
         /**
          * authnetcim_profile_version customer attribute: Indicates whether each customer needs
@@ -100,13 +114,18 @@ class InstallData implements \Magento\Framework\Setup\InstallDataInterface
             ]
         );
 
-        $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'authnetcim_profile_version')
-                      ->addData([
-                          'attribute_set_id' => $customerSetup->getDefaultAttributeSetId(Customer::ENTITY),
-                          'attribute_group_id' => $customerSetup->getDefaultAttributeGroupId(Customer::ENTITY),
-                          'used_in_forms' => [],
-                      ])
-                      ->save();
+        $profileVersionAttr = $customerSetup->getEavConfig()->getAttribute(
+            Customer::ENTITY,
+            'authnetcim_profile_version'
+        );
+
+        $profileVersionAttr->addData([
+            'attribute_set_id' => $customerSetup->getDefaultAttributeSetId(Customer::ENTITY),
+            'attribute_group_id' => $customerSetup->getDefaultAttributeGroupId(Customer::ENTITY),
+            'used_in_forms' => [],
+        ]);
+
+        $this->attributeRepository->save($profileVersionAttr);
 
         $setup->endSetup();
     }

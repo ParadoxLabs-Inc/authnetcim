@@ -27,12 +27,12 @@ class ConfigProvider extends CcGenericConfigProvider
     protected $code = 'authnetcim';
 
     /**
-     * @var \Magento\Checkout\Model\Session
+     * @var \Magento\Checkout\Model\Session\Proxy
      */
     protected $checkoutSession;
 
     /**
-     * @var \Magento\Customer\Model\Session
+     * @var \Magento\Customer\Model\Session\Proxy
      */
     protected $customerSession;
 
@@ -54,8 +54,8 @@ class ConfigProvider extends CcGenericConfigProvider
     /**
      * @param CcConfig $ccConfig
      * @param \Magento\Payment\Helper\Data $paymentHelper
-     * @param \Magento\Checkout\Model\Session $checkoutSession
-     * @param \Magento\Customer\Model\Session $customerSession
+     * @param \Magento\Checkout\Model\Session\Proxy $checkoutSession
+     * @param \Magento\Customer\Model\Session\Proxy $customerSession
      * @param \Magento\Payment\Model\Config $paymentConfig
      * @param \ParadoxLabs\Authnetcim\Helper\Data $dataHelper
      * @param array $methodCodes
@@ -63,8 +63,8 @@ class ConfigProvider extends CcGenericConfigProvider
     public function __construct(
         CcConfig $ccConfig,
         \Magento\Payment\Helper\Data $paymentHelper,
-        \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Customer\Model\Session $customerSession,
+        \Magento\Checkout\Model\Session\Proxy $checkoutSession,
+        \Magento\Customer\Model\Session\Proxy $customerSession,
         \Magento\Payment\Model\Config $paymentConfig,
         \ParadoxLabs\Authnetcim\Helper\Data $dataHelper,
         array $methodCodes = []
@@ -98,11 +98,14 @@ class ConfigProvider extends CcGenericConfigProvider
         if ($this->customerSession->isLoggedIn()) {
             return true;
         }
+
         return false;
     }
 
     /**
-     * @return array|void
+     * Get checkout config.
+     *
+     * @return array
      */
     public function getConfig()
     {

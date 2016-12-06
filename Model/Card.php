@@ -37,12 +37,12 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
     public function importLegacyData(\Magento\Payment\Model\InfoInterface $payment)
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
-        
+
         // Customer ID -- pull from customer or payment if possible, otherwise go to Authorize.Net.
-        if (intval($this->getCustomer()->getData('authnetcim_profile_id')) > 0) {
-            $this->setProfileId($this->getCustomer()->getData('authnetcim_profile_id'));
-        } elseif (intval($payment->getAdditionalInformation('profile_id')) > 0) {
-            $this->setProfileId(intval($payment->getAdditionalInformation('profile_id')));
+        if ((int)$this->getCustomer()->getCustomAttribute('authnetcim_profile_id') > 0) {
+            $this->setProfileId($this->getCustomer()->getCustomAttribute('authnetcim_profile_id'));
+        } elseif ((int)$payment->getAdditionalInformation('profile_id') > 0) {
+            $this->setProfileId((int)$payment->getAdditionalInformation('profile_id'));
         } else {
             $this->createCustomerProfile();
         }
@@ -159,11 +159,11 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
 
             if (!empty($profileId)) {
                 $this->setProfileId($profileId);
-                $this->getCustomer()->setData('authnetcim_profile_id', $profileId)
-                                    ->setData('authnetcim_profile_version', 200);
+                $this->getCustomer()->setCustomAttribute('authnetcim_profile_id', $profileId)
+                                    ->setCustomAttribute('authnetcim_profile_version', 200);
 
                 if ($this->getCustomer()->getId() > 0) {
-                    $this->getCustomer()->save();
+                    $this->customerRepository->save($this->getCustomer());
                 }
             } else {
                 $this->helper->log(
@@ -216,8 +216,9 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
          */
         if ($this->getProfileId() == '') {
             // Does the customer have a profile ID? Try to import it.
-            if ($this->getCustomer()->getId() > 0 && $this->getCustomer()->getData('authnetcim_profile_id') != '') {
-                $this->setProfileId($this->getCustomer()->getData('authnetcim_profile_id'));
+            if ($this->getCustomer()->getId() > 0
+                && $this->getCustomer()->getCustomAttribute('authnetcim_profile_id') != '') {
+                $this->setProfileId($this->getCustomer()->getCustomAttribute('authnetcim_profile_id'));
             } else {
                 // No profile ID, so create one.
                 $this->createCustomerProfile();
@@ -296,8 +297,9 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $this->setProfileId('');
             $this->setPaymentId('');
 
-            if ($this->getCustomer()->getId() > 0 && $this->getCustomer()->getData('authnetcim_profile_id') != '') {
-                $this->getCustomer()->setData('authnetcim_profile_id', '');
+            if ($this->getCustomer()->getId() > 0
+                && $this->getCustomer()->getCustomAttribute('authnetcim_profile_id') != '') {
+                $this->getCustomer()->setCustomAttribute('authnetcim_profile_id', '');
             }
 
             return $this->syncCustomerPaymentProfile(false);

@@ -56,7 +56,7 @@ class Gateway extends \ParadoxLabs\Authnetcim\Model\Gateway
         $accountLastFour    = substr($this->getParameter('accountNumber'), -4);
         $routingLastFour    = substr($this->getParameter('routingNumber'), -4);
 
-        if (isset($profile['profile']['paymentProfiles']) && count($profile['profile']['paymentProfiles']) > 0) {
+        if (isset($profile['profile']['paymentProfiles']) && !empty($profile['profile']['paymentProfiles'])) {
             // If there's only one, just stop. It has to be the match.
             if (isset($profile['profile']['paymentProfiles']['billTo'])) {
                 $card = $profile['profile']['paymentProfiles'];

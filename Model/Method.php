@@ -50,7 +50,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
 
-        if (!is_null($this->card)) {
+        if ($this->card !== null) {
             $this->log(sprintf('loadOrCreateCard(%s %s)', get_class($payment), $payment->getId()));
 
             $this->setCard($this->getCard());
@@ -67,8 +67,9 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
                  ->setMethodInstance($this)
                  ->setCustomer($this->getCustomer(), $payment)
                  ->setAddress($payment->getOrder()->getBillingAddress())
-                 ->importLegacyData($payment)
-                 ->save();
+                 ->importLegacyData($payment);
+
+            $this->cardRepository->save($card);
 
             $this->setCard($card);
 
@@ -194,13 +195,14 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
                     $authResponse    = $this->gateway()->authorize($payment, $outstanding);
                 } catch (\Exception $e) {
                     // Reauth failed: Take no action
+                    $this->log('afterCapture(): Reauthorization not successful. Continuing with original transaction.');
                 }
 
                 /**
                  * Even if the auth didn't go through, we need to create a new 'transaction'
                  * so we can still do an online capture for the remainder.
                  */
-                if (!is_null($authResponse)) {
+                if ($authResponse !== null) {
                     $payment->setTransactionId(
                         $this->getValidTransactionId($payment, $authResponse->getTransactionId())
                     );
@@ -229,7 +231,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
                     false
                 );
 
-                if (!is_null($message)) {
+                if ($message !== null) {
                     $payment->addTransactionCommentsToOrder($transaction, $message);
                 }
 
@@ -259,7 +261,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
         if ($this->getCard()->getAdditional('cc_type') == null && $response->getCardType() != '') {
             $ccType = $this->helper->mapCcTypeToMagento($response->getCardType());
 
-            if (!is_null($ccType)) {
+            if ($ccType !== null) {
                 $this->getCard()->setAdditional('cc_type', $ccType)
                                 ->setData('no_sync', true)
                                 ->save();

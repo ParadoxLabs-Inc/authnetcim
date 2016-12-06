@@ -24,7 +24,9 @@ class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
     protected $code = 'authnetcim_ach';
 
     /**
-     * @return array|void
+     * Get checkout config.
+     *
+     * @return array
      */
     public function getConfig()
     {

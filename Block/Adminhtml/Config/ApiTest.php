@@ -61,7 +61,7 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
                 $errorCode = 'E00001';
             }
 
-            if (in_array($errorCode, array( 'E00005', 'E00006', 'E00007', 'E00008' ))) {
+            if (in_array($errorCode, ['E00005', 'E00006', 'E00007', 'E00008'])) {
                 // Bad login ID / trans key
                 return __('Your API credentials are invalid. (%1)', $errorCode);
             } elseif ($errorCode == 'E00009') {

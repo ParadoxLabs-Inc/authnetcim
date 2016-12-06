@@ -34,34 +34,50 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
     protected $orderCollectionFactory;
 
     /**
-     * @var \Magento\Framework\App\ResourceConnection
-     */
-    protected $resource;
-
-    /**
      * @var \Magento\Directory\Model\RegionFactory
      */
     protected $regionFactory;
+
+    /**
+     * @var \Magento\Customer\Api\CustomerRepositoryInterface
+     */
+    protected $customerRepository;
+
+    /**
+     * @var \Magento\Sales\Api\OrderPaymentRepositoryInterface
+     */
+    protected $paymentRepository;
+
+    /**
+     * @var \ParadoxLabs\TokenBase\Api\CardRepositoryInterface
+     */
+    protected $cardRepository;
 
     /**
      * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
      * @param \ParadoxLabs\TokenBase\Model\CardFactory $cardFactory
      * @param \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory
      * @param \Magento\Directory\Model\RegionFactory $regionFactory
-     * @param \Magento\Framework\App\ResourceConnection $resource
+     * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
+     * @param \Magento\Sales\Api\OrderPaymentRepositoryInterface $paymentRepository
+     * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
      */
     public function __construct(
         \ParadoxLabs\Authnetcim\Helper\Data $helper,
         \ParadoxLabs\TokenBase\Model\CardFactory $cardFactory,
         \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory,
         \Magento\Directory\Model\RegionFactory $regionFactory,
-        \Magento\Framework\App\ResourceConnection $resource
+        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
+        \Magento\Sales\Api\OrderPaymentRepositoryInterface $paymentRepository,
+        \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
     ) {
         $this->helper                   = $helper;
         $this->cardFactory              = $cardFactory;
         $this->orderCollectionFactory   = $orderCollectionFactory;
         $this->regionFactory            = $regionFactory;
-        $this->resource                 = $resource;
+        $this->customerRepository       = $customerRepository;
+        $this->paymentRepository        = $paymentRepository;
+        $this->cardRepository           = $cardRepository;
     }
 
     /**
@@ -73,42 +89,44 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
      */
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
-        /** @var \Magento\Customer\Model\Customer $customer */
-        $customer = $observer->getEvent()->getData('customer');
-
         /** @var string $method */
         $method = $observer->getEvent()->getData('method');
 
         /**
          * Short circuit if this isn't us.
          */
-        if (is_null($method) || $method != 'authnetcim') {
+        if ($method === null || $method != 'authnetcim') {
             return;
         }
 
         /**
          * Short circuit if no customer.
          */
-        if (!($customer instanceof \Magento\Customer\Model\Customer) || $customer->getId() < 1) {
+        /** @var \Magento\Customer\Api\Data\CustomerInterface $customer */
+        $customer = $observer->getEvent()->getData('customer');
+
+        if ($customer instanceof \Magento\Customer\Model\Customer) {
+            $customer = $customer->getDataModel();
+        }
+
+        if (!($customer instanceof \Magento\Customer\Api\Data\CustomerInterface) || $customer->getId() < 1) {
             return;
         }
 
         /**
          * Short circuit if no profile ID, or already converted.
          */
-        $profileId = $customer->getData('authnetcim_profile_id');
+        $profileId = $customer->getCustomAttribute('authnetcim_profile_id');
 
-        if (empty($profileId) || $customer->getData('authnetcim_profile_version') >= 200) {
+        if (empty($profileId) || $customer->getCustomAttribute('authnetcim_profile_version') >= 200) {
             return;
         }
-        
 
         /**
          * Update customer data from 1.x trunk to 2.x.
          *
          * That means:
          * - Load all profile data from Authorize.Net
-         * - Merge in data from authnetcim/cards table
          * - Create card records for each
          * - Update any orders or profiles attached to those cards
          */
@@ -127,7 +145,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
         $affectedCards = 0;
         $affectedRps = 0;
 
-        if (isset($profile['profile']['paymentProfiles']) && count($profile['profile']['paymentProfiles']) > 0) {
+        if (isset($profile['profile']['paymentProfiles']) && !empty($profile['profile']['paymentProfiles'])) {
             if (isset($profile['profile']['paymentProfiles']['billTo'])) {
                 $cards[$profile['profile']['paymentProfiles']['customerPaymentProfileId']]
                     = $profile['profile']['paymentProfiles'];
@@ -138,9 +156,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
             }
         }
 
-        if (count($cards) > 0) {
-            $cards = $this->mergeHiddenCardData($customer, $cards, $profileId);
-
+        if (!empty($cards)) {
             /**
              * Create a card record for each
              */
@@ -154,8 +170,9 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
             $this->helper->log(
                 'authnetcim',
                 sprintf(
-                    "Updated records for customer %s (%d): %d cards, %d orders, %d profiles",
-                    $customer->getName(),
+                    "Updated records for customer %s %s (%d): %d cards, %d orders, %d profiles",
+                    $customer->getFirstname(),
+                    $customer->getLastname(),
                     $customer->getId(),
                     $affectedCards,
                     $affectedOrders,
@@ -164,50 +181,14 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
             );
         }
 
-        $customer->setData('authnetcim_profile_version', 200)
-                 ->save();
-    }
-
-    /**
-     * Merge data on hidden cards onto the cards array.
-     *
-     * @param \Magento\Customer\Model\Customer $customer
-     * @param array $cards
-     * @param string $profileId
-     * @return array
-     */
-    protected function mergeHiddenCardData(\Magento\Customer\Model\Customer $customer, $cards, $profileId)
-    {
-        /**
-         * Fetch and merge in data from authnetcim/cards (deleted/unsaved cards)
-         */
-        $db = $this->resource->getConnection('read');
-        $cardTable = $this->resource->getTableName('authnetcim_card_exclude');
-
-        if ($db->isTableExists($cardTable) === true) {
-            $sql = $db->select()
-                      ->from($cardTable, ['profile_id', 'payment_id', 'added'])
-                      ->where('customer_id=' . $customer->getId());
-
-            $excludedCards = $db->fetchAll($sql);
-            if (count($excludedCards) > 0) {
-                foreach ($excludedCards as $excluded) {
-                    if (isset($cards[$excluded['payment_id']]) && $excluded['profile_id'] == $profileId) {
-                        $cards[$excluded['payment_id']]['active'] = false;
-                        $cards[$excluded['payment_id']]['last_use'] = strtotime($excluded['added']);
-                    }
-                }
-            }
-        }
-
-        return $cards;
+        $customer->setCustomAttribute('authnetcim_profile_version', 200);
+        $this->customerRepository->save($customer);
     }
 
     /**
      * Update orders attached to converted cards
      *
      * @param array $cards
-     * @param int $affectedOrders
      * @return mixed
      */
     protected function updateOrders($cards)
@@ -215,12 +196,14 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
         $affectedOrders = 0;
 
         $orders = $this->orderCollectionFactory->create();
-        $orders->addFieldToFilter('ext_customer_id', array('in' => array_keys($cards)));
+        $orders->addFieldToFilter('ext_customer_id', ['in' => array_keys($cards)]);
 
         /** @var \Magento\Sales\Model\Order $order */
         foreach ($orders as $order) {
-            $order->getPayment()->setData('tokenbase_id', $cards[$order->getExtCustomerId()]['tokenbase_id'])
-                  ->save();
+            $payment = $order->getPayment();
+            $payment->setData('tokenbase_id', $cards[$order->getExtCustomerId()]['tokenbase_id']);
+
+            $this->paymentRepository->save($payment);
 
             $affectedOrders++;
         }
@@ -232,13 +215,17 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
      * Create a tokenbase card for each legacy record.
      *
      * @param array $cards
-     * @param \Magento\Customer\Model\Customer $customer
+     * @param \Magento\Customer\Api\Data\CustomerInterface $customer
      * @param string $profileId
      * @param int $affectedCards
      * @return void
      */
-    protected function convertCards(&$cards, \Magento\Customer\Model\Customer $customer, $profileId, &$affectedCards)
-    {
+    protected function convertCards(
+        &$cards,
+        \Magento\Customer\Api\Data\CustomerInterface $customer,
+        $profileId,
+        &$affectedCards
+    ) {
         foreach ($cards as $k => $card) {
             if (!isset($card['payment']['creditCard'])) {
                 continue;
@@ -290,7 +277,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
                 $storedCard->setData('additional', serialize($paymentData));
             }
 
-            $storedCard->save();
+            $this->cardRepository->save($storedCard);
 
             $cards[$k]['tokenbase_id'] = $storedCard->getId();
 
