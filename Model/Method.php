@@ -19,28 +19,6 @@ namespace ParadoxLabs\Authnetcim\Model;
 class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
 {
     /**
-     * @var string
-     */
-    protected $_code = 'authnetcim';
-
-    /**
-     * @var string
-     */
-    protected $_formBlockType = 'ParadoxLabs\Authnetcim\Block\Form\Cc';
-
-    /**
-     * @var string
-     */
-    protected $_infoBlockType = 'ParadoxLabs\Authnetcim\Block\Info\Cc';
-
-    /**
-     * Payment Method feature
-     *
-     * @var bool
-     */
-    protected $_canFetchTransactionInfo = true;
-
-    /**
      * Try to convert legacy data inline.
      *
      * @param \Magento\Payment\Model\InfoInterface $payment
@@ -63,7 +41,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
 
             /** @var \ParadoxLabs\Authnetcim\Model\Card $card */
             $card = $this->cardFactory->create();
-            $card->setMethod($this->_code)
+            $card->setMethod($this->methodCode)
                  ->setMethodInstance($this)
                  ->setCustomer($this->getCustomer(), $payment)
                  ->setAddress($payment->getOrder()->getBillingAddress())
@@ -258,13 +236,14 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
         \ParadoxLabs\TokenBase\Model\Gateway\Response $response
     ) {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
-        if ($this->getCard()->getAdditional('cc_type') == null && $response->getCardType() != '') {
-            $ccType = $this->helper->mapCcTypeToMagento($response->getCardType());
+        if ($this->getCard()->getAdditional('cc_type') == null && $response->getData('card_type') != '') {
+            $ccType = $this->helper->mapCcTypeToMagento($response->getData('card_type'));
 
             if ($ccType !== null) {
                 $this->getCard()->setAdditional('cc_type', $ccType)
-                                ->setData('no_sync', true)
-                                ->save();
+                                ->setData('no_sync', true);
+
+                $this->cardRepository->save($this->getCard());
 
                 $payment->getOrder()->getPayment()->setCcType($ccType);
             }

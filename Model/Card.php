@@ -39,8 +39,13 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
         /** @var \Magento\Sales\Model\Order\Payment $payment */
 
         // Customer ID -- pull from customer or payment if possible, otherwise go to Authorize.Net.
-        if ((int)$this->getCustomer()->getCustomAttribute('authnetcim_profile_id') > 0) {
-            $this->setProfileId($this->getCustomer()->getCustomAttribute('authnetcim_profile_id'));
+        $profileId = $this->getCustomer()->getCustomAttribute('authnetcim_profile_id');
+        if ($profileId instanceof \Magento\Framework\Api\AttributeInterface) {
+            $profileId = $profileId->getValue();
+        }
+
+        if (!empty($profileId)) {
+            $this->setProfileId($profileId);
         } elseif ((int)$payment->getAdditionalInformation('profile_id') > 0) {
             $this->setProfileId((int)$payment->getAdditionalInformation('profile_id'));
         } else {
@@ -216,9 +221,13 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
          */
         if ($this->getProfileId() == '') {
             // Does the customer have a profile ID? Try to import it.
-            if ($this->getCustomer()->getId() > 0
-                && $this->getCustomer()->getCustomAttribute('authnetcim_profile_id') != '') {
-                $this->setProfileId($this->getCustomer()->getCustomAttribute('authnetcim_profile_id'));
+            $profileId = $this->getCustomer()->getCustomAttribute('authnetcim_profile_id');
+            if ($profileId instanceof \Magento\Framework\Api\AttributeInterface) {
+                $profileId = $profileId->getValue();
+            }
+
+            if (!empty($profileId)) {
+                $this->setProfileId($profileId);
             } else {
                 // No profile ID, so create one.
                 $this->createCustomerProfile();
@@ -297,8 +306,12 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $this->setProfileId('');
             $this->setPaymentId('');
 
-            if ($this->getCustomer()->getId() > 0
-                && $this->getCustomer()->getCustomAttribute('authnetcim_profile_id') != '') {
+            $profileId = $this->getCustomer()->getCustomAttribute('authnetcim_profile_id');
+            if ($profileId instanceof \Magento\Framework\Api\AttributeInterface) {
+                $profileId = $profileId->getValue();
+            }
+
+            if (!empty($profileId)) {
                 $this->getCustomer()->setCustomAttribute('authnetcim_profile_id', '');
             }
 

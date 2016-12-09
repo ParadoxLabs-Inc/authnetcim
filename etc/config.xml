@@ -10,8 +10,9 @@
                 <cctypes>AE,VI,MC,DI</cctypes>
                 <login backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
                 <trans_key backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
-                <model>ParadoxLabs\Authnetcim\Model\Method</model>
+                <model>ParadoxLabs\Authnetcim\Gateway\VirtualFacade</model>
                 <card_model>ParadoxLabs\Authnetcim\Model\Card</card_model>
+                <method_model>ParadoxLabs\Authnetcim\Model\Method</method_model>
                 <order_status>pending</order_status>
                 <payment_action>authorize</payment_action>
                 <test>0</test>
@@ -28,6 +29,24 @@
                 <savecard_opt_out>1</savecard_opt_out>
                 <verify_ssl>1</verify_ssl>
                 <group>tokenbase</group>
+                <!-- Feature flags -->
+                <can_order>1</can_order>
+                <can_authorize>1</can_authorize>
+                <can_capture>1</can_capture>
+                <can_capture_partial>1</can_capture_partial>
+                <can_capture_once>1</can_capture_once>
+                <can_refund>1</can_refund>
+                <can_refund_partial_per_invoice>1</can_refund_partial_per_invoice>
+                <can_void>1</can_void>
+                <can_cancel>1</can_cancel>
+                <can_use_internal>1</can_use_internal>
+                <can_use_checkout>1</can_use_checkout>
+                <can_edit>1</can_edit>
+                <can_fetch_transaction_information>1</can_fetch_transaction_information>
+                <can_review_payment>0</can_review_payment>
+                <is_gateway>0</is_gateway>
+                <is_offline>0</is_offline>
+                <can_initialize>0</can_initialize>
             </authnetcim>
             <authnetcim_ach>
                 <version backend_model="ParadoxLabs\Authnetcim\Model\Config\Version" />
@@ -36,8 +55,9 @@
                 <title>Bank Account (eCheck)</title>
                 <login backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
                 <trans_key backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
-                <model>ParadoxLabs\Authnetcim\Model\Ach\Method</model>
+                <model>ParadoxLabs\Authnetcim\Gateway\Ach\VirtualFacade</model>
                 <card_model>ParadoxLabs\Authnetcim\Model\Ach\Card</card_model>
+                <method_model>ParadoxLabs\Authnetcim\Model\Ach\Method</method_model>
                 <order_status>pending</order_status>
                 <payment_action>authorize</payment_action>
                 <test>0</test>
@@ -52,6 +72,24 @@
                 <savecard_opt_out>1</savecard_opt_out>
                 <verify_ssl>1</verify_ssl>
                 <group>tokenbase</group>
+                <!-- Feature flags -->
+                <can_order>1</can_order>
+                <can_authorize>1</can_authorize>
+                <can_capture>1</can_capture>
+                <can_capture_partial>1</can_capture_partial>
+                <can_capture_once>1</can_capture_once>
+                <can_refund>1</can_refund>
+                <can_refund_partial_per_invoice>1</can_refund_partial_per_invoice>
+                <can_void>1</can_void>
+                <can_cancel>1</can_cancel>
+                <can_use_internal>1</can_use_internal>
+                <can_use_checkout>1</can_use_checkout>
+                <can_edit>1</can_edit>
+                <can_fetch_transaction_information>1</can_fetch_transaction_information>
+                <can_review_payment>0</can_review_payment>
+                <is_gateway>0</is_gateway>
+                <is_offline>0</is_offline>
+                <can_initialize>0</can_initialize>
             </authnetcim_ach>
         </payment>
     </default>

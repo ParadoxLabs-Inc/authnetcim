@@ -6,4 +6,11 @@
     <event name="tokenbase_before_load_payment_info">
         <observer name="authnetcim_loaded_cards" instance="ParadoxLabs\Authnetcim\Observer\ConvertLegacyStoredDataObserver" />
     </event>
+    <event name="payment_method_assign_data_authnetcim">
+        <observer name="authnetcim_assign_data" instance="ParadoxLabs\TokenBase\Observer\PaymentMethodAssignDataObserver" />
+    </event>
+    <event name="payment_method_assign_data_authnetcim_ach">
+        <observer name="authnetcim_assign_data" instance="ParadoxLabs\TokenBase\Observer\PaymentMethodAssignDataObserver" />
+        <observer name="authnetcim_ach_assign_data" instance="ParadoxLabs\TokenBase\Observer\PaymentMethodAssignAchDataObserver" />
+    </event>
 </config>

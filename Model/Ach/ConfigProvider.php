@@ -18,10 +18,7 @@ namespace ParadoxLabs\Authnetcim\Model\Ach;
  */
 class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
 {
-    /**
-     * @var string
-     */
-    protected $code = 'authnetcim_ach';
+    const CODE = 'authnetcim_ach';
 
     /**
      * Get checkout config.
@@ -30,7 +27,7 @@ class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
      */
     public function getConfig()
     {
-        if (!$this->methods[$this->code]->isAvailable()) {
+        if (!$this->methods[static::CODE]->isAvailable()) {
             return [];
         }
 
@@ -50,7 +47,7 @@ class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
             $selected               = $card->getHash();
         }
 
-        $config['payment'][$this->code] = [
+        $config['payment'][static::CODE] = [
             'canSaveCard'               => $this->canSaveCard(),
             'forceSaveCard'             => $this->forceSaveCard(),
             'defaultSaveCard'           => $this->defaultSaveCard(),

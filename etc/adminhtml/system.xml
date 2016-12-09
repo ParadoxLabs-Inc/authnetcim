@@ -36,9 +36,9 @@
                 </field>
                 <field id="payment_action" translate="label comment" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment Action</label>
-                    <source_model>Magento\Authorizenet\Model\Source\PaymentAction</source_model>
+                    <source_model>ParadoxLabs\TokenBase\Model\Source\PaymentAction</source_model>
                     <attribute type="shared">1</attribute>
-                    <comment>'Authorize and Capture' to charge on checkout.</comment>
+                    <comment>This controls what happens upon checkout. 'Authorize' means funds will be reserved for several days, until the order is invoiced. 'Capture' means funds will be immediately withdrawn.</comment>
                 </field>
                 <field id="order_status" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>New Order Status</label>
@@ -178,9 +178,9 @@
                 </field>
                 <field id="payment_action" translate="label comment" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment Action</label>
-                    <source_model>Magento\Authorizenet\Model\Source\PaymentAction</source_model>
+                    <source_model>ParadoxLabs\TokenBase\Model\Source\PaymentAction</source_model>
                     <attribute type="shared">1</attribute>
-                    <comment>'Authorize and Capture' to charge on checkout.</comment>
+                    <comment>This controls what happens upon checkout. 'Authorize' means funds will be reserved for several days, until the order is invoiced. 'Capture' means funds will be immediately withdrawn.</comment>
                 </field>
                 <field id="order_status" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>New Order Status</label>

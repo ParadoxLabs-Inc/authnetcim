@@ -158,42 +158,38 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     protected $moduleDir;
 
     /**
+     * @var \Magento\Framework\Registry
+     */
+    protected $registry;
+
+    /**
      * Gateway constructor.
      *
-     * @param \Magento\Framework\Model\Context $context
-     * @param \Magento\Framework\Registry $registry
      * @param \ParadoxLabs\TokenBase\Helper\Data $helper
      * @param \ParadoxLabs\TokenBase\Model\Gateway\Xml $xml
      * @param \ParadoxLabs\TokenBase\Model\Gateway\ResponseFactory $responseFactory
      * @param \Magento\Framework\HTTP\ZendClientFactory $httpClientFactory
      * @param \Magento\Framework\Module\Dir $moduleDir
-     * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
-     * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
+     * @param \Magento\Framework\Registry $registry
      * @param array $data
      */
     public function __construct(
-        \Magento\Framework\Model\Context $context,
-        \Magento\Framework\Registry $registry,
         \ParadoxLabs\TokenBase\Helper\Data $helper,
         \ParadoxLabs\TokenBase\Model\Gateway\Xml $xml,
         \ParadoxLabs\TokenBase\Model\Gateway\ResponseFactory $responseFactory,
         \Magento\Framework\HTTP\ZendClientFactory $httpClientFactory,
         \Magento\Framework\Module\Dir $moduleDir,
-        \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
-        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
+        \Magento\Framework\Registry $registry,
         array $data = []
     ) {
         $this->moduleDir = $moduleDir;
+        $this->registry = $registry;
 
         parent::__construct(
-            $context,
-            $registry,
             $helper,
             $xml,
             $responseFactory,
             $httpClientFactory,
-            $resource,
-            $resourceCollection,
             $data
         );
     }
@@ -291,8 +287,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     $this->code,
                     sprintf(
                         "CURL Connection error: %s (%s)\nREQUEST: %s",
-                        $response->getMessage(),
-                        $response->getStatus(),
+                        $httpClient->getAdapter()->getError(),
+                        $httpClient->getAdapter()->getErrno(),
                         $this->sanitizeLog($xml)
                     )
                 );
@@ -300,8 +296,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 throw new LocalizedException(
                     __(sprintf(
                         'Authorize.Net CIM Gateway Connection error: %s (%s)',
-                        $response->getMessage(),
-                        $response->getStatus()
+                        $httpClient->getAdapter()->getError(),
+                        $httpClient->getAdapter()->getErrno()
                     ))
                 );
             }
@@ -309,16 +305,20 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $this->helper->log(
                 $this->code,
                 sprintf(
-                    "Connection error: %s\nREQUEST: %s",
+                    "CURL Connection error: %s. %s (%s)\nREQUEST: %s",
                     $e->getMessage(),
+                    $httpClient->getAdapter()->getError(),
+                    $httpClient->getAdapter()->getErrno(),
                     $this->sanitizeLog($xml)
                 )
             );
 
             throw new LocalizedException(
                 __(sprintf(
-                    'Authorize.Net CIM Gateway Connection error: %s',
-                    str_replace('Error in cURL request: ', '', $e->getMessage())
+                    'Authorize.Net CIM Gateway Connection error: %s. %s (%s)',
+                    $e->getMessage(),
+                    $httpClient->getAdapter()->getError(),
+                    $httpClient->getAdapter()->getErrno()
                 ))
             );
         }
@@ -395,8 +395,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                      * of a transaction... so any change will just be rolled back. Save it for a little later.
                      * @see \ParadoxLabs\TokenBase\Observer\CardLoadProcessDeleteQueueObserver::checkQueuedForDeletion()
                      */
-                    $this->_registry->unregister('queue_card_deletion');
-                    $this->_registry->register('queue_card_deletion', $this->getData('card'));
+                    $this->registry->unregister('queue_card_deletion');
+                    $this->registry->register('queue_card_deletion', $this->getData('card'));
                 }
 
                 $this->helper->log(

@@ -8,4 +8,20 @@
             </argument>
         </arguments>
     </type>
+
+    <type name="ParadoxLabs\Authnetcim\Block\Info\Cc">
+        <arguments>
+            <argument name="data" xsi:type="array">
+                <item xsi:type="string" name="is_secure_mode">1</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="ParadoxLabs\Authnetcim\Block\Info\Ach">
+        <arguments>
+            <argument name="data" xsi:type="array">
+                <item xsi:type="string" name="is_secure_mode">1</item>
+            </argument>
+        </arguments>
+    </type>
 </config>

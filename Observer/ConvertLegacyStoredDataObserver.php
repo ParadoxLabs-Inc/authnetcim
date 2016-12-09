@@ -24,6 +24,11 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
     protected $helper;
 
     /**
+     * @var \ParadoxLabs\TokenBase\Model\Method\Factory
+     */
+    protected $methodFactory;
+
+    /**
      * @var \ParadoxLabs\TokenBase\Model\CardFactory
      */
     protected $cardFactory;
@@ -55,6 +60,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
 
     /**
      * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
+     * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
      * @param \ParadoxLabs\TokenBase\Model\CardFactory $cardFactory
      * @param \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory
      * @param \Magento\Directory\Model\RegionFactory $regionFactory
@@ -64,6 +70,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
      */
     public function __construct(
         \ParadoxLabs\Authnetcim\Helper\Data $helper,
+        \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
         \ParadoxLabs\TokenBase\Model\CardFactory $cardFactory,
         \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory,
         \Magento\Directory\Model\RegionFactory $regionFactory,
@@ -72,6 +79,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
         \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
     ) {
         $this->helper                   = $helper;
+        $this->methodFactory            = $methodFactory;
         $this->cardFactory              = $cardFactory;
         $this->orderCollectionFactory   = $orderCollectionFactory;
         $this->regionFactory            = $regionFactory;
@@ -117,8 +125,16 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
          * Short circuit if no profile ID, or already converted.
          */
         $profileId = $customer->getCustomAttribute('authnetcim_profile_id');
+        if ($profileId instanceof \Magento\Framework\Api\AttributeInterface) {
+            $profileId = $profileId->getValue();
+        }
 
-        if (empty($profileId) || $customer->getCustomAttribute('authnetcim_profile_version') >= 200) {
+        $profileVersion = $customer->getCustomAttribute('authnetcim_profile_version');
+        if ($profileVersion instanceof \Magento\Framework\Api\AttributeInterface) {
+            $profileVersion = $profileVersion->getValue();
+        }
+
+        if (empty($profileId) || $profileVersion >= 200) {
             return;
         }
 
@@ -136,7 +152,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
          */
 
         /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
-        $gateway = $this->helper->getMethodInstance('authnetcim')->gateway();
+        $gateway = $this->methodFactory->getMethodInstance('authnetcim')->gateway();
         $gateway->setParameter('customerProfileId', $profileId);
 
         $profile = $gateway->getCustomerProfile();
