@@ -19,6 +19,39 @@ namespace ParadoxLabs\Authnetcim\Model;
 class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
 {
     /**
+     * Determine whether Accept.js is configured and enabled.
+     *
+     * @return bool
+     */
+    public function isAcceptJsEnabled()
+    {
+        $clientKey = $this->getConfigData('client_key');
+
+        if ($this->getConfigData('acceptjs') == 1 && !empty($clientKey)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Return boolean whether given payment object includes new card info.
+     *
+     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @return bool
+     */
+    protected function paymentContainsCard(\Magento\Payment\Model\InfoInterface $payment)
+    {
+        $acceptJsValue = $this->getInfoInstance()->getAdditionalInformation('acceptjs_value');
+
+        if (!empty($acceptJsValue)) {
+            return true;
+        }
+
+        return parent::paymentContainsCard($payment);
+    }
+
+    /**
      * Try to convert legacy data inline.
      *
      * @param \Magento\Payment\Model\InfoInterface $payment
@@ -47,7 +80,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
                  ->setAddress($payment->getOrder()->getBillingAddress())
                  ->importLegacyData($payment);
 
-            $this->cardRepository->save($card);
+            $card = $this->cardRepository->save($card);
 
             $this->setCard($card);
 
@@ -235,15 +268,17 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
         \Magento\Payment\Model\InfoInterface $payment,
         \ParadoxLabs\TokenBase\Model\Gateway\Response $response
     ) {
+        $card = $this->getCard();
+
         /** @var \Magento\Sales\Model\Order\Payment $payment */
-        if ($this->getCard()->getAdditional('cc_type') == null && $response->getData('card_type') != '') {
+        if ($card->getAdditional('cc_type') == null && $response->getData('card_type') != '') {
             $ccType = $this->helper->mapCcTypeToMagento($response->getData('card_type'));
 
             if ($ccType !== null) {
-                $this->getCard()->setAdditional('cc_type', $ccType)
+                $card->setAdditional('cc_type', $ccType)
                                 ->setData('no_sync', true);
 
-                $this->cardRepository->save($this->getCard());
+                $this->card = $this->cardRepository->save($card);
 
                 $payment->getOrder()->getPayment()->setCcType($ccType);
             }

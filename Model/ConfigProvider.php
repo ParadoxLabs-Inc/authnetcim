@@ -143,6 +143,9 @@ class ConfigProvider extends CcGenericConfigProvider
                     'availableCardTypes'      => $this->getCcAvailableTypes(static::CODE),
                     'logoImage'               => $this->getLogoImage(),
                     'requireCcv'              => $this->requireCcv(),
+                    'apiLoginId'              => $this->getApiLoginId(),
+                    'clientKey'               => $this->getClientKey(),
+                    'sandbox'                 => $this->getSandbox(),
                 ],
             ],
         ]);
@@ -192,5 +195,43 @@ class ConfigProvider extends CcGenericConfigProvider
         }
 
         return false;
+    }
+
+    /**
+     * Get API Login ID - ONLY if Accept.js is enabled
+     *
+     * @return string
+     */
+    public function getApiLoginId()
+    {
+        if ($this->methods[static::CODE]->getConfigData('acceptjs')) {
+            return $this->methods[static::CODE]->getConfigData('login');
+        }
+
+        return '';
+    }
+
+    /**
+     * Get Client Key - ONLY if Accept.js is enabled
+     *
+     * @return string
+     */
+    public function getClientKey()
+    {
+        if ($this->methods[static::CODE]->getConfigData('acceptjs')) {
+            return $this->methods[static::CODE]->getConfigData('client_key');
+        }
+
+        return '';
+    }
+
+    /**
+     * Get sandbox mode enabled flag
+     *
+     * @return bool
+     */
+    public function getSandbox()
+    {
+        return (bool)$this->methods[static::CODE]->getConfigData('test');
     }
 }

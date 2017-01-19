@@ -1,0 +1,122 @@
+<?php
+/** @var \ParadoxLabs\TokenBase\Block\Form\Cc $block */
+// @codingStandardsIgnoreFile
+
+$code           = $block->escapeQuote($block->getMethodCode());
+$image          = $block->getBrandingImage();
+$storedCards    = $block->getStoredCards();
+?>
+<input id="<?php echo $code ?>-payment-method" type="hidden" name="payment[method]" value="<?php echo $code ?>" />
+<?php if ($block->getTokenbaseMethod()->isAcceptJsEnabled() === true): ?>
+    <input type="hidden" name="payment[acceptjs_key]" id="<?php echo $code ?>-acceptjs-key" value="" />
+    <input type="hidden" name="payment[acceptjs_value]" id="<?php echo $code ?>-acceptjs-value" value="" />
+    <input type="hidden" name="payment[cc_last4]" id="<?php echo $code ?>-cc-last4" value="" />
+<?php endif; ?>
+<div id="payment_form_<?php echo $code ?>" class="admin__page-section-item" style="display:none" data-mage-init='{
+     "tokenbaseForm":{"code":"<?php echo $code ?>"}
+<?php if ($block->getTokenbaseMethod()->isAcceptJsEnabled() === true): ?>,
+    "authnetcimAcceptjs": {
+        "apiLoginId": "<?php echo $block->escapeJsQuote($block->getMethod()->getConfigData('login')); ?>",
+        "clientKey": "<?php echo $block->escapeJsQuote($block->getMethod()->getConfigData('client_key')); ?>",
+        "method": "<?php echo $code; ?>",
+        "submitSelector": "#edit_form button.save, #submit_order_top_button",
+        "processingSelector": "div.admin__field",
+        "sandbox": <?php echo $block->getMethod()->getConfigData('test') ? 'true' : 'false'; ?>
+    }
+<?php endif; ?>
+}'>
+    <fieldset class="admin__fieldset">
+        <?php if ($image): ?>
+            <div class="page-actions">
+                <img src="<?php echo $block->escapeUrl($image); ?>" />
+            </div>
+        <?php endif; ?>
+        <?php if ($block->haveStoredCards()): ?>
+            <div class="admin__field">
+                <div class="admin__field-control control">
+                    <select id="<?php echo $code ?>-card-id" name="payment[card_id]" class="select admin__control-select">
+                        <?php /** @var \ParadoxLabs\TokenBase\Model\Card $card */ ?>
+                        <?php foreach ($storedCards as $card): ?>
+                            <?php $card = $card->getTypeInstance(); ?>
+                            <option value="<?php echo $block->escapeQuote($card->getHash()) ?>" <?php if ($card->getId() == $block->getInfoData('tokenbase_id') || count($storedCards) == 1): ?>selected="selected"<?php endif; ?>>
+                                <?php echo $block->escapeHtml($card->getLabel()) ?>
+                            </option>
+                        <?php endforeach; ?>
+                        <option value='' <?php if (count($storedCards) > 1 && $block->getInfoData('tokenbase_id') == ''): ?>selected="selected"<?php endif; ?>><?php echo $block->escapeHtml(__('Add new card')) ?></option>
+                    </select>
+                </div>
+            </div>
+        <?php endif; ?>
+        <div class="admin__field hide-if-card-selected">
+            <label class="label admin__field-label" for="<?php echo $code ?>-cc-type" ><?php echo $block->escapeHtml(__('Credit Card Type')) ?><span class="required">*</span></label>
+            <div class="admin__field-control control">
+                <select id="<?php echo $code ?>-cc-type" name="payment[cc_type]" class="required-entry _required select admin__control-select validate-cc-type-select">
+                    <option value="">--<?php echo $block->escapeHtml(__('Please Select'))?>--</option>
+                    <?php $_ccType = $block->getInfoData('cc_type') ?>
+                    <?php foreach ($block->getCcAvailableTypes() as $_typeCode => $_typeName): ?>
+                        <option value="<?php echo $block->escapeQuote($_typeCode) ?>"<?php if ($_typeCode==$_ccType): ?> selected="selected"<?php endif ?>><?php echo $block->escapeHtml($_typeName) ?></option>
+                    <?php endforeach ?>
+                </select>
+            </div>
+        </div>
+        <div class="admin__field hide-if-card-selected">
+            <label class="label admin__field-label" for="<?php echo $code ?>-cc-number"><?php echo $block->escapeHtml(__('Credit Card Number')) ?><span class="required">*</span></label>
+            <div class="admin__field-control control">
+                <input type="text" id="<?php echo $code ?>-cc-number" name="payment[cc_number]"  title="<?php echo $block->escapeQuote(__('Credit Card Number')) ?>" class="input-text admin__control-text validate-cc-number validate-cc-type" value="<?php echo $block->escapeQuote($block->getInfoData('cc_number')); ?>" autocomplete="off" />
+            </div>
+        </div>
+        <div class="admin__field hide-if-card-selected">
+            <label class="label admin__field-label" for="<?php echo $code ?>-cc-exp-month" ><?php echo $block->escapeHtml(__('Expiration Date')) ?><span class="required">*</span></label>
+            <div class="admin__field-control control">
+                <select id="<?php echo $code ?>-cc-exp-month" name="payment[cc_exp_month]" class="month validate-cc-exp required-entry _required select admin__control-select">
+                    <?php $_ccExpMonth = $block->getInfoData('cc_exp_month') ?>
+                    <?php foreach ($block->getCcMonths() as $k=>$v): ?>
+                        <option value="<?php echo $k?$block->escapeQuote($k):'' ?>"<?php if ($k==$_ccExpMonth): ?> selected="selected"<?php endif ?>><?php echo $block->escapeHtml($v) ?></option>
+                    <?php endforeach ?>
+                </select>
+                <?php $_ccExpYear = $block->getInfoData('cc_exp_year') ?>
+                <select id="<?php echo $code ?>-cc-exp-year" name="payment[cc_exp_year]" class="year required-entry _required select admin__control-select">
+                    <?php foreach ($block->getCcYears() as $k=>$v): ?>
+                        <option value="<?php echo $k?$block->escapeQuote($k):'' ?>"<?php if ($k==$_ccExpYear): ?> selected="selected"<?php endif ?>><?php echo $block->escapeHtml($v) ?></option>
+                    <?php endforeach ?>
+                </select>
+            </div>
+        </div>
+        <?php echo $block->getChildHtml() ?>
+        <?php if ($block->hasVerification()): ?>
+            <div class="admin__field <?php if ($block->getMethod()->getConfigData('require_ccv') == 0): ?>hide-if-card-selected<?php endif; ?>">
+                <label class="label admin__field-label" for="<?php echo $code ?>-cc-cid" ><?php echo $block->escapeHtml(__('Card Verification Number')) ?><span class="required">*</span></label>
+                <div class="admin__field-control control">
+                    <div class="v-fix">
+                        <input type="text" title="<?php echo $block->escapeQuote(__('Card Verification Number')) ?>" class="input-text admin__control-text cvv required-entry validate-cc-cvn" id="<?php echo $code ?>-cc-cid" name="payment[cc_cid]" value="<?php echo $block->escapeQuote($block->getInfoData('cc_cid')); ?>" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+        <?php if (!$block->isGuestCheckout()): ?>
+            <div class="admin__field hide-if-card-selected">
+                <div class="admin__field-control control">
+                    <?php if ($block->getMethod()->getConfigData('allow_unsaved')): ?>
+                        <input type="hidden" name="payment[save]" value="0" />
+                        <input type="checkbox" title="<?php echo $block->escapeQuote(__('Save for next time')) ?>" class="input-checkbox" id="<?php echo $code ?>-save" name="payment[save]" value="1" <?php if ($block->getMethod()->getConfigData('savecard_opt_out') && $block->getInfoData('save') !== 0): ?>checked="checked"<?php endif; ?> />
+                        <label for="<?php echo $code ?>-save"><?php echo $block->escapeHtml(__('Save for next time')) ?></label>
+                    <?php else: ?>
+                        <input type="hidden" name="payment[save]" value="1" />
+                        <label class="label admin__field-label" for="<?php echo $code ?>-save"><?php echo $block->escapeHtml(__('For your convenience, this data will be stored securely by our payment processor.')) ?></label>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+        <?php if ($block->getTokenbaseMethod()->isAcceptJsEnabled() === true): ?>
+            <div class="no-display _hidden" id="<?php echo $code; ?>-processing">
+                <?php echo $block->escapeHtml(__('Processing, please wait...')); ?>
+            </div>
+            <div class="no-display _hidden" id="<?php echo $code; ?>-complete">
+                <?php echo $block->escapeHtml(__('&#128077; Okay, ready to continue!')); ?>
+            </div>
+            <div class="no-display _hidden" id="<?php echo $code; ?>-failed">
+                <?php echo $block->escapeHtml(__('&#10060; Please fix your payment info before continuing.')); ?> <span class="error-text"></span>
+            </div>
+        <?php endif; ?>
+    </fieldset>
+</div>

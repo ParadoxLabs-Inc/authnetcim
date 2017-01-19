@@ -146,7 +146,7 @@
 
     <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualStoredAchValidator" type="ParadoxLabs\TokenBase\Gateway\Validator\StoredAch" />
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualCreditCardValidator" type="ParadoxLabs\TokenBase\Gateway\Validator\CreditCard">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualCreditCardValidator" type="ParadoxLabs\Authnetcim\Gateway\Validator\CreditCard">
         <arguments>
             <argument name="config" xsi:type="object">ParadoxLabs\Authnetcim\Gateway\VirtualConfig</argument>
         </arguments>

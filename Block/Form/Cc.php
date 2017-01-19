@@ -21,5 +21,10 @@ class Cc extends \ParadoxLabs\TokenBase\Block\Form\Cc
     /**
      * @var string
      */
+    protected $_template = 'ParadoxLabs_Authnetcim::form/cc.phtml';
+
+    /**
+     * @var string
+     */
     protected $brandingImage = 'ParadoxLabs_Authnetcim::images/logo.png';
 }

@@ -81,6 +81,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'customerProfileId'         => [],
         'customerShippingAddressId' => [],
         'customerType'              => ['enum' => ['individual', 'business']],
+        'dataDescriptor'            => ['noSymbols' => true],
+        'dataValue'                 => ['noSymbols' => true],
         'description'               => ['maxLength' => 255],
         'duplicateWindow'           => ['charMask' => '\d'],
         'dutyAmount'                => [],
@@ -862,6 +864,13 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             if ($this->hasParameter('cardCode')) {
                 $params['paymentProfile']['payment']['creditCard']['cardCode'] = $this->getParameter('cardCode');
             }
+        } elseif ($this->hasParameter('dataValue')) {
+            $params['paymentProfile']['payment'] = [
+                'opaqueData' => [
+                    'dataDescriptor' => $this->getParameter('dataDescriptor'),
+                    'dataValue'      => $this->getParameter('dataValue'),
+                ],
+            ];
         } elseif ($this->hasParameter('accountNumber')) {
             $params['paymentProfile']['payment'] = [
                 'bankAccount' => [
@@ -901,8 +910,16 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             }
 
             if (!empty($paymentId)) {
-                // Update the card record to ensure CCV and expiry are up to date.
+                // Update the card record to ensure expiry is up to date.
                 $this->setParameter('customerPaymentProfileId', $paymentId);
+
+                // Handle Accept.js nonce (which would now be expired). Card number won't have changed, but exp might.
+                // TODO: This will need to be adjusted when Accept.js adds ACH support.
+                if ($this->hasParameter('dataValue')) {
+                    $this->setParameter('cardNumber', 'XXXX' . $this->getCard()->getAdditional('cc_last4'));
+                    $this->setParameter('expirationDate', date("Y-m", strtotime($this->getCard()->getExpires())));
+                }
+
                 $this->updateCustomerPaymentProfile();
             }
         }
@@ -1152,6 +1169,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             ];
         }
 
+        if (empty($params['payment'])) {
+            unset($params['payment']);
+        }
+
         if (empty($params['profile'])) {
             unset($params['profile']);
         }
@@ -1330,6 +1351,13 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             if ($this->hasParameter('cardCode')) {
                 $params['paymentProfile']['payment']['creditCard']['cardCode'] = $this->getParameter('cardCode');
             }
+        } elseif ($this->hasParameter('dataValue')) {
+            $params['paymentProfile']['payment'] = [
+                'opaqueData' => [
+                    'dataDescriptor' => $this->getParameter('dataDescriptor'),
+                    'dataValue'      => $this->getParameter('dataValue'),
+                ],
+            ];
         } elseif ($this->hasParameter('accountNumber')) {
             $params['paymentProfile']['payment'] = [
                 'bankAccount' => [
@@ -1341,6 +1369,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     'bankName'      => $this->getParameter('bankName'),
                 ],
             ];
+        }
+
+        if (empty($params['paymentProfile']['payment'])) {
+            unset($params['paymentProfile']['payment']);
         }
 
         return $this->runTransaction('updateCustomerPaymentProfileRequest', $params);
@@ -1383,9 +1415,13 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $params = [
             'customerProfileId'         => $this->getParameter('customerProfileId'),
             'customerPaymentProfileId'  => $this->getParameter('customerPaymentProfileId'),
-            'customerShippingAddressId' => $this->getParameter('customerShippingAddressId'),
-            'validationMode'            => $this->getParameter('validationMode'),
         ];
+
+        if ($this->hasParameter('customerShippingAddressId')) {
+            $params['customerShippingAddressId'] = $this->getParameter('customerShippingAddressId');
+        }
+
+        $params['validationMode'] = $this->getParameter('validationMode');
 
         return $this->runTransaction('validateCustomerPaymentProfileRequest', $params);
     }
@@ -1712,6 +1748,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $params['amount'] = static::formatAmount($this->getParameter('amount'));
         }
 
+        // payment must be above profile. Placeholder to enforce that.
+        $params['payment'] = [];
+
         // profile must be above refTransId. Placeholder to enforce that.
         $params['profile'] = [];
 
@@ -1760,6 +1799,13 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 if ($this->hasParameter('cardCode')) {
                     $params['payment']['creditCard']['cardCode'] = $this->getParameter('cardCode');
                 }
+            } elseif ($this->hasParameter('dataValue')) {
+                $params['paymentProfile']['payment'] = [
+                    'opaqueData' => [
+                        'dataDescriptor' => $this->getParameter('dataDescriptor'),
+                        'dataValue'      => $this->getParameter('dataValue'),
+                    ],
+                ];
             } elseif ($this->hasParameter('accountNumber')) {
                 $params['payment'] = [
                     'bankAccount' => [
@@ -2191,6 +2237,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     $this->code,
                     sprintf("API error: %s: %s\n%s", $errorCode, $errorText, $this->log)
                 );
+
+                if ($errorText == 'Invalid OTS Token.') {
+                    $errorText = 'Invalid token. Please re-enter your payment info.';
+                }
 
                 throw new PaymentException(
                     __(sprintf('Authorize.Net CIM Gateway: %s (%s)', $errorText, $errorCode))

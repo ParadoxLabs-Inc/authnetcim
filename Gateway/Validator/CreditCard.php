@@ -1,0 +1,65 @@
+<?php
+/**
+ * Paradox Labs, Inc.
+ * http://www.paradoxlabs.com
+ * 717-431-3330
+ */
+
+namespace ParadoxLabs\Authnetcim\Gateway\Validator;
+
+/**
+ * CreditCard Class
+ */
+class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
+{
+    /**
+     * Performs domain-related validation for business object
+     *
+     * @param array $validationSubject
+     * @return \Magento\Payment\Gateway\Validator\ResultInterface
+     */
+    public function validate(array $validationSubject)
+    {
+        $isValid = true;
+        $fails   = [];
+
+        /** @var \Magento\Payment\Model\Info $payment */
+        $payment = $validationSubject['payment'];
+
+        if ($this->isAcceptJsEnabled() === true
+            && strlen(str_replace(['X', '-'], '', $payment->getData('cc_number'))) > 4) {
+            // This gets triggered if Accept.js is enabled but we received raw credit card data anyway.
+            // We don't ever want that, so refuse to process it. Whatever happened must be fixed.
+            $isValid = false;
+            $fails[] =__(
+                'We did not receive the expected Accept.js data. Please verify payment details and try again.'
+                .' If you get this error twice, contact support.'
+            );
+        }
+
+        /**
+         * If we do not have Accept.js info, apply normal CC validation.
+         */
+        $acceptJsValue = $payment->getAdditionalInformation('acceptjs_value');
+
+        if (empty($acceptJsValue)) {
+            return parent::validate($validationSubject);
+        }
+
+        return $this->createResult($isValid, $fails);
+    }
+
+    /**
+     * Determine whether Accept.js is configured.
+     */
+    public function isAcceptJsEnabled()
+    {
+        $clientKey = $this->config->getValue('client_key');
+
+        if ($this->config->getValue('acceptjs') == 1 && !empty($clientKey)) {
+            return true;
+        }
+
+        return false;
+    }
+}

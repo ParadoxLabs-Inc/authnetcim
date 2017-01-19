@@ -4,7 +4,7 @@
         <referenceContainer name="tokenbase_customer_wrapper">
             <block class="Magento\Framework\View\Element\Template" name="tokenbase_manage_authnetcim" template="ParadoxLabs_TokenBase::customer/method.phtml" cacheable="false">
                 <block class="ParadoxLabs\TokenBase\Block\Customer\Cards" name="tokenbase_manage_authnetcim_cards" as="tokenbase_customer_method_left" template="ParadoxLabs_TokenBase::customer/cards.phtml" />
-                <block class="ParadoxLabs\TokenBase\Block\Customer\Form" name="tokenbase_manage_authnetcim_form" as="tokenbase_customer_method_right" template="ParadoxLabs_TokenBase::customer/form/cc.phtml" />
+                <block class="ParadoxLabs\TokenBase\Block\Customer\Form" name="tokenbase_manage_authnetcim_form" as="tokenbase_customer_method_right" template="ParadoxLabs_Authnetcim::customer/form/cc.phtml" />
             </block>
         </referenceContainer>
     </body>

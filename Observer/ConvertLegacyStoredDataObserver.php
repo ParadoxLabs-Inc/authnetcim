@@ -103,7 +103,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
         /**
          * Short circuit if this isn't us.
          */
-        if ($method === null || $method != 'authnetcim') {
+        if ($method === null || $method !== 'authnetcim') {
             return;
         }
 
@@ -293,7 +293,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
                 $storedCard->setData('additional', serialize($paymentData));
             }
 
-            $this->cardRepository->save($storedCard);
+            $storedCard = $this->cardRepository->save($storedCard);
 
             $cards[$k]['tokenbase_id'] = $storedCard->getId();
 

@@ -1,0 +1,235 @@
+<div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}">
+    <div class="payment-method-title field choice">
+        <input type="radio"
+               name="payment[method]"
+               class="radio"
+               data-bind="attr: {'id': getCode()},
+                          value: getCode(),
+                          checked: isChecked,
+                          click: selectPaymentMethod,
+                          visible: isRadioButtonVisible()"/>
+        <label class="label" data-bind="attr: {'for': getCode()}"><span data-bind="text: getTitle()"></span></label>
+    </div>
+
+    <div class="payment-method-content" data-bind="mageInit: {
+    'authnetcimAcceptjs': {
+        'apiLoginId': getApiLoginId(),
+        'clientKey': getClientKey(),
+        'method': getCode(),
+        'sandbox': getSandbox(),
+        'submitSelector': '#' + getCode() + '-submit',
+        'processingSelector': 'div.field.required'
+    }
+    }">
+        <!-- ko if: (useAcceptJs()) -->
+            <input type="hidden" name="payment[acceptjs_key]" value="" data-bind="attr: {id: getCode() + '-acceptjs-key'}, value: acceptJsKey"/>
+            <input type="hidden" name="payment[acceptjs_value]" value="" data-bind="attr: {id: getCode() + '-acceptjs-value'}, value: acceptJsValue"/>
+            <input type="hidden" name="payment[cc_last4]" value="" data-bind="attr: {id: getCode() + '-cc-last4'}, value: creditCardLast4"/>
+        <!-- /ko -->
+        <div class="payment-method-billing-address">
+            <!-- ko foreach: $parent.getRegion(getBillingAddressFormName()) -->
+            <!-- ko template: getTemplate() --><!-- /ko -->
+            <!--/ko-->
+        </div>
+
+        <fieldset data-bind="attr: {class: 'fieldset payment items ccard ' + getCode(), id: getCode() + '-form-cc'}">
+            <!-- ko if: (isShowLegend())-->
+            <legend class="legend"><span><!-- ko text: $t('Credit Card Information')--><!-- /ko --></span></legend><br />
+            <!-- /ko -->
+            <!-- ko if: (getLogoImage())-->
+            <div class="sorter">
+                <img data-bind="attr: {'src': getLogoImage()}" />
+            </div>
+            <!--/ko-->
+            <!-- ko if: (useVault()) -->
+            <div>
+                <label data-bind="attr: {for: getCode() + '-card-id'}" class="label">
+                    <span><!-- ko text: $t('Payment Information')--><!-- /ko --></span>
+                </label>
+                <div class="control">
+                    <select name="payment[card_id]" class="select"
+                            data-bind="attr: {id: getCode() + '-card-id', 'data-container': getCode() + '-card-id'},
+                                    mageInit: {creditCardType:{creditCardTypeContainer:'#' + getCode() + '-cc-type-ss-div'}},
+                                    enable: true,
+                                    options: getStoredCards(),
+                                    optionsValue: 'id',
+                                    optionsText: 'label',
+                                    optionsCaption: $t('Add new card'),
+                                    value: selectedCard">
+                    </select>
+                </div>
+            </div>
+            <div>&nbsp;</div>
+            <!-- /ko -->
+            <div class="field type required widget" data-bind="visible: isCcFormShown">
+                <label data-bind="attr: {for: getCode() + '-cc-type'}" class="label">
+                    <span><!-- ko text: $t('Credit Card Type')--><!-- /ko --></span>
+                </label>
+                <div class="control">
+                    <ul class="credit-card-types">
+                        <!-- ko foreach: {data: getCcAvailableTypesValues(), as: 'item'} -->
+                        <li class="item" data-bind="css: {_active: $parent.selectedCardType() == item.value} ">
+                            <!--ko if: $parent.getIcons(item.value) -->
+                            <img data-bind="attr: {
+                            'src': $parent.getIcons(item.value).url,
+                            'alt': item.type,
+                            'width': $parent.getIcons(item.value).width,
+                            'height': $parent.getIcons(item.value).height
+                            }">
+                            <!--/ko-->
+                        </li>
+                        <!--/ko-->
+                    </ul>
+                    <input type="hidden"
+                           name="payment[cc_type]"
+                           class="input-text"
+                           value=""
+                           data-bind="attr: {id: getCode() + '-cc-type', 'data-container': getCode() + '-cc-type'},
+                       value: creditCardType
+                       ">
+                </div>
+            </div>
+            <div class="field number required" data-bind="visible: isCcFormShown">
+                <label data-bind="attr: {for: getCode() + '-cc-number'}" class="label">
+                    <span><!-- ko text: $t('Credit Card Number')--><!-- /ko --></span>
+                </label>
+                <div class="control">
+                    <input type="number" name="payment[cc_number]" class="input-text" value=""
+                           data-bind="attr: {id: getCode() + '-cc-number', title: $t('Credit Card Number'), 'data-container': getCode() + '-cc-number', 'data-validate': JSON.stringify({'required-number':true, 'validate-cc-number':'#' + getCode() + '-cc-type', 'validate-cc-type':'#' + getCode() + '-cc-type'})},
+                    enable: true, value: creditCardNumber"/>
+                </div>
+            </div>
+            <div class="field date required" data-bind="attr: {id: getCode() + '-cc-type-exp-div'}, visible: isCcFormShown">
+                <label data-bind="attr: {for: getCode() + '-cc-exp-month'}" class="label">
+                    <span><!-- ko text: $t('Expiration Date')--><!-- /ko --></span>
+                </label>
+                <div class="control">
+                    <div class="fields group group-2">
+                        <div class="field no-label month">
+                            <div class="control">
+                                <select  name="payment[cc_exp_month]" class="select month"
+                                         data-bind="attr: {id: getCode() + '-cc-exp-month', 'data-container': getCode() + '-cc-month', 'data-validate': JSON.stringify({required:true, 'validate-cc-exp':'#' + getCode() + '-cc-exp-year'})},
+                                enable: true,
+                                options: getCcMonthsValues(),
+                                optionsValue: 'value',
+                                optionsText: 'month',
+                                optionsCaption: $t('Month'),
+                                value: creditCardExpMonth">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="field no-label year">
+                            <div class="control">
+                                <select name="payment[cc_exp_year]" class="select year"
+                                        data-bind="attr: {id: getCode() + '-cc-exp-year', 'data-container': getCode() + '-cc-year', 'data-validate': JSON.stringify({required:true})},
+                                enable: true,
+                                options: getCcYearsValues(),
+                                optionsValue: 'value',
+                                optionsText: 'year',
+                                optionsCaption: $t('Year'),
+                                value: creditCardExpYear">
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ko if: (hasVerification())-->
+            <div class="field cvv required" data-bind="attr: {id: getCode() + '-cc-type-cvv-div'}, visible: (isCcvShown)">
+                <label data-bind="attr: {for: getCode() + '-cc-cid'}" class="label">
+                    <span><!-- ko text: $t('Card Verification Number')--><!-- /ko --></span>
+                </label>
+                <div class="control">
+                    <input type="number"
+                           class="input-text cvv"
+                           name="payment[cc_cid]"
+                           value=""
+                           data-bind="attr: {id: getCode() + '-cc-cid',
+                       title: $t('Card Verification Number'),
+                       'data-container': getCode() + '-cc-cvv',
+                       'data-validate': JSON.stringify({'required-number':true, 'validate-cc-cvn':'#' + getCode() + '-cc-type'})},
+                       enable: true,
+                       value: creditCardVerificationNumber" />
+                    <div class="field-tooltip toggle">
+                        <span class="field-tooltip-action action-cvv"
+                              tabindex="0"
+                              data-toggle="dropdown"
+                              data-bind="attr: {title: $t('What is this?')}, mageInit: {'dropdown':{'activeClass': '_active'}}">
+                            <span><!-- ko text: $t('What is this?')--><!-- /ko --></span>
+                        </span>
+                        <div class="field-tooltip-content"
+                             data-target="dropdown"
+                             data-bind="html: getCvvImageHtml()"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- /ko -->
+            <!-- ko if: (canSaveCard)-->
+            <div class="field" data-bind="visible: isCcFormShown">
+                <label class="label">
+                    <span></span>
+                </label>
+                <div class="control">
+                    <!-- ko if: (forceSaveCard)-->
+                    <input type="hidden"
+                           name="payment[save]"
+                           value="1"
+                           checked="checked"
+                           class="checkbox"
+                           data-bind="checked: save, attr: {id: getCode() + '-save'}"/>
+                    <label class="label" data-bind="attr: {for: getCode() + '-save'}">
+                        <span><!-- ko text: $t('For your convenience, this data will be stored securely by our payment processor.')--><!-- /ko --></span>
+                    </label>
+                    <!-- /ko -->
+                    <!-- ko if: (!forceSaveCard)-->
+                    <input type="checkbox"
+                           name="payment[save]"
+                           value="1"
+                           checked="checked"
+                           class="checkbox"
+                           data-bind="checked: save, attr: {id: getCode() + '-save'}"/>
+                    <label class="label" data-bind="attr: {for: getCode() + '-save'}">
+                        <span><!-- ko text: $t('Save for next time')--><!-- /ko --></span>
+                    </label>
+                    <!-- /ko -->
+                </div>
+            </div>
+            <!-- /ko -->
+            <!-- ko if: (useAcceptJs()) -->
+            <div class="no-display _hidden" data-bind="attr: {id: getCode() + '-processing'}">
+                <!-- ko text: $t('Processing, please wait...')--><!-- /ko -->
+            </div>
+            <div class="no-display _hidden" data-bind="attr: {id: getCode() + '-complete'}">
+                &#128077; <!-- ko text: $t('Okay, ready to continue!')--><!-- /ko -->
+            </div>
+            <div class="no-display _hidden"  data-bind="attr: {id: getCode() + '-failed'}">
+                &#10060; <!-- ko text: $t('Please fix your payment info before continuing.')--><!-- /ko --> <span class="error-text"></span>
+            </div>
+            <!-- /ko -->
+        </fieldset>
+
+        <div class="payment-method-content">
+            <div class="checkout-agreements-block">
+                <!-- ko foreach: $parent.getRegion('before-place-order') -->
+                <!-- ko template: getTemplate() --><!-- /ko -->
+                <!--/ko-->
+            </div>
+            <div class="actions-toolbar">
+                <div class="primary">
+                    <button class="action primary checkout"
+                            type="submit"
+                            data-bind="
+                        click: placeOrder,
+                        attr: {title: $t('Place Order'), id: getCode() + '-submit'},
+                        enable: (getCode() == isChecked()),
+                        css: {disabled: !isPlaceOrderActionAllowed()}
+                        "
+                            disabled>
+                        <span data-bind="text: $t('Place Order')"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -28,6 +28,8 @@
                 <reauthorize_partial_invoice>1</reauthorize_partial_invoice>
                 <savecard_opt_out>1</savecard_opt_out>
                 <verify_ssl>1</verify_ssl>
+                <acceptjs>1</acceptjs>
+                <client_key />
                 <group>tokenbase</group>
                 <!-- Feature flags -->
                 <can_order>1</can_order>

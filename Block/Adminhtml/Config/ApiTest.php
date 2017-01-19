@@ -36,7 +36,11 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
 
         // Don't bother if details aren't entered.
         if ($method->getConfigData('login') == '' || $method->getConfigData('trans_key') == '') {
-            return 'Enter API credentials and save to test.';
+            return __('Enter API credentials and save to test.');
+        }
+
+        if ($method->getConfigData('acceptjs') == 1 && $method->getConfigData('client_key') == '') {
+            return __('Accept.js is enabled, but you have not entered your Client Key.');
         }
 
         /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
@@ -64,13 +68,13 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
             if (in_array($errorCode, ['E00005', 'E00006', 'E00007', 'E00008'])) {
                 // Bad login ID / trans key
                 return __('Your API credentials are invalid. (%1)', $errorCode);
-            } elseif ($errorCode == 'E00009') {
+            } elseif ($errorCode === 'E00009') {
                 // Test mode active
                 return __(
                     'Your account has test mode enabled. It must be disabled for CIM to work properly. (%1)',
                     $errorCode
                 );
-            } elseif ($errorCode == 'E00044') {
+            } elseif ($errorCode === 'E00044') {
                 // CIM not enabled
                 return __(
                     'Your account does not have CIM enabled. Please contact your Authorize.Net support rep '
