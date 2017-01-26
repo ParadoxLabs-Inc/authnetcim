@@ -64,7 +64,7 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
     public function getLabel($includeType = true)
     {
         return sprintf(
-            "%s: x-%s",
+            '%s: x-%s',
             $this->getAdditional('echeck_bank_name'),
             $this->getAdditional('echeck_account_number_last4')
         );

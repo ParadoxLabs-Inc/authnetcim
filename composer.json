@@ -8,9 +8,7 @@
     },
     "type": "magento2-module",
     "version": "3.1.0",
-    "license": [
-        "proprietary"
-    ],
+    "license": "proprietary",
     "autoload": {
         "files": [ "registration.php" ],
         "psr-4": {

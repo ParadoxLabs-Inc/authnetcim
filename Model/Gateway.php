@@ -853,36 +853,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 ] + $params['paymentProfile'];
         }
 
-        if ($this->hasParameter('cardNumber')) {
-            $params['paymentProfile']['payment'] = [
-                'creditCard' => [
-                    'cardNumber'     => $this->getParameter('cardNumber'),
-                    'expirationDate' => $this->getParameter('expirationDate'),
-                ],
-            ];
-
-            if ($this->hasParameter('cardCode')) {
-                $params['paymentProfile']['payment']['creditCard']['cardCode'] = $this->getParameter('cardCode');
-            }
-        } elseif ($this->hasParameter('dataValue')) {
-            $params['paymentProfile']['payment'] = [
-                'opaqueData' => [
-                    'dataDescriptor' => $this->getParameter('dataDescriptor'),
-                    'dataValue'      => $this->getParameter('dataValue'),
-                ],
-            ];
-        } elseif ($this->hasParameter('accountNumber')) {
-            $params['paymentProfile']['payment'] = [
-                'bankAccount' => [
-                    'accountType'   => $this->getParameter('accountType'),
-                    'routingNumber' => $this->getParameter('routingNumber'),
-                    'accountNumber' => $this->getParameter('accountNumber'),
-                    'nameOnAccount' => $this->getParameter('nameOnAccount'),
-                    'echeckType'    => $this->getParameter('echeckType'),
-                    'bankName'      => $this->getParameter('bankName'),
-                ],
-            ];
-        }
+        $params = $this->createCustomerPaymentProfileAddPaymentInfo($params);
 
         $result = $this->runTransaction('createCustomerPaymentProfileRequest', $params);
         $paymentId = null;
@@ -917,7 +888,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 // TODO: This will need to be adjusted when Accept.js adds ACH support.
                 if ($this->hasParameter('dataValue')) {
                     $this->setParameter('cardNumber', 'XXXX' . $this->getCard()->getAdditional('cc_last4'));
-                    $this->setParameter('expirationDate', date("Y-m", strtotime($this->getCard()->getExpires())));
+                    $this->setParameter('expirationDate', date('Y-m', strtotime($this->getCard()->getExpires())));
                 }
 
                 $this->updateCustomerPaymentProfile();
@@ -1340,36 +1311,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             ],
         ];
 
-        if ($this->hasParameter('cardNumber')) {
-            $params['paymentProfile']['payment'] = [
-                'creditCard' => [
-                    'cardNumber'     => $this->getParameter('cardNumber'),
-                    'expirationDate' => $this->getParameter('expirationDate'),
-                ],
-            ];
-
-            if ($this->hasParameter('cardCode')) {
-                $params['paymentProfile']['payment']['creditCard']['cardCode'] = $this->getParameter('cardCode');
-            }
-        } elseif ($this->hasParameter('dataValue')) {
-            $params['paymentProfile']['payment'] = [
-                'opaqueData' => [
-                    'dataDescriptor' => $this->getParameter('dataDescriptor'),
-                    'dataValue'      => $this->getParameter('dataValue'),
-                ],
-            ];
-        } elseif ($this->hasParameter('accountNumber')) {
-            $params['paymentProfile']['payment'] = [
-                'bankAccount' => [
-                    'accountType'   => $this->getParameter('accountType'),
-                    'routingNumber' => $this->getParameter('routingNumber'),
-                    'accountNumber' => $this->getParameter('accountNumber'),
-                    'nameOnAccount' => $this->getParameter('nameOnAccount'),
-                    'echeckType'    => $this->getParameter('echeckType'),
-                    'bankName'      => $this->getParameter('bankName'),
-                ],
-            ];
-        }
+        $params = $this->createCustomerPaymentProfileAddPaymentInfo($params);
 
         if (empty($params['paymentProfile']['payment'])) {
             unset($params['paymentProfile']['payment']);
@@ -1618,7 +1560,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         $txn     = $response['transaction'];
-        $eCheck  = $this->helper->getArrayValue($txn, 'payment/bankAccount', false) !== false ? true : false;
+        $eCheck  = $this->helper->getArrayValue($txn, 'payment/bankAccount', false) !== false;
 
         // Map data.
         $data    = [
@@ -2247,5 +2189,49 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 );
             }
         }
+    }
+
+    /**
+     * Add payment fields to a createCustomerPaymentProfile API request's parameters.
+     *
+     * Split out to reduce that method's cyclomatic complexity.
+     *
+     * @param array $params
+     * @return array
+     */
+    protected function createCustomerPaymentProfileAddPaymentInfo($params)
+    {
+        if ($this->hasParameter('cardNumber')) {
+            $params['paymentProfile']['payment'] = [
+                'creditCard' => [
+                    'cardNumber'     => $this->getParameter('cardNumber'),
+                    'expirationDate' => $this->getParameter('expirationDate'),
+                ],
+            ];
+
+            if ($this->hasParameter('cardCode')) {
+                $params['paymentProfile']['payment']['creditCard']['cardCode'] = $this->getParameter('cardCode');
+            }
+        } elseif ($this->hasParameter('dataValue')) {
+            $params['paymentProfile']['payment'] = [
+                'opaqueData' => [
+                    'dataDescriptor' => $this->getParameter('dataDescriptor'),
+                    'dataValue'      => $this->getParameter('dataValue'),
+                ],
+            ];
+        } elseif ($this->hasParameter('accountNumber')) {
+            $params['paymentProfile']['payment'] = [
+                'bankAccount' => [
+                    'accountType'   => $this->getParameter('accountType'),
+                    'routingNumber' => $this->getParameter('routingNumber'),
+                    'accountNumber' => $this->getParameter('accountNumber'),
+                    'nameOnAccount' => $this->getParameter('nameOnAccount'),
+                    'echeckType'    => $this->getParameter('echeckType'),
+                    'bankName'      => $this->getParameter('bankName'),
+                ],
+            ];
+        }
+
+        return $params;
     }
 }

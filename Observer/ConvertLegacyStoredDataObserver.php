@@ -156,21 +156,11 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
         $gateway->setParameter('customerProfileId', $profileId);
 
         $profile = $gateway->getCustomerProfile();
-        $cards = [];
 
         $affectedCards = 0;
         $affectedRps = 0;
 
-        if (isset($profile['profile']['paymentProfiles']) && !empty($profile['profile']['paymentProfiles'])) {
-            if (isset($profile['profile']['paymentProfiles']['billTo'])) {
-                $cards[$profile['profile']['paymentProfiles']['customerPaymentProfileId']]
-                    = $profile['profile']['paymentProfiles'];
-            } else {
-                foreach ($profile['profile']['paymentProfiles'] as $card) {
-                    $cards[$card['customerPaymentProfileId']] = $card;
-                }
-            }
-        }
+        $cards = $this->getCardsFromProfile($profile);
 
         if (!empty($cards)) {
             /**
@@ -186,7 +176,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
             $this->helper->log(
                 'authnetcim',
                 sprintf(
-                    "Updated records for customer %s %s (%d): %d cards, %d orders, %d profiles",
+                    'Updated records for customer %s %s (%d): %d cards, %d orders, %d profiles',
                     $customer->getFirstname(),
                     $customer->getLastname(),
                     $customer->getId(),
@@ -299,5 +289,30 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
 
             $affectedCards++;
         }
+    }
+
+    /**
+     * Pull payment profile info out of the given customer profile array.
+     *
+     * @param array $profile
+     * @return array
+     */
+    protected function getCardsFromProfile(array $profile)
+    {
+        $cards = [];
+        if (isset($profile['profile']['paymentProfiles']) && !empty($profile['profile']['paymentProfiles'])) {
+            $profiles = $profile['profile']['paymentProfiles'];
+
+            // Could have one value, or several. Handle both cases.
+            if (isset($profiles['billTo'])) {
+                $cards[$profiles['customerPaymentProfileId']] = $profiles;
+            } else {
+                foreach ($profiles as $card) {
+                    $cards[$card['customerPaymentProfileId']] = $card;
+                }
+            }
+        }
+
+        return $cards;
     }
 }

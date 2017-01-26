@@ -127,7 +127,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
 
             $this->setAdditional('cc_exp_year', $payment->getData('cc_exp_year'))
                 ->setAdditional('cc_exp_month', $payment->getData('cc_exp_month'))
-                ->setData('expires', sprintf("%s-%s-%s 23:59:59", $yr, $mo, $day));
+                ->setData('expires', sprintf('%s-%s-%s 23:59:59', $yr, $mo, $day));
         }
 
         return $this;
@@ -290,7 +290,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $gateway->setParameter('billToFirstName', $address->getFirstname());
             $gateway->setParameter('billToLastName', $address->getLastname());
             $gateway->setParameter('billToCompany', $address->getCompany());
-            $gateway->setParameter('billToAddress', implode(", ", $address->getStreet()));
+            $gateway->setParameter('billToAddress', implode(', ', $address->getStreet()));
             $gateway->setParameter('billToCity', $address->getCity());
             $gateway->setParameter('billToState', $region);
             $gateway->setParameter('billToZip', $address->getPostcode());
@@ -317,7 +317,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $gateway->setParameter('billToFirstName', $address->getFirstname());
             $gateway->setParameter('billToLastName', $address->getLastname());
             $gateway->setParameter('billToCompany', $address->getCompany());
-            $gateway->setParameter('billToAddress', implode(", ", $address->getStreet()));
+            $gateway->setParameter('billToAddress', implode(', ', $address->getStreet()));
             $gateway->setParameter('billToCity', $address->getCity());
             $gateway->setParameter('billToState', $region);
             $gateway->setParameter('billToZip', $address->getPostcode());
@@ -325,11 +325,10 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $gateway->setParameter('billToPhoneNumber', $address->getTelephone());
             $gateway->setParameter('billToFaxNumber', $address->getFax());
 
-            if ($this->helper->getIsAccount()) {
-                $gateway->setParameter('validationMode', $this->getMethodInstance()->getConfigData('validation_mode'));
-            } else {
-                $gateway->setParameter('validationMode', null);
-            }
+            $gateway->setParameter(
+                'validationMode',
+                $this->helper->getIsAccount() ? $this->getMethodInstance()->getConfigData('validation_mode') : null
+            );
 
             $this->setPaymentInfoOnUpdate($gateway);
 
@@ -365,7 +364,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $errorCode = $response['messages']['message']['code'];
             $errorText = $response['messages']['message']['text'];
 
-            $this->helper->log($this->getMethod(), sprintf("API error: %s: %s", $errorCode, $errorText));
+            $this->helper->log($this->getMethod(), sprintf('API error: %s: %s', $errorCode, $errorText));
             $gateway->logLogs();
 
             throw new LocalizedException(__(sprintf('Authorize.Net CIM Gateway: %s', $errorText)));
@@ -408,7 +407,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
         $gateway->setParameter('billToFirstName', $address->getFirstname());
         $gateway->setParameter('billToLastName', $address->getLastname());
         $gateway->setParameter('billToCompany', $address->getCompany());
-        $gateway->setParameter('billToAddress', implode(", ", $address->getStreet()));
+        $gateway->setParameter('billToAddress', implode(', ', $address->getStreet()));
         $gateway->setParameter('billToCity', $address->getCity());
         $gateway->setParameter('billToState', $region);
         $gateway->setParameter('billToZip', $address->getPostcode());
@@ -454,7 +453,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $gateway->setParameter('cardCode', $info->getData('cc_cid'));
             $gateway->setParameter(
                 'expirationDate',
-                sprintf("%04d-%02d", $info->getData('cc_exp_year'), $info->getData('cc_exp_month'))
+                sprintf('%04d-%02d', $info->getData('cc_exp_year'), $info->getData('cc_exp_month'))
             );
         }
 
@@ -509,7 +508,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $gateway->setParameter(
                 'expirationDate',
                 sprintf(
-                    "%04d-%02d",
+                    '%04d-%02d',
                     $info->getData('cc_exp_year'),
                     $info->getData('cc_exp_month')
                 )
