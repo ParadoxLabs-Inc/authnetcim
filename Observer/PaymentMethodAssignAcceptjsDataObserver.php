@@ -3,6 +3,12 @@
  * Paradox Labs, Inc.
  * http://www.paradoxlabs.com
  * 717-431-3330
+ *
+ * Need help? Open a ticket in our support system:
+ *  http://support.paradoxlabs.com
+ *
+ * @author      Ryan Hoerr <support@paradoxlabs.com>
+ * @license     http://store.paradoxlabs.com/license.html
  */
 
 namespace ParadoxLabs\Authnetcim\Observer;
@@ -39,14 +45,19 @@ class PaymentMethodAssignAcceptjsDataObserver implements \Magento\Framework\Even
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         /** @var \Magento\Payment\Model\MethodInterface $method */
-        $method = $observer->getData(AbstractDataAssignObserver::METHOD_CODE);
+        $method = $observer->getData('method');
         $tokenbaseMethod = $this->methodFactory->getMethodInstance($method->getCode());
 
         /** @var \Magento\Sales\Model\Order\Payment $payment */
-        $payment = $observer->getData(AbstractDataAssignObserver::MODEL_CODE);
+        $payment = $observer->getData('payment_model');
+
+        // Magento 2.0 compatibility
+        if ($payment === null) {
+            $payment = $method->getInfoInstance();
+        }
 
         /** @var \Magento\Framework\DataObject $data */
-        $data = $observer->getData(AbstractDataAssignObserver::DATA_CODE);
+        $data = $observer->getData('data');
 
         /**
          * Merge together data from additional_data array
