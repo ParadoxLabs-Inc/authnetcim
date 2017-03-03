@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
-    <module name="ParadoxLabs_Authnetcim" setup_version="3.1.1.20170302">
+    <module name="ParadoxLabs_Authnetcim" setup_version="3.1.2.20170303">
         <sequence>
             <module name="ParadoxLabs_TokenBase" />
             <module name="Magento_Payment" />
