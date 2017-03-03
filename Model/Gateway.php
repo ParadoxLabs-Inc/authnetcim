@@ -82,7 +82,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'customerShippingAddressId' => [],
         'customerType'              => ['enum' => ['individual', 'business']],
         'dataDescriptor'            => ['noSymbols' => true],
-        'dataValue'                 => ['charMask' => 'a-zA-Z0-9+/\\='],
+        'dataValue'                 => ['charMask' => 'a-zA-Z0-9+\/\\='],
         'description'               => ['maxLength' => 255],
         'duplicateWindow'           => ['charMask' => '\d'],
         'dutyAmount'                => [],
