@@ -136,7 +136,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
     /**
      * Finalize before saving.
      *
-     * return $this
+     * @return $this
      */
     public function beforeSave()
     {
@@ -152,6 +152,31 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
         }
 
         parent::beforeSave();
+
+        return $this;
+    }
+
+    /**
+     * Finalize after saving.
+     *
+     * @return $this
+     */
+    public function afterSave()
+    {
+        // On card save, store the token/ID in the registry (if any) to avoid token reuse.
+        if ($this->hasData('info_instance')) {
+            $acceptJsValue = $this->getMethodInstance()->gateway()->getParameter('dataValue');
+
+            if (!empty($acceptJsValue)) {
+                $this->_registry->register(
+                    'authnetcim-acceptjs-' . $acceptJsValue,
+                    $this->getId(),
+                    true
+                );
+            }
+        }
+
+        parent::afterSave();
 
         return $this;
     }

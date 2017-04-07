@@ -61,6 +61,17 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
 
+        // Check for stale Accept.js token
+        $acceptJsValue = $this->getInfoInstance()->getAdditionalInformation('acceptjs_value');
+        $acceptCardId  = $this->registry->registry('authnetcim-acceptjs-' . $acceptJsValue);
+        if (!empty($acceptJsValue) && $acceptCardId !== null) {
+            // If we already stored the current token as a card and recorded it as such (via arbitrary registry key),
+            // we can't reuse it -- swap the card ID in and use that instead.
+            $payment->setData('tokenbase_id', $acceptCardId);
+            $payment->unsAdditionalInformation('acceptjs_key');
+            $payment->unsAdditionalInformation('acceptjs_value');
+        }
+
         if ($this->card !== null) {
             $this->log(sprintf('loadOrCreateCard(%s %s)', get_class($payment), $payment->getId()));
 
