@@ -1,5 +1,10 @@
 <?xml version="1.0"?>
 <payment xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Payment:etc/payment.xsd">
+    <groups>
+        <group id="tokenbase">
+            <label>ParadoxLabs Tokenization Methods</label>
+        </group>
+    </groups>
     <methods>
         <method name="authnetcim">
             <allow_multiple_address>1</allow_multiple_address>

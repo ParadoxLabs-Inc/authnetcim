@@ -70,13 +70,13 @@ define(
                 return 'authnetcim';
             },
             getApiLoginId: function () {
-                return this.apiLoginId;
+                return this.apiLoginId !== null ? this.apiLoginId : '';
             },
             getClientKey: function () {
-                return this.clientKey;
+                return this.clientKey !== null ? this.clientKey : '';
             },
             getSandbox: function () {
-                return this.sandbox;
+                return this.sandbox !== null ? this.sandbox : false;
             },
             useAcceptJs: function () {
                 return this.getApiLoginId().length > 0 && this.getClientKey().length > 0;
