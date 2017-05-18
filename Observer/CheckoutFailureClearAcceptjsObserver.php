@@ -51,8 +51,8 @@ class CheckoutFailureClearAcceptjsObserver implements \Magento\Framework\Event\O
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         try {
-            $this->clearAcceptJsTokens($observer->getEvent()->getData('order')->getPayment());
-            $this->clearAcceptJsTokens($observer->getEvent()->getData('quote')->getPayment());
+            $this->clearAcceptJsTokens($observer->getEvent()->getData('order'));
+            $this->clearAcceptJsTokens($observer->getEvent()->getData('quote'));
         } catch (\Exception $e) {
             // Ignore any errors; we don't want to throw them in this context.
         }
@@ -61,25 +61,30 @@ class CheckoutFailureClearAcceptjsObserver implements \Magento\Framework\Event\O
     /**
      * Unset payment object values, to ensure they will not be reused.
      *
-     * @param mixed $payment
+     * @param mixed $object
      * @return $this
      */
-    protected function clearAcceptJsTokens($payment)
+    protected function clearAcceptJsTokens($object)
     {
-        if ($payment instanceof \Magento\Payment\Model\InfoInterface) {
-            $acceptJsKey   = $payment->getAdditionalInformation('acceptjs_key');
-            $acceptJsValue = $payment->getAdditionalInformation('acceptjs_value');
+        if ($object instanceof \Magento\Quote\Model\Quote || $object instanceof \Magento\Sales\Model\Order) {
+            $payment = $object->getPayment();
 
-            if (!empty($acceptJsKey) || !empty($acceptJsValue)) {
-                $payment->setAdditionalInformation('acceptjs_key', null);
-                $payment->setAdditionalInformation('acceptjs_value', null);
+            if ($payment instanceof \Magento\Payment\Model\InfoInterface) {
+                $acceptJsKey = $payment->getAdditionalInformation('acceptjs_key');
+                $acceptJsValue = $payment->getAdditionalInformation('acceptjs_value');
 
-                if ($payment->getId() > 0) {
-                    if ($payment instanceof \Magento\Sales\Api\Data\OrderPaymentInterface) {
-                        $this->orderPaymentRepository->save($payment);
-                    } elseif ($payment instanceof \Magento\Quote\Api\Data\PaymentInterface
-                        && $payment->getQuote() instanceof \Magento\Quote\Api\Data\CartInterface) {
-                        $this->quoteRepository->save($payment->getQuote());
+                if (!empty($acceptJsKey) || !empty($acceptJsValue)) {
+                    $payment->setAdditionalInformation('acceptjs_key', null);
+                    $payment->setAdditionalInformation('acceptjs_value', null);
+
+                    if ($payment->getId() > 0) {
+                        if ($payment instanceof \Magento\Sales\Api\Data\OrderPaymentInterface) {
+                            $this->orderPaymentRepository->save($payment);
+                        } elseif ($payment instanceof \Magento\Quote\Api\Data\PaymentInterface
+                            && $payment->getQuote() instanceof \Magento\Quote\Api\Data\CartInterface
+                        ) {
+                            $this->quoteRepository->save($payment->getQuote());
+                        }
                     }
                 }
             }

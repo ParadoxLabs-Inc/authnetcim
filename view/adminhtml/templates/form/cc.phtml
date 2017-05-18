@@ -62,7 +62,7 @@ $storedCards    = $block->getStoredCards();
         <div class="admin__field hide-if-card-selected">
             <label class="label admin__field-label" for="<?php echo $code ?>-cc-number"><?php echo $block->escapeHtml(__('Credit Card Number')) ?><span class="required">*</span></label>
             <div class="admin__field-control control">
-                <input type="text" id="<?php echo $code ?>-cc-number" name="payment[cc_number]"  title="<?php echo $block->escapeQuote(__('Credit Card Number')) ?>" class="input-text admin__control-text validate-cc-number validate-cc-type" value="<?php echo $block->escapeQuote($block->getInfoData('cc_number')); ?>" autocomplete="off" />
+                <input type="text" pattern="[0-9]*" id="<?php echo $code ?>-cc-number" name="payment[cc_number]"  title="<?php echo $block->escapeQuote(__('Credit Card Number')) ?>" class="input-text admin__control-text validate-cc-number validate-cc-type" value="<?php echo $block->escapeQuote($block->getInfoData('cc_number')); ?>" autocomplete="off" />
             </div>
         </div>
         <div class="admin__field hide-if-card-selected">
@@ -88,7 +88,7 @@ $storedCards    = $block->getStoredCards();
                 <label class="label admin__field-label" for="<?php echo $code ?>-cc-cid" ><?php echo $block->escapeHtml(__('Card Verification Number')) ?><span class="required">*</span></label>
                 <div class="admin__field-control control">
                     <div class="v-fix">
-                        <input type="text" title="<?php echo $block->escapeQuote(__('Card Verification Number')) ?>" class="input-text admin__control-text cvv required-entry validate-cc-cvn" id="<?php echo $code ?>-cc-cid" name="payment[cc_cid]" value="<?php echo $block->escapeQuote($block->getInfoData('cc_cid')); ?>" autocomplete="off" />
+                        <input type="text" pattern="[0-9]*" title="<?php echo $block->escapeQuote(__('Card Verification Number')) ?>" class="input-text admin__control-text cvv required-entry validate-cc-cvn" id="<?php echo $code ?>-cc-cid" name="payment[cc_cid]" value="<?php echo $block->escapeQuote($block->getInfoData('cc_cid')); ?>" autocomplete="off" />
                     </div>
                 </div>
             </div>

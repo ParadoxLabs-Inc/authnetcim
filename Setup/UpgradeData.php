@@ -74,7 +74,7 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
                     'input'            => 'text',
                     'default'          => '',
                     'position'         => 70,
-                    'visible'          => true,
+                    'visible'          => false,
                     'required'         => false,
                     'system'           => false,
                     'user_defined'     => true,
@@ -120,6 +120,18 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
 
                 $this->attributeRepository->save($profileIdAttr);
             }
+
+            /**
+             * is_visible should be 0 to prevent the attribute showing on forms.
+             */
+            if ($attribute['is_visible'] != 0) {
+                $customerSetup->updateAttribute(
+                    Customer::ENTITY,
+                    $attribute['attribute_id'],
+                    'is_visible',
+                    0
+                );
+            }
         }
 
         /**
@@ -136,7 +148,7 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
                     'input'            => 'text',
                     'default'          => '100',
                     'position'         => 71,
-                    'visible'          => true,
+                    'visible'          => false,
                     'required'         => false,
                     'system'           => false,
                     'user_defined'     => true,
@@ -181,6 +193,18 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
                 ]);
 
                 $this->attributeRepository->save($profileVersionAttr);
+            }
+
+            /**
+             * is_visible should be 0 to prevent the attribute showing on forms.
+             */
+            if ($attribute['is_visible'] != 0) {
+                $customerSetup->updateAttribute(
+                    Customer::ENTITY,
+                    $attribute['attribute_id'],
+                    'is_visible',
+                    0
+                );
             }
         }
 

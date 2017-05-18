@@ -143,7 +143,7 @@
         <div class="admin__field number _required">
             <label for="<?php echo $code ?>-cc-number" class="admin__field-label"><span><?php echo $block->escapeHtml(__('CC Number')) ?></span></label>
             <div class="admin__field-control">
-                <input type="text" id="<?php echo $code ?>-cc-number" name="payment[cc_number]" title="<?php echo $block->escapeQuote(__('Credit Card Number')) ?>" class="admin__control-text" value="<?php echo $block->escapeQuote($block->getCard()->getLabel(false)); ?>" data-validate='{"required-number":true, "validate-cc-number":"#<?php echo $code ?>-cc-type", "validate-cc-type":"#<?php echo $code ?>-cc-type"}' autocomplete="off" />
+                <input type="text" pattern="[0-9]*" id="<?php echo $code ?>-cc-number" name="payment[cc_number]" title="<?php echo $block->escapeQuote(__('Credit Card Number')) ?>" class="admin__control-text" value="<?php echo $block->escapeQuote($block->getCard()->getLabel(false)); ?>" data-validate='{"required-number":true, "validate-cc-number":"#<?php echo $code ?>-cc-type", "validate-cc-type":"#<?php echo $code ?>-cc-type"}' autocomplete="off" />
             </div>
         </div>
         <div class="admin__field date _required" id="<?php echo $code ?>-cc-type_exp_div">
@@ -167,7 +167,7 @@
             <div class="admin__field cvv _required" id="<?php echo $code ?>-cc-type_cvv_div">
                 <label for="<?php echo $code ?>-cc-cid" class="admin__field-label"><span><?php echo $block->escapeHtml(__('CCV')) ?></span></label>
                 <div class="admin__field-control">
-                    <input type="number" title="<?php echo $block->escapeQuote(__('Card Verification Number')) ?>" class="admin__control-text cvv" id="<?php echo $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true, "validate-cc-cvn":"#<?php echo $code ?>-cc-type"}' autocomplete="off" />
+                    <input type="text" pattern="[0-9]*" title="<?php echo $block->escapeQuote(__('Card Verification Number')) ?>" class="admin__control-text cvv" id="<?php echo $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true, "validate-cc-cvn":"#<?php echo $code ?>-cc-type"}' autocomplete="off" />
                 </div>
             </div>
         <?php endif; ?>

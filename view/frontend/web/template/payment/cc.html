@@ -94,8 +94,8 @@
                     <span><!-- ko text: $t('Credit Card Number')--><!-- /ko --></span>
                 </label>
                 <div class="control">
-                    <input type="number" name="payment[cc_number]" class="input-text" value=""
-                           data-bind="attr: {id: getCode() + '-cc-number', title: $t('Credit Card Number'), 'data-container': getCode() + '-cc-number', 'data-validate': JSON.stringify({'required-number':true, 'validate-cc-number':'#' + getCode() + '-cc-type', 'validate-cc-type':'#' + getCode() + '-cc-type'})},
+                    <input type="text" pattern="[0-9]*" name="payment[cc_number]" class="input-text" value=""
+                           data-bind="attr: {id: getCode() + '-cc-number', title: $t('Credit Card Number'), 'data-container': getCode() + '-cc-number', 'data-validate': JSON.stringify({'required':true, 'validate-cc-number':'#' + getCode() + '-cc-type', 'validate-cc-type':'#' + getCode() + '-cc-type'})},
                     enable: true, value: creditCardNumber"/>
                 </div>
             </div>
@@ -140,7 +140,8 @@
                     <span><!-- ko text: $t('Card Verification Number')--><!-- /ko --></span>
                 </label>
                 <div class="control">
-                    <input type="number"
+                    <input type="text"
+                           pattern="[0-9]*"
                            class="input-text cvv"
                            name="payment[cc_cid]"
                            value=""

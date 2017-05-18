@@ -89,13 +89,11 @@ define([
          */
         bind: function () {
             // Global callback and param is necessary for the vendor JS library.
-            if( typeof window['acceptJs_' + this.options.method + '_callback'] == 'undefined' ) {
-                window['acceptJs_' + this.options.method + '_callback'] = function(response) {
-                    this.handlePaymentResponse(response);
-                }.bind(this);
+            window['acceptJs_' + this.options.method + '_callback'] = function(response) {
+                this.handlePaymentResponse(response);
+            }.bind(this);
 
-                window.isReady = true;
-            }
+            window.isReady = true;
 
             if (this.element) {
                 this.element.on(

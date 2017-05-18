@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <!-- Payment Method Facade -->
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualFacade" type="Magento\Payment\Model\Method\Adapter">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualFacade" type="Magento\Payment\Model\Method\Adapter" shared="false">
         <arguments>
             <argument name="code" xsi:type="const">\ParadoxLabs\Authnetcim\Model\ConfigProvider::CODE</argument>
             <argument name="formBlockType" xsi:type="string">ParadoxLabs\Authnetcim\Block\Form\Cc</argument>
@@ -12,7 +12,7 @@
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualFacade" type="Magento\Payment\Model\Method\Adapter">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualFacade" type="Magento\Payment\Model\Method\Adapter" shared="false">
         <arguments>
             <argument name="code" xsi:type="const">\ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider::CODE</argument>
             <argument name="formBlockType" xsi:type="string">ParadoxLabs\Authnetcim\Block\Form\Ach</argument>
@@ -74,7 +74,7 @@
         </arguments>
     </type>
 
-    <type name="ParadoxLabs\Authnetcim\Model\Ach\Method">
+    <type name="ParadoxLabs\Authnetcim\Model\Ach\Method" shared="false">
         <arguments>
             <argument name="gateway" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\Gateway</argument>
             <argument name="cardFactory" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\CardFactory</argument>
@@ -109,7 +109,6 @@
     <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualGlobalValidator" type="Magento\Payment\Gateway\Validator\ValidatorComposite">
         <arguments>
             <argument name="validators" xsi:type="array">
-                <item name="country" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\VirtualCountryValidator</item>
                 <item name="storedCard" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\VirtualStoredCardValidator</item>
                 <item name="creditCard" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\VirtualCreditCardValidator</item>
             </argument>
@@ -119,7 +118,6 @@
     <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualGlobalValidator" type="Magento\Payment\Gateway\Validator\ValidatorComposite">
         <arguments>
             <argument name="validators" xsi:type="array">
-                <item name="country" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\Ach\VirtualCountryValidator</item>
                 <item name="storedAch" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\Ach\VirtualStoredAchValidator</item>
                 <item name="newAch" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\Ach\VirtualNewAchValidator</item>
             </argument>
@@ -156,7 +154,7 @@
     <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualNewAchValidator" type="ParadoxLabs\TokenBase\Gateway\Validator\NewAch" />
 
     <!-- Commands -->
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualCommandPool" type="Magento\Payment\Gateway\Command\CommandPool" shared="false">
         <arguments>
             <argument name="commands" xsi:type="array">
                 <item name="order" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\VirtualOrderCommand</item>
@@ -170,7 +168,7 @@
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualCommandPool" type="Magento\Payment\Gateway\Command\CommandPool" shared="false">
         <arguments>
             <argument name="commands" xsi:type="array">
                 <item name="order" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\Ach\VirtualOrderCommand</item>
@@ -184,85 +182,85 @@
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualOrderCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Order">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualOrderCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Order" shared="false">
         <arguments>
             <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Method</argument>
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualOrderCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Order">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualOrderCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Order" shared="false">
         <arguments>
             <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\Method</argument>
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualAuthorizeCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Authorize">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualAuthorizeCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Authorize" shared="false">
         <arguments>
             <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Method</argument>
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualAuthorizeCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Authorize">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualAuthorizeCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Authorize" shared="false">
         <arguments>
             <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\Method</argument>
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualCaptureCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Capture">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualCaptureCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Capture" shared="false">
         <arguments>
             <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Method</argument>
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualCaptureCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Capture">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualCaptureCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Capture" shared="false">
         <arguments>
             <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\Method</argument>
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualRefundCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Refund">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualRefundCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Refund" shared="false">
         <arguments>
             <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Method</argument>
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualRefundCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Refund">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualRefundCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Refund" shared="false">
         <arguments>
             <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\Method</argument>
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualCancelCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Cancel">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualCancelCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Cancel" shared="false">
         <arguments>
             <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Method</argument>
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualCancelCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Cancel">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualCancelCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Cancel" shared="false">
         <arguments>
             <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\Method</argument>
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualVoidCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Void">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualVoidCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Void" shared="false">
         <arguments>
             <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Method</argument>
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualVoidCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Void">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualVoidCommand" type="ParadoxLabs\TokenBase\Gateway\Command\Void" shared="false">
         <arguments>
             <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\Method</argument>
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualFetchTransactionInformationCommand" type="ParadoxLabs\TokenBase\Gateway\Command\FetchTransactionInformation">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualFetchTransactionInformationCommand" type="ParadoxLabs\TokenBase\Gateway\Command\FetchTransactionInformation" shared="false">
         <arguments>
             <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Method</argument>
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualFetchTransactionInformationCommand" type="ParadoxLabs\TokenBase\Gateway\Command\FetchTransactionInformation">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualFetchTransactionInformationCommand" type="ParadoxLabs\TokenBase\Gateway\Command\FetchTransactionInformation" shared="false">
         <arguments>
             <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\Method</argument>
         </arguments>
