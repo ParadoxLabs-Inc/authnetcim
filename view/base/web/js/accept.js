@@ -231,6 +231,11 @@ define([
                 $(this.element).find('#' + this.options.method + '-acceptjs-value').val(response.opaqueData.dataValue).trigger('change');
                 $(this.element).find('#' + this.options.method + '-cc-last4').val(cc_no.substring(cc_no.length - 4)).trigger('change');
 
+                var binField = $(this.element).find('#' + this.options.method + '-cc-bin');
+                if (binField.length > 0) {
+                    binField.val(cc_no.substring(0, 6)).trigger('change');
+                }
+
                 // Remove fields from request
                 $(this.protectedFields).each(function (i, elemIndex) {
                     if (typeof $(this.element).find('#' + this.options.method + elemIndex) != 'undefined') {

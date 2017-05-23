@@ -11,6 +11,9 @@ $storedCards    = $block->getStoredCards();
     <input type="hidden" name="payment[acceptjs_key]" id="<?php echo $code ?>-acceptjs-key" value="" />
     <input type="hidden" name="payment[acceptjs_value]" id="<?php echo $code ?>-acceptjs-value" value="" />
     <input type="hidden" name="payment[cc_last4]" id="<?php echo $code ?>-cc-last4" value="" />
+    <?php if ($block->getTokenbaseMethod()->getConfigData('can_store_bin') == 1): ?>
+        <input type="hidden" name="payment[cc_bin]" id="<?php echo $code ?>-cc-bin" value="" />
+    <?php endif; ?>
 <?php endif; ?>
 <div id="payment_form_<?php echo $code ?>" class="admin__page-section-item" style="display:none" data-mage-init='{
      "tokenbaseForm":{"code":"<?php echo $code ?>"}

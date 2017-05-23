@@ -119,6 +119,11 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $this->setAdditional('cc_last4', $payment->getData('cc_last4'));
         }
 
+        if (!empty($payment->getAdditionalInformation('cc_bin'))
+            && $this->getMethodInstance()->getConfigData('can_store_bin') == 1) {
+            $this->setAdditional('cc_bin', $payment->getAdditionalInformation('cc_bin'));
+        }
+
         if ($payment->getData('cc_exp_year') > date('Y')
             || ($payment->getData('cc_exp_year') == date('Y') && $payment->getData('cc_exp_month') >= date('n'))) {
             $yr  = $payment->getData('cc_exp_year');

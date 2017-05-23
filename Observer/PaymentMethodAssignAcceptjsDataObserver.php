@@ -79,6 +79,10 @@ class PaymentMethodAssignAcceptjsDataObserver implements \Magento\Framework\Even
             $payment->setAdditionalInformation('acceptjs_key', $data->getData('acceptjs_key'))
                     ->setAdditionalInformation('acceptjs_value', $data->getData('acceptjs_value'))
                     ->setCcLast4($data->getData('cc_last4'));
+
+            if ($method->getConfigData('can_store_bin') == 1) {
+                $payment->setAdditionalInformation('cc_bin', $data->getData('cc_bin'));
+            }
         }
     }
 }

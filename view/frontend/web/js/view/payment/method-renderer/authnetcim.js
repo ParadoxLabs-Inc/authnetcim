@@ -21,7 +21,9 @@ define(
                 sandbox: config ? config.sandbox : false,
                 acceptJsKey: '',
                 acceptJsValue: '',
-                creditCardLast4: ''
+                creditCardLast4: '',
+                canStoreBin: config ? config.canStoreBin : false,
+                creditCardBin: ''
             },
             initVars: function() {
                 this.canSaveCard     = config ? config.canSaveCard : false;
@@ -38,7 +40,9 @@ define(
                     .observe([
                         'acceptJsKey',
                         'acceptJsValue',
-                        'creditCardLast4'
+                        'creditCardLast4',
+                        'canStoreBin',
+                        'creditCardBin'
                     ]);
 
                 return this;
@@ -59,6 +63,7 @@ define(
                             'cc_exp_month': this.creditCardExpMonth(),
                             'cc_cid': this.creditCardVerificationNumber(),
                             'cc_last4': this.creditCardLast4(),
+                            'cc_bin': this.creditCardBin(),
                             'card_id': this.selectedCard()
                         }
                     }

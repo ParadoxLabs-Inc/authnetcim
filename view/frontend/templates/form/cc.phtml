@@ -11,6 +11,9 @@ $storedCards    = $block->getStoredCards();
         <input type="hidden" name="payment[acceptjs_key]" id="<?php echo $code ?>-acceptjs-key" value="" />
         <input type="hidden" name="payment[acceptjs_value]" id="<?php echo $code ?>-acceptjs-value" value="" />
         <input type="hidden" name="payment[cc_last4]" id="<?php echo $code ?>-cc-last4" value="" />
+        <?php if ($block->getTokenbaseMethod()->getConfigData('can_store_bin') == 1): ?>
+            <input type="hidden" name="payment[cc_bin]" id="<?php echo $code ?>-cc-bin" value="" />
+        <?php endif; ?>
     <?php endif; ?>
     <?php if ($image): ?>
         <div class="sorter">
@@ -132,7 +135,7 @@ $storedCards    = $block->getStoredCards();
                 "apiLoginId": "<?php echo $block->escapeJsQuote($block->getMethod()->getConfigData('login')); ?>",
                 "clientKey": "<?php echo $block->escapeJsQuote($block->getMethod()->getConfigData('client_key')); ?>",
                 "method": "<?php echo $code; ?>",
-                "submitSelector": "form button[type=submit]",<?php // TODO: fix this?>
+                "submitSelector": "form button[type=submit]",
                 "processingSelector": "div.field",
                 "sandbox": <?php echo $block->getMethod()->getConfigData('test') ? 'true' : 'false'; ?>
             }

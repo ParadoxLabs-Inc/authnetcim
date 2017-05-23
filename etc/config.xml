@@ -50,6 +50,7 @@
                 <is_gateway>0</is_gateway>
                 <is_offline>0</is_offline>
                 <can_initialize>0</can_initialize>
+                <can_store_bin>0</can_store_bin>
             </authnetcim>
             <authnetcim_ach>
                 <version backend_model="ParadoxLabs\Authnetcim\Model\Config\Version" />
@@ -94,6 +95,7 @@
                 <is_gateway>0</is_gateway>
                 <is_offline>0</is_offline>
                 <can_initialize>0</can_initialize>
+                <can_store_bin>0</can_store_bin>
             </authnetcim_ach>
         </payment>
     </default>

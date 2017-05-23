@@ -34,6 +34,9 @@
         <input type="hidden" name="payment[acceptjs_key]" id="<?php echo $code ?>-acceptjs-key" value="" />
         <input type="hidden" name="payment[acceptjs_value]" id="<?php echo $code ?>-acceptjs-value" value="" />
         <input type="hidden" name="payment[cc_last4]" id="<?php echo $code ?>-cc-last4" value="" />
+        <?php if ($block->getMethod()->getConfigData('can_store_bin') == 1): ?>
+            <input type="hidden" name="payment[cc_bin]" id="<?php echo $code ?>-cc-bin" value="" />
+        <?php endif; ?>
     <?php endif; ?>
     <fieldset class="admin__fieldset">
         <div class="admin__fieldset-wrapper-title">

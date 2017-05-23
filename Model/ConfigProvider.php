@@ -146,6 +146,7 @@ class ConfigProvider extends CcGenericConfigProvider
                     'apiLoginId'              => $this->getApiLoginId(),
                     'clientKey'               => $this->getClientKey(),
                     'sandbox'                 => $this->getSandbox(),
+                    'canStoreBin'             => $this->getCanStoreBin(),
                 ],
             ],
         ]);
@@ -233,5 +234,15 @@ class ConfigProvider extends CcGenericConfigProvider
     public function getSandbox()
     {
         return (bool)$this->methods[static::CODE]->getConfigData('test');
+    }
+
+    /**
+     * Get 'can store BIN' flag
+     *
+     * @return bool
+     */
+    public function getCanStoreBin()
+    {
+        return (bool)$this->methods[static::CODE]->getConfigData('can_store_bin');
     }
 }
