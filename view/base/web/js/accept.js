@@ -186,7 +186,8 @@ define([
                 cardData: {
                     cardNumber: form.find('#' + this.options.method + '-cc-number').val().replace(/\D/g, ''),
                     month: form.find('#' + this.options.method + '-cc-exp-month').val(),
-                    year: form.find('#' + this.options.method + '-cc-exp-year').val()
+                    year: form.find('#' + this.options.method + '-cc-exp-year').val(),
+                    cardCode: ''
                 },
                 authData: {
                     clientKey: this.options.clientKey,
@@ -194,7 +195,7 @@ define([
                 }
             };
 
-            if (typeof form.find('#' + this.options.method + '-cc-cid') != 'undefined') {
+            if (form.find('#' + this.options.method + '-cc-cid').length > 0) {
                 paymentData['cardData']['cardCode'] = form.find('#' + this.options.method + '-cc-cid').val();
             }
 

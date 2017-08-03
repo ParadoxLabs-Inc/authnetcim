@@ -39,6 +39,12 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
             return __('Enter API credentials and save to test.');
         }
 
+        // Verify no invalid characters -- suggests changed encryption key/corrupted data.
+        if ($this->containsInvalidCharacters($method->getConfigData('login'))
+            || $this->containsInvalidCharacters($method->getConfigData('trans_key'))) {
+            return __('Please re-enter your API Login ID and Transaction Key. They may be corrupted.');
+        }
+
         if ($method->getConfigData('acceptjs') == 1 && $method->getConfigData('client_key') == '') {
             return __('Accept.js is enabled, but you have not entered your Client Key.');
         }

@@ -386,6 +386,14 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
 
             if (!empty($profileId)) {
                 $this->getCustomer()->setCustomAttribute('authnetcim_profile_id', '');
+
+                /**
+                 * We know the authnetcim_profile_id is invalid, so get rid of it. Except we're in the middle
+                 * of a transaction... so any change will just be rolled back. Save it for a little later.
+                 * @see \ParadoxLabs\Authnetcim\Observer\CheckoutFailureClearProfileIdObserver::execute()
+                 */
+                $this->_registry->unregister('queue_profileid_deletion');
+                $this->_registry->register('queue_profileid_deletion', $this->getCustomer());
             }
 
             return $this->syncCustomerPaymentProfile(false);

@@ -395,7 +395,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     /**
                      * We know the card is not valid, so hide and get rid of it. Except we're in the middle
                      * of a transaction... so any change will just be rolled back. Save it for a little later.
-                     * @see \ParadoxLabs\TokenBase\Observer\CardLoadProcessDeleteQueueObserver::checkQueuedForDeletion()
+                     * @see \ParadoxLabs\TokenBase\Observer\CardLoadProcessDeleteQueueObserver::execute()
                      */
                     $this->registry->unregister('queue_card_deletion');
                     $this->registry->register('queue_card_deletion', $this->getData('card'));
@@ -562,10 +562,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
             if ($transactionId !== null) {
                 $this->setParameter('transId', $transactionId);
-            } elseif ($payment->getData('transaction_id') != '') {
+            } else {
                 $this->setParameter('transId', $payment->getData('transaction_id'));
             }
-        } else {
+        }
+
+        if ($this->getHaveAuthorized() === false || empty($this->getTransactionId())) {
             $this->setParameter('transactionType', 'authCaptureTransaction');
         }
 
@@ -591,6 +593,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             );
 
             $this->clearParameters()
+                 ->setHaveAuthorized(false)
                  ->setCard($this->getData('card'));
 
             $response = $this->capture($payment, $amount, '');

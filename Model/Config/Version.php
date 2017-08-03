@@ -20,16 +20,22 @@ class Version extends \Magento\Framework\App\Config\Value implements
     \Magento\Framework\App\Config\Data\ProcessorInterface
 {
     /**
-     * @var \Magento\Framework\Module\ResourceInterface
+     * @var \Magento\Framework\Module\Dir
      */
-    protected $moduleResource;
+    protected $moduleDir;
+
+    /**
+     * @var \Magento\Framework\Filesystem\Io\File
+     */
+    protected $fileHandler;
 
     /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\Registry $registry
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $config
      * @param \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList
-     * @param \Magento\Framework\Module\ResourceInterface $moduleResource
+     * @param \Magento\Framework\Module\Dir $moduleDir
+     * @param \Magento\Framework\Filesystem\Io\File $fileHandler
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource $resource
      * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
      * @param array $data
@@ -39,13 +45,12 @@ class Version extends \Magento\Framework\App\Config\Value implements
         \Magento\Framework\Registry $registry,
         \Magento\Framework\App\Config\ScopeConfigInterface $config,
         \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList,
-        \Magento\Framework\Module\ResourceInterface $moduleResource,
+        \Magento\Framework\Module\Dir $moduleDir,
+        \Magento\Framework\Filesystem\Io\File $fileHandler,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
-        $this->moduleResource = $moduleResource;
-
         parent::__construct(
             $context,
             $registry,
@@ -55,6 +60,9 @@ class Version extends \Magento\Framework\App\Config\Value implements
             $resourceCollection,
             $data
         );
+
+        $this->moduleDir = $moduleDir;
+        $this->fileHandler = $fileHandler;
     }
 
     /**
@@ -64,7 +72,23 @@ class Version extends \Magento\Framework\App\Config\Value implements
      */
     public function _getDefaultValue()
     {
-        return (string)$this->moduleResource->getDbVersion('ParadoxLabs_Authnetcim');
+        try {
+            $composerFile = $this->fileHandler->read(
+                $this->moduleDir->getDir('ParadoxLabs_Authnetcim') . '/composer.json'
+            );
+
+            $composer = json_decode($composerFile, 1);
+
+            if (isset($composer['version'], $composer['time'])) {
+                return $composer['version'] . ' (' . $composer['time'] . ')';
+            } elseif (isset($composer['version'])) {
+                return $composer['version'];
+            } else {
+                return __('Unknown (could not read composer.json)');
+            }
+        } catch (\Exception $e) {
+            return __('Unknown (could not read composer.json)');
+        }
     }
 
     /**

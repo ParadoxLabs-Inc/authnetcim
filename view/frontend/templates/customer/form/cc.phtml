@@ -121,7 +121,7 @@
         <div class="field number required">
             <label for="<?php echo $code ?>-cc-number" class="label"><span><?php echo $block->escapeHtml(__('CC Number')) ?></span></label>
             <div class="control">
-                <input type="text" pattern="[0-9]*" id="<?php echo $code ?>-cc-number" name="payment[cc_number]" title="<?php echo $block->escapeQuote(__('Credit Card Number')) ?>" class="input-text" value="<?php echo $block->escapeQuote($block->getCard()->getLabel(false)); ?>" data-validate='{"required-number":true, "validate-cc-number":"#<?php echo $code ?>-cc-type", "validate-cc-type":"#<?php echo $code ?>-cc-type"}' autocomplete="off" />
+                <input type="text" pattern="[0-9]*" id="<?php echo $code ?>-cc-number" name="payment[cc_number]" title="<?php echo $block->escapeQuote(__('Credit Card Number')) ?>" class="input-text" value="<?php echo $block->escapeQuote($block->getCard()->getLabel(false)); ?>" data-validate='{"required-number":true, "validate-cc-number":"#<?php echo $code ?>-cc-type", "validate-cc-type":"#<?php echo $code ?>-cc-type"}' autocomplete="cc-number" />
             </div>
         </div>
         <div class="field date required" id="<?php echo $code ?>-cc-type_exp_div">
@@ -130,7 +130,7 @@
                 <div class="fields group group-2">
                     <div class="field no-label month">
                         <div class="control">
-                            <select id="<?php echo $code ?>-cc-exp-month" name="payment[cc_exp_month]" class="select month" data-validate='{required:true, "validate-cc-exp":"#<?php echo $code ?>-cc-exp-year"}'>
+                            <select id="<?php echo $code ?>-cc-exp-month" name="payment[cc_exp_month]" class="select month" data-validate='{required:true, "validate-cc-exp":"#<?php echo $code ?>-cc-exp-year"}' autocomplete="cc-exp-month">
                                 <?php $_ccExpMonth = $block->getCard()->getAdditional('cc_exp_month'); ?>
                                 <?php foreach ($block->getCcBlock()->getCcMonths() as $k => $v): ?>
                                     <option value="<?php echo $k ? $block->escapeQuote($k) : '' ?>"<?php if ($k == $_ccExpMonth): ?> selected="selected"<?php endif ?>><?php echo $block->escapeHtml($v) ?></option>
@@ -141,7 +141,7 @@
                     <div class="field no-label year">
                         <div class="control">
                             <?php $_ccExpYear = $block->getCard()->getAdditional('cc_exp_year'); ?>
-                            <select id="<?php echo $code ?>-cc-exp-year" name="payment[cc_exp_year]" class="select year" data-validate='{required:true}'>
+                            <select id="<?php echo $code ?>-cc-exp-year" name="payment[cc_exp_year]" class="select year" data-validate='{required:true}' autocomplete="cc-exp-year">
                                 <?php foreach ($block->getCcBlock()->getCcYears() as $k => $v): ?>
                                     <option value="<?php echo $k ? $block->escapeQuote($k) : '' ?>"<?php if ($k == $_ccExpYear): ?> selected="selected"<?php endif ?>><?php echo $block->escapeHtml($v) ?></option>
                                 <?php endforeach ?>
@@ -155,7 +155,7 @@
             <div class="field cvv required" id="<?php echo $code ?>-cc-type_cvv_div">
                 <label for="<?php echo $code ?>-cc-cid" class="label"><span><?php echo $block->escapeHtml(__('CCV')) ?></span></label>
                 <div class="control">
-                    <input type="text" pattern="[0-9]*" title="<?php echo $block->escapeQuote(__('Card Verification Number')) ?>" class="input-text cvv" id="<?php echo $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true, "validate-cc-cvn":"#<?php echo $code ?>-cc-type"}' autocomplete="off" />
+                    <input type="text" pattern="[0-9]*" title="<?php echo $block->escapeQuote(__('Card Verification Number')) ?>" class="input-text cvv" id="<?php echo $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true, "validate-cc-cvn":"#<?php echo $code ?>-cc-type"}' autocomplete="cc-csc" />
                     <?php $_content = '<img src=\"' . $block->escapeUrl($block->getViewFileUrl('Magento_Checkout::cvv.png')) . '\" alt=\"' . $block->escapeQuote(__('Card Verification Number Visual Reference')) . '\" title=\"' . $block->escapeQuote(__('Card Verification Number Visual Reference')) . '\" />'; ?>
                     <div class="note">
                         <a href="#" class="action cvv" title="<?php echo $block->escapeQuote(__('What is this?')) ?>" data-mage-init='{"tooltip": {"content": "<?php echo $_content ?>"}}'><span><?php echo $block->escapeHtml(__('What is this?')) ?></span></a>

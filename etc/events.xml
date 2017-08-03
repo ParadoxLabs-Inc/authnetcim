@@ -16,5 +16,6 @@
     </event>
     <event name="sales_model_service_quote_submit_failure">
         <observer name="authnetcim_failure_clear_acceptjs" instance="ParadoxLabs\Authnetcim\Observer\CheckoutFailureClearAcceptjsObserver" />
+        <observer name="authnetcim_failure_clear_profileid" instance="ParadoxLabs\Authnetcim\Observer\CheckoutFailureClearProfileIdObserver" />
     </event>
 </config>

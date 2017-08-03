@@ -54,7 +54,7 @@ $storedCards    = $block->getStoredCards();
         <label for="<?php echo $code ?>-cc-number" class="label"><span><?php echo $block->escapeHtml(__('Credit Card Number')) ?></span></label>
         <div class="control">
             <input type="text" pattern="[0-9]*" id="<?php echo $code ?>-cc-number" name="payment[cc_number]"
-                   title="<?php echo $block->escapeQuote(__('Credit Card Number')) ?>" class="input-text" value="" autocomplete="off"
+                   title="<?php echo $block->escapeQuote(__('Credit Card Number')) ?>" class="input-text" value="" autocomplete="cc-number"
                    data-container="<?php echo $code ?>-cc-number"
                    data-validate='{"required-number":true, "validate-cc-number":"#<?php echo $code ?>-cc-type", "validate-cc-type":"#<?php echo $code ?>-cc-type"}' />
         </div>
@@ -65,7 +65,7 @@ $storedCards    = $block->getStoredCards();
             <div class="fields group group-2">
                 <div class="field no-label month">
                     <div class="control">
-                        <select id="<?php echo $code ?>-cc-exp-month" name="payment[cc_exp_month]" class="select month" data-validate='{required:true, "validate-cc-exp":"#<?php echo $code ?>-cc-exp-year"}'>
+                        <select id="<?php echo $code ?>-cc-exp-month" name="payment[cc_exp_month]" class="select month" data-validate='{required:true, "validate-cc-exp":"#<?php echo $code ?>-cc-exp-year"}' autocomplete="cc-exp-month">
                             <?php $_ccExpMonth = $block->getInfoData('cc_exp_month') ?>
                             <?php foreach ($block->getCcMonths() as $k => $v): ?>
                                 <option value="<?php echo $k ? $block->escapeQuote($k) : '' ?>"<?php if ($k == $_ccExpMonth): ?> selected="selected"<?php endif ?>><?php echo $block->escapeHtml($v) ?></option>
@@ -76,7 +76,7 @@ $storedCards    = $block->getStoredCards();
                 <div class="field no-label year">
                     <div class="control">
                         <?php $_ccExpYear = $block->getInfoData('cc_exp_year') ?>
-                        <select id="<?php echo $code ?>-cc-exp-year" name="payment[cc_exp_year]" class="select year" data-validate='{required:true}'>
+                        <select id="<?php echo $code ?>-cc-exp-year" name="payment[cc_exp_year]" class="select year" data-validate='{required:true}' autocomplete="cc-exp-year">
                             <?php foreach ($block->getCcYears() as $k => $v): ?>
                                 <option value="<?php echo $k ? $block->escapeQuote($k) : '' ?>"<?php if ($k == $_ccExpYear): ?> selected="selected"<?php endif ?>><?php echo $block->escapeHtml($v) ?></option>
                             <?php endforeach ?>
@@ -90,7 +90,7 @@ $storedCards    = $block->getStoredCards();
         <div class="field cvv required <?php if ($block->getMethod()->getConfigData('require_ccv') == 0): ?>hide-if-card-selected<?php endif; ?>">
             <label for="<?php echo $code ?>-cc-cid" class="label"><span><?php echo $block->escapeHtml(__('Card Verification Number')) ?></span></label>
             <div class="control">
-                <input type="text" pattern="[0-9]*" title="<?php echo $block->escapeQuote(__('Card Verification Number')) ?>" class="input-text cvv" id="<?php echo $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true}' autocomplete="off" />
+                <input type="text" pattern="[0-9]*" title="<?php echo $block->escapeQuote(__('Card Verification Number')) ?>" class="input-text cvv" id="<?php echo $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true}' autocomplete="cc-csc" />
             </div>
             <?php $_content = '<img src=\"' . $block->escapeUrl($block->getViewFileUrl('Magento_Checkout::cvv.png')) . '\" alt=\"' . $block->escapeQuote(__('Card Verification Number Visual Reference')) . '\" title=\"' . $block->escapeQuote(__('Card Verification Number Visual Reference')) . '\" />'; ?>
             <div class="note">
