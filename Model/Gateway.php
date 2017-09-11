@@ -888,7 +888,6 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 $this->setParameter('customerPaymentProfileId', $paymentId);
 
                 // Handle Accept.js nonce (which would now be expired). Card number won't have changed, but exp might.
-                // TODO: This will need to be adjusted when Accept.js adds ACH support.
                 if ($this->hasParameter('dataValue')) {
                     $this->setParameter('cardNumber', 'XXXX' . $this->getCard()->getAdditional('cc_last4'));
                     $this->setParameter('expirationDate', date('Y-m', strtotime($this->getCard()->getExpires())));

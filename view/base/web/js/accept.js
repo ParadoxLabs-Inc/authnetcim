@@ -222,6 +222,11 @@ define([
                     messages += $.mage.__(response.messages.message[i].text + ' (' + response.messages.message[i].code + ')');
                 }
 
+                // Unset data
+                $(this.element).find('#' + this.options.method + '-acceptjs-key').val('').trigger('change');
+                $(this.element).find('#' + this.options.method + '-acceptjs-value').val('').trigger('change');
+                $(this.element).find('#' + this.options.method + '-cc-last4').val('').trigger('change');
+
                 this.stopLoadWaiting(messages);
             }
             else {

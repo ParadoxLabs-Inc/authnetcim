@@ -24,12 +24,12 @@ class ConfigProvider extends CcGenericConfigProvider
     const CODE = 'authnetcim';
 
     /**
-     * @var \Magento\Checkout\Model\Session\Proxy
+     * @var \Magento\Checkout\Model\Session
      */
     protected $checkoutSession;
 
     /**
-     * @var \Magento\Customer\Model\Session\Proxy
+     * @var \Magento\Customer\Model\Session
      */
     protected $customerSession;
 
@@ -51,8 +51,8 @@ class ConfigProvider extends CcGenericConfigProvider
     /**
      * @param CcConfig $ccConfig
      * @param \Magento\Payment\Helper\Data $paymentHelper
-     * @param \Magento\Checkout\Model\Session\Proxy $checkoutSession
-     * @param \Magento\Customer\Model\Session\Proxy $customerSession
+     * @param \Magento\Checkout\Model\Session $checkoutSession *Proxy
+     * @param \Magento\Customer\Model\Session $customerSession *Proxy
      * @param \Magento\Payment\Model\Config $paymentConfig
      * @param \ParadoxLabs\Authnetcim\Helper\Data $dataHelper
      * @param array $methodCodes
@@ -60,8 +60,8 @@ class ConfigProvider extends CcGenericConfigProvider
     public function __construct(
         CcConfig $ccConfig,
         \Magento\Payment\Helper\Data $paymentHelper,
-        \Magento\Checkout\Model\Session\Proxy $checkoutSession,
-        \Magento\Customer\Model\Session\Proxy $customerSession,
+        \Magento\Checkout\Model\Session $checkoutSession,
+        \Magento\Customer\Model\Session $customerSession,
         \Magento\Payment\Model\Config $paymentConfig,
         \ParadoxLabs\Authnetcim\Helper\Data $dataHelper,
         array $methodCodes = []

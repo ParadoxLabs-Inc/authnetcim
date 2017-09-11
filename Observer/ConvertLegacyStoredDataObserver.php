@@ -270,7 +270,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
                 'fax'         => isset($card['billTo']['faxNumber']) ? $card['billTo']['faxNumber'] : '',
             ];
 
-            $storedCard->setData('address', serialize($addressData));
+            $storedCard->setData('address', json_encode($addressData));
 
             if (isset($card['payment']['creditCard'])) {
                 $paymentData = [
@@ -280,7 +280,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
                     'cc_exp_month' => '',
                 ];
 
-                $storedCard->setData('additional', serialize($paymentData));
+                $storedCard->setData('additional', json_encode($paymentData));
             }
 
             $storedCard = $this->cardRepository->save($storedCard);
