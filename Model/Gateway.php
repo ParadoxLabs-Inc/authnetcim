@@ -92,6 +92,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'email'                     => ['maxLength' => 255],
         'emailCustomer'             => ['enum' => ['true', 'false']],
         'expirationDate'            => ['maxLength' => 7],
+        'includeIssuerInfo'         => ['enum' => ['true', 'false']],
         'invoiceNumber'             => ['maxLength' => 20, 'noSymbols' => true],
         'itemName'                  => ['maxLength' => 31, 'noSymbols' => true],
         'loginId'                   => ['maxLength' => 20],
@@ -139,6 +140,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             ],
         ],
         'transId'                   => ['charMask' => '\d'],
+        'unmaskExpirationDate'      => ['enum' => ['true', 'false']],
         'validationMode'            => ['enum' => ['liveMode', 'testMode', 'none']],
     ];
 
@@ -218,7 +220,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      *
      * @param string $request
      * @param array $params
-     * @return string
+     * @return array|string
      * @throws LocalizedException
      * @throws PaymentException
      */
@@ -619,12 +621,14 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $this->setParameter('amount', $amount);
         $this->setParameter('invoiceNumber', $payment->getOrder()->getIncrementId());
 
-        if ($payment->getCreditmemo()->getBaseTaxAmount()) {
-            $this->setParameter('taxAmount', $payment->getCreditmemo()->getBaseTaxAmount());
-        }
+        if ($payment->getCreditmemo() instanceof \Magento\Sales\Api\Data\CreditmemoInterface) {
+            if ($payment->getCreditmemo()->getBaseTaxAmount()) {
+                $this->setParameter('taxAmount', $payment->getCreditmemo()->getBaseTaxAmount());
+            }
 
-        if ($payment->getCreditmemo()->getBaseShippingAmount()) {
-            $this->setParameter('shipAmount', $payment->getCreditmemo()->getBaseShippingAmount());
+            if ($payment->getCreditmemo()->getBaseShippingAmount()) {
+                $this->setParameter('shipAmount', $payment->getCreditmemo()->getBaseShippingAmount());
+            }
         }
 
         if ($transactionId !== null) {
@@ -643,7 +647,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             /**
              * Is this a full refund? If so, just void it. Nobody will see the difference.
              */
-            if ($amount == $payment->getCreditmemo()->getInvoice()->getBaseGrandTotal()) {
+            if ($payment->getCreditmemo() instanceof \Magento\Sales\Api\Data\CreditmemoInterface
+                && $amount == $payment->getCreditmemo()->getInvoice()->getBaseGrandTotal()) {
                 $transactionId = $this->getParameter('transId');
 
                 return $this->clearParameters()
@@ -893,7 +898,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     $this->setParameter('expirationDate', date('Y-m', strtotime($this->getCard()->getExpires())));
                 }
 
-                $this->updateCustomerPaymentProfile();
+                if ($this->getParameter('cardNumber') !== 'XXXX'
+                    && $this->getParameter('expirationDate') !== '1970-01') {
+                    $this->updateCustomerPaymentProfile();
+                }
             }
         }
 
@@ -1215,7 +1223,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     public function getCustomerProfile()
     {
         $params = [
-            'customerProfileId' => $this->getParameter('customerProfileId'),
+            'customerProfileId'    => $this->getParameter('customerProfileId'),
+            'unmaskExpirationDate' => $this->getParameter('unmaskExpirationDate', 'false'),
+            'includeIssuerInfo'    => $this->getParameter('includeIssuerInfo', 'false'),
         ];
 
         return $this->runTransaction('getCustomerProfileRequest', $params);
@@ -1231,6 +1241,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $params = [
             'customerProfileId'        => $this->getParameter('customerProfileId'),
             'customerPaymentProfileId' => $this->getParameter('customerPaymentProfileId'),
+            'unmaskExpirationDate'     => $this->getParameter('unmaskExpirationDate', 'false'),
+            'includeIssuerInfo'        => $this->getParameter('includeIssuerInfo', 'false'),
         ];
 
         return $this->runTransaction('getCustomerPaymentProfileRequest', $params);

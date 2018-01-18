@@ -9,7 +9,7 @@ define(
         return Component.extend({
             defaults: {
                 template: 'ParadoxLabs_Authnetcim/payment/cc',
-                save: config ? config.canSaveCard : false,
+                save: config ? config.canSaveCard && config.defaultSaveCard : false,
                 selectedCard: config ? config.selectedCard : '',
                 storedCards: config ? config.storedCards : {},
                 availableCardTypes: config ? config.availableCardTypes : {},

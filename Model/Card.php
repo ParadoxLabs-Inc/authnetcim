@@ -538,6 +538,13 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             if (isset($profile['paymentProfile'], $profile['paymentProfile']['payment']['creditCard'])) {
                 $gateway->setParameter('cardNumber', $profile['paymentProfile']['payment']['creditCard']['cardNumber']);
             } else {
+                $this->helper->log(
+                    $this->getMethod(),
+                    'Authorize.Net CIM Gateway: Could not load payment record.'
+                );
+
+                $gateway->logLogs();
+
                 throw new LocalizedException(__('Authorize.Net CIM Gateway: Could not load payment record.'));
             }
         }

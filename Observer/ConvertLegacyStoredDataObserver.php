@@ -59,6 +59,11 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
     protected $cardRepository;
 
     /**
+     * @var \Magento\Framework\Api\SearchCriteriaBuilder
+     */
+    protected $searchCriteriaBuilder;
+
+    /**
      * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
      * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
      * @param \ParadoxLabs\TokenBase\Model\CardFactory $cardFactory
@@ -67,6 +72,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
      * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
      * @param \Magento\Sales\Api\OrderPaymentRepositoryInterface $paymentRepository
      * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
+     * @param \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
      */
     public function __construct(
         \ParadoxLabs\Authnetcim\Helper\Data $helper,
@@ -76,7 +82,8 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
         \Magento\Directory\Model\RegionFactory $regionFactory,
         \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
         \Magento\Sales\Api\OrderPaymentRepositoryInterface $paymentRepository,
-        \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
+        \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
+        \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
     ) {
         $this->helper                   = $helper;
         $this->methodFactory            = $methodFactory;
@@ -86,6 +93,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
         $this->customerRepository       = $customerRepository;
         $this->paymentRepository        = $paymentRepository;
         $this->cardRepository           = $cardRepository;
+        $this->searchCriteriaBuilder    = $searchCriteriaBuilder;
     }
 
     /**
@@ -154,6 +162,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
         /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
         $gateway = $this->methodFactory->getMethodInstance('authnetcim')->gateway();
         $gateway->setParameter('customerProfileId', $profileId);
+        $gateway->setParameter('unmaskExpirationDate', 'true');
 
         $profile = $gateway->getCustomerProfile();
 
@@ -233,7 +242,8 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
         &$affectedCards
     ) {
         foreach ($cards as $k => $card) {
-            if (!isset($card['payment']['creditCard'])) {
+            if (!isset($card['payment']['creditCard'])
+                || $this->cardAlreadyExists($customer->getId(), $profileId, $card['customerPaymentProfileId'])) {
                 continue;
             }
 
@@ -273,14 +283,18 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
             $storedCard->setData('address', json_encode($addressData));
 
             if (isset($card['payment']['creditCard'])) {
+                list($yr, $mo) = explode('-', $card['payment']['creditCard']['expirationDate'], 2);
+                $day = date('t', strtotime($yr . '-' . $mo));
+
                 $paymentData = [
                     'cc_type'      => '',
                     'cc_last4'     => substr($card['payment']['creditCard']['cardNumber'], -4),
-                    'cc_exp_year'  => '',
-                    'cc_exp_month' => '',
+                    'cc_exp_year'  => $yr,
+                    'cc_exp_month' => $mo,
                 ];
 
                 $storedCard->setData('additional', json_encode($paymentData));
+                $storedCard->setData('expires', sprintf('%s-%s-%s 23:59:59', $yr, $mo, $day));
             }
 
             $storedCard = $this->cardRepository->save($storedCard);
@@ -314,5 +328,29 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
         }
 
         return $cards;
+    }
+
+    /**
+     * Check whether the given profile/payment ID pair already exist.
+     *
+     * @param string|int $customerId
+     * @param string|int $profileId
+     * @param string|int $paymentId
+     * @return bool
+     */
+    protected function cardAlreadyExists($customerId, $profileId, $paymentId)
+    {
+        $cardCriteria = $this->searchCriteriaBuilder->addFilter('method', 'authnetcim')
+                                                    ->addFilter('customer_id', $customerId)
+                                                    ->addFilter('profile_id', $profileId)
+                                                    ->addFilter('payment_id', $paymentId)
+                                                    ->setPageSize(1)
+                                                    ->create();
+
+        if ($this->cardRepository->getList($cardCriteria)->getTotalCount() > 0) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -95,6 +95,8 @@ define([
 
             window.isReady = true;
 
+            this.nonceConcat = null;
+
             if (this.element) {
                 this.element.on(
                     'input change keyup',

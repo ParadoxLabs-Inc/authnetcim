@@ -8,7 +8,7 @@ define(
         var config=window.checkoutConfig.payment.authnetcim_ach;
         return Component.extend({
             defaults: {
-                save: config ? config.canSaveCard : false,
+                save: config ? config.canSaveCard && config.defaultSaveCard : false,
                 selectedCard: config ? config.selectedCard : '',
                 storedCards: config ? config.storedCards : {},
                 achAccountTypes: config ? config.achAccountTypes : {},

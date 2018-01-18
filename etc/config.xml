@@ -19,7 +19,6 @@
                 <useccv>1</useccv>
                 <validation_mode>liveMode</validation_mode>
                 <allowspecific>0</allowspecific>
-                <currency>USD</currency>
                 <allow_unsaved>1</allow_unsaved>
                 <show_branding>0</show_branding>
                 <require_ccv>0</require_ccv>
@@ -67,7 +66,6 @@
                 <test>0</test>
                 <validation_mode>liveMode</validation_mode>
                 <allowspecific>0</allowspecific>
-                <currency>USD</currency>
                 <allow_unsaved>1</allow_unsaved>
                 <show_branding>0</show_branding>
                 <send_shipping_address>1</send_shipping_address>

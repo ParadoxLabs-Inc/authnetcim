@@ -53,7 +53,7 @@ $storedCards    = $block->getStoredCards();
     <div class="field number required hide-if-card-selected">
         <label for="<?php echo $code ?>-cc-number" class="label"><span><?php echo $block->escapeHtml(__('Credit Card Number')) ?></span></label>
         <div class="control">
-            <input type="text" pattern="[0-9]*" id="<?php echo $code ?>-cc-number" name="payment[cc_number]"
+            <input type="text" id="<?php echo $code ?>-cc-number" name="payment[cc_number]"
                    title="<?php echo $block->escapeQuote(__('Credit Card Number')) ?>" class="input-text" value="" autocomplete="cc-number"
                    data-container="<?php echo $code ?>-cc-number"
                    data-validate='{"required-number":true, "validate-cc-number":"#<?php echo $code ?>-cc-type", "validate-cc-type":"#<?php echo $code ?>-cc-type"}' />
@@ -90,7 +90,7 @@ $storedCards    = $block->getStoredCards();
         <div class="field cvv required <?php if ($block->getMethod()->getConfigData('require_ccv') == 0): ?>hide-if-card-selected<?php endif; ?>">
             <label for="<?php echo $code ?>-cc-cid" class="label"><span><?php echo $block->escapeHtml(__('Card Verification Number')) ?></span></label>
             <div class="control">
-                <input type="text" pattern="[0-9]*" title="<?php echo $block->escapeQuote(__('Card Verification Number')) ?>" class="input-text cvv" id="<?php echo $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true}' autocomplete="cc-csc" />
+                <input type="text" title="<?php echo $block->escapeQuote(__('Card Verification Number')) ?>" class="input-text cvv" id="<?php echo $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true}' autocomplete="cc-csc" />
             </div>
             <?php $_content = '<img src=\"' . $block->escapeUrl($block->getViewFileUrl('Magento_Checkout::cvv.png')) . '\" alt=\"' . $block->escapeQuote(__('Card Verification Number Visual Reference')) . '\" title=\"' . $block->escapeQuote(__('Card Verification Number Visual Reference')) . '\" />'; ?>
             <div class="note">

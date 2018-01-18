@@ -212,6 +212,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
 
                     $this->gateway()->clearParameters();
                     $this->gateway()->setCard($this->gateway()->getCard());
+                    $this->handleShippingAddress($payment);
                     $this->gateway()->setHaveAuthorized(true);
 
                     $authResponse    = $this->gateway()->authorize($payment, $outstanding);
