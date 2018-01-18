@@ -250,6 +250,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 CURLOPT_CAINFO         => $this->moduleDir->getDir('ParadoxLabs_Authnetcim') . '/authorizenet-cert.pem',
                 CURLOPT_SSL_VERIFYPEER => false,
             ],
+            'verifypeer' => false,
+            'verifyhost' => 0,
         ];
 
         // If we are running a money transaction, we don't want to cut it off even if it takes too long.
@@ -261,6 +263,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         if ($this->verifySsl === true) {
             $clientConfig['curloptions'][CURLOPT_SSL_VERIFYPEER] = true;
             $clientConfig['curloptions'][CURLOPT_SSL_VERIFYHOST] = 2;
+            $clientConfig['verifypeer'] = true;
+            $clientConfig['verifyhost'] = 2;
         }
 
         $httpClient->setUri($this->endpoint);
