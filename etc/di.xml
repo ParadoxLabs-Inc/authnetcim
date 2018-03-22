@@ -64,6 +64,21 @@
         </arguments>
     </virtualType>
 
+    <type name="Magento\Config\Model\Config\TypePool">
+        <arguments>
+            <argument name="sensitive" xsi:type="array">
+                <item name="payment/authnetcim/login" xsi:type="string">1</item>
+                <item name="payment/authnetcim/trans_key" xsi:type="string">1</item>
+                <item name="payment/authnetcim_ach/login" xsi:type="string">1</item>
+                <item name="payment/authnetcim_ach/trans_key" xsi:type="string">1</item>
+            </argument>
+            <argument name="environment" xsi:type="array">
+                <item name="payment/authnetcim/test" xsi:type="string">1</item>
+                <item name="payment/authnetcim_ach/test" xsi:type="string">1</item>
+            </argument>
+        </arguments>
+    </type>
+
     <!-- Methods -->
     <type name="ParadoxLabs\Authnetcim\Model\Method" shared="false">
         <arguments>

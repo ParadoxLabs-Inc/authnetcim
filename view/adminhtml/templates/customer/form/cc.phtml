@@ -134,7 +134,7 @@
             <label for="<?php echo $code ?>-cc-type" class="admin__field-label"><span><?php echo $block->escapeHtml(__('CC Type')) ?></span></label>
             <div class="admin__field-control">
                 <select id="<?php echo $code ?>-cc-type"
-                        name="payment[cc_type]" data-validate='{required:true, "validate-cc-type-select":"#<?php echo $code ?>-cc-number"}' class="admin__control-select">
+                        name="payment[cc_type]" data-validate='{required:true<?php if ($block->isEdit() === false): ?>, "validate-cc-type-select":"#<?php echo $code ?>-cc-number"<?php endif; ?>}' class="admin__control-select">
                     <option value=""><?php echo $block->escapeHtml(__('--Please Select--')) ?></option>
                     <?php $_ccType = $block->getCard()->getAdditional('cc_type') ?>
                     <?php foreach ($block->getCcBlock()->getCcAvailableTypes() as $_typeCode => $_typeName): ?>
@@ -146,7 +146,7 @@
         <div class="admin__field number _required">
             <label for="<?php echo $code ?>-cc-number" class="admin__field-label"><span><?php echo $block->escapeHtml(__('CC Number')) ?></span></label>
             <div class="admin__field-control">
-                <input type="text" id="<?php echo $code ?>-cc-number" name="payment[cc_number]" title="<?php echo $block->escapeQuote(__('Credit Card Number')) ?>" class="admin__control-text" value="<?php echo $block->escapeQuote($block->getCard()->getLabel(false)); ?>" data-validate='{"required-number":true, "validate-cc-number":"#<?php echo $code ?>-cc-type", "validate-cc-type":"#<?php echo $code ?>-cc-type"}' autocomplete="cc-number" />
+                <input type="text" id="<?php echo $code ?>-cc-number" name="payment[cc_number]" title="<?php echo $block->escapeQuote(__('Credit Card Number')) ?>" class="admin__control-text" value="<?php echo $block->escapeQuote($block->getCard()->getLabel(false)); ?>" data-validate='{"required-number":true<?php if ($block->isEdit() === false): ?>, "validate-cc-number":"#<?php echo $code ?>-cc-type", "validate-cc-type":"#<?php echo $code ?>-cc-type"<?php endif; ?>}' autocomplete="cc-number" />
             </div>
         </div>
         <div class="admin__field date _required" id="<?php echo $code ?>-cc-type_exp_div">

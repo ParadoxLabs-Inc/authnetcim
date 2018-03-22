@@ -134,9 +134,6 @@
                     <label>Reauthorize on Partial Invoice</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, when you create a partial invoice, we will reauthorize any outstanding balance on the order. This helps guarantee funds, but can cause multiple holds on the card until transactions settle.</comment>
-                    <depends>
-                        <field id="payment_action">authorize</field>
-                    </depends>
                 </field>
                 <field id="savecard_opt_out" translate="label comment" type="select" sortOrder="220" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Auto-select 'save for next time'</label>
@@ -257,9 +254,6 @@
                     <label>Reauthorize on Partial Invoice</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, when you create a partial invoice, we will reauthorize any outstanding balance on the order. This helps guarantee funds, but can cause multiple holds on the card until transactions settle.</comment>
-                    <depends>
-                        <field id="payment_action">authorize</field>
-                    </depends>
                 </field>
                 <field id="savecard_opt_out" translate="label comment" type="select" sortOrder="220" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Auto-select 'save for next time'</label>
