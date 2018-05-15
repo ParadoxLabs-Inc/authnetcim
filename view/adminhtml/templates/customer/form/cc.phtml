@@ -62,10 +62,11 @@
                 <input type="text" name="billing[company]" id="<?php echo $code; ?>-company" title="<?php echo $block->escapeQuote(__('Company')) ?>" value="<?php echo $block->escapeQuote($block->getAddress()->getCompany()) ?>" class="admin__control-text <?php echo $block->escapeQuote($this->helper('Magento\Customer\Helper\Address')->getAttributeValidationClass('company')) ?>">
             </div>
         </div>
-        <div class="admin__field telephone _required">
+        <?php $phoneValidation = $this->helper('Magento\Customer\Helper\Address')->getAttributeValidationClass('telephone'); ?>
+        <div class="admin__field telephone<?php if (strpos($phoneValidation, 'required') !== false): ?> _required<?php endif; ?>">
             <label class="admin__field-label" for="<?php echo $code; ?>-telephone"><span><?php echo $block->escapeHtml(__('Phone Number')) ?></span></label>
             <div class="admin__field-control">
-                <input type="text" name="billing[telephone]" value="<?php echo $block->escapeQuote($block->getAddress()->getTelephone()) ?>" title="<?php echo $block->escapeQuote(__('Phone Number')) ?>" class="admin__control-text <?php echo $block->escapeQuote($this->helper('Magento\Customer\Helper\Address')->getAttributeValidationClass('telephone')) ?>" id="<?php echo $code; ?>-telephone" data-validate='{required:true}'>
+                <input type="text" name="billing[telephone]" value="<?php echo $block->escapeQuote($block->getAddress()->getTelephone()) ?>" title="<?php echo $block->escapeQuote(__('Phone Number')) ?>" class="admin__control-text <?php echo $block->escapeQuote($phoneValidation) ?>" id="<?php echo $code; ?>-telephone" data-validate='{required:true}'>
             </div>
         </div>
     </fieldset>

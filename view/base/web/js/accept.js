@@ -232,7 +232,7 @@ define([
                 this.stopLoadWaiting(messages);
             }
             else {
-                var cc_no = $(this.element).find('#' + this.options.method + '-cc-number').val();
+                var cc_no = $(this.element).find('#' + this.options.method + '-cc-number').val().replace(/\D/g,'');
 
                 // Set data
                 $(this.element).find('#' + this.options.method + '-acceptjs-key').val(response.opaqueData.dataDescriptor).trigger('change');

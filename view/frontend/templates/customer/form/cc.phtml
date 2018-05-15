@@ -36,19 +36,13 @@
                 <input type="text" name="billing[company]" id="company" title="<?php echo $block->escapeQuote(__('Company')) ?>" value="<?php echo $block->escapeQuote($block->getAddress()->getCompany()) ?>" class="input-text <?php echo $block->escapeQuote($this->helper('Magento\Customer\Helper\Address')->getAttributeValidationClass('company')) ?>">
             </div>
         </div>
-        <div class="field telephone required">
+        <?php $phoneValidation = $this->helper('Magento\Customer\Helper\Address')->getAttributeValidationClass('telephone'); ?>
+        <div class="field telephone<?php if (strpos($phoneValidation, 'required') !== false): ?> required<?php endif; ?>">
             <label class="label" for="telephone"><span><?php echo $block->escapeHtml(__('Phone Number')) ?></span></label>
             <div class="control">
-                <input type="text" name="billing[telephone]" value="<?php echo $block->escapeQuote($block->getAddress()->getTelephone()) ?>" title="<?php echo $block->escapeQuote(__('Phone Number')) ?>" class="input-text <?php echo $block->escapeQuote($this->helper('Magento\Customer\Helper\Address')->getAttributeValidationClass('telephone')) ?>" id="telephone">
+                <input type="text" name="billing[telephone]" value="<?php echo $block->escapeQuote($block->getAddress()->getTelephone()) ?>" title="<?php echo $block->escapeQuote(__('Phone Number')) ?>" class="input-text <?php echo $block->escapeQuote($phoneValidation) ?>" id="telephone">
             </div>
         </div>
-        <?php /* Just why?
-        <div class="field fax">
-            <label class="label" for="fax"><span><?php echo $block->escapeHtml(__('Fax')) ?></span></label>
-            <div class="control">
-                <input type="text" name="billing[fax]" id="fax" title="<?php echo $block->escapeQuote(__('Fax')) ?>" value="<?php echo $block->escapeQuote($block->getAddress()->getFax()) ?>" class="input-text <?php echo $block->escapeQuote($this->helper('Magento\Customer\Helper\Address')->getAttributeValidationClass('fax')) ?>">
-            </div>
-        </div> */ ?>
     </fieldset>
     <fieldset class="fieldset">
         <legend class="legend"><span><?php echo $block->escapeHtml(__('Cardholder Address')) ?></span></legend><br>

@@ -83,7 +83,7 @@
     <type name="ParadoxLabs\Authnetcim\Model\Method" shared="false">
         <arguments>
             <argument name="gateway" xsi:type="object">ParadoxLabs\Authnetcim\Model\Gateway</argument>
-            <argument name="cardFactory" xsi:type="object">ParadoxLabs\Authnetcim\Model\CardFactory</argument>
+            <argument name="cardFactory" xsi:type="object">ParadoxLabs\Authnetcim\Model\CardFactoryVirtualType</argument>
             <argument name="config" xsi:type="object">ParadoxLabs\Authnetcim\Gateway\VirtualConfig</argument>
             <argument name="methodCode" xsi:type="const">\ParadoxLabs\Authnetcim\Model\ConfigProvider::CODE</argument>
         </arguments>
@@ -92,7 +92,7 @@
     <type name="ParadoxLabs\Authnetcim\Model\Ach\Method" shared="false">
         <arguments>
             <argument name="gateway" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\Gateway</argument>
-            <argument name="cardFactory" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\CardFactory</argument>
+            <argument name="cardFactory" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\CardFactoryVirtualType</argument>
             <argument name="config" xsi:type="object">ParadoxLabs\Authnetcim\Gateway\Ach\VirtualConfig</argument>
             <argument name="methodCode" xsi:type="const">\ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider::CODE</argument>
         </arguments>
@@ -295,13 +295,13 @@
     </type>
 
     <!-- Card factories -->
-    <virtualType name="ParadoxLabs\Authnetcim\Model\Ach\CardFactory" type="ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory">
+    <virtualType name="ParadoxLabs\Authnetcim\Model\Ach\CardFactoryVirtualType" type="ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory">
         <arguments>
             <argument name="instanceName" xsi:type="string">\ParadoxLabs\Authnetcim\Model\Ach\Card</argument>
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Model\CardFactory" type="ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory">
+    <virtualType name="ParadoxLabs\Authnetcim\Model\CardFactoryVirtualType" type="ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory">
         <arguments>
             <argument name="instanceName" xsi:type="string">\ParadoxLabs\Authnetcim\Model\Card</argument>
         </arguments>

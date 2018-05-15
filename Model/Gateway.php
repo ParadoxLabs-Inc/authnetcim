@@ -1887,7 +1887,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $qty = $item->getData('qty_ordered');
         }
 
+        // We're sending SKU and name through parameters to filter characters and length.
         $sku = $this->setParameter('itemName', $item->getSku())->getParameter('itemName');
+        $name = $this->setParameter('itemName', $item->getName())->getParameter('itemName');
 
         if ($qty < 1 || $item->getPrice() <= 0 || empty($sku)) {
             return false;
@@ -1896,13 +1898,14 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         // Discount amount is per-line, not per-unit (???). Math it out.
         $unitPrice = max(0, $item->getPrice() - ($item->getDiscountAmount() / $qty));
 
-        return [
-            // We're sending SKU and name through parameters to filter characters and length.
+        $itemData = [
             'itemId'    => $sku,
-            'name'      => $this->setParameter('itemName', $item->getName())->getParameter('itemName'),
+            'name'      => !empty($name) ? $name : $sku,
             'quantity'  => static::formatAmount($qty),
             'unitPrice' => static::formatAmount($unitPrice),
         ];
+        
+        return $itemData;
     }
 
     /**
