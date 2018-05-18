@@ -379,7 +379,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Turn transaction results and directResponse into a usable object.
      *
-     * @param string $transactionResult
+     * @param array $transactionResult
      * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
      * @throws LocalizedException
      * @throws PaymentException
@@ -390,12 +390,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
          * Check for not-found error first. If that error makes it here, that means they attempted to use a stored card
          * that could not be found (deleted, or account change, or such). Any way about it the card is no longer valid.
          */
-        if ($transactionResult['messages']['resultCode'] != 'Ok') {
+        if ($transactionResult['messages']['resultCode'] !== 'Ok') {
             $errorCode = $transactionResult['messages']['message']['code'];
             $errorText = $transactionResult['messages']['message']['text'];
 
-            if ($errorCode == 'E00040'
-                && $errorText == 'Customer Profile ID or Customer Payment Profile ID not found.'
+            if ($errorCode === 'E00040'
+                && $errorText === 'Customer Profile ID or Customer Payment Profile ID not found.'
             ) {
                 if ($this->hasData('card')) {
                     /**
@@ -416,7 +416,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     __('Sorry, we were unable to find your payment record. '
                         . 'Please re-enter your payment info and try again.')
                 );
-            } elseif ($errorCode == 'E00040' && $errorText == 'Customer Shipping Address ID not found.') {
+            } elseif ($errorCode === 'E00040' && $errorText === 'Customer Shipping Address ID not found.') {
                 /**
                  * Invalid shipping ID. We should retry, but that's hard to do with this architecture.
                  * In a transaction, no events, ...
@@ -461,37 +461,39 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         /**
-         * Response 54 is 'can't refund; txn has not settled.' 16 is 'cannot find txn' (expired). We deal with them.
+         * Response 54 is 'can't refund; txn has not settled.' 16 is 'cannot find txn' (expired).
+         * Allow those through; they're handled elsewhere.
          */
-        if (!in_array($response->getResponseReasonCode(), [16, 54])) {
-            /**
-             * Fail if:
-             * Error result
-             * OR error/decline response code
-             * OR no transID or auth code on a charge txn
-             */
-            if ($transactionResult['messages']['resultCode'] != 'Ok'
-                || in_array($response->getResponseCode(), [2, 3])
-                || (!in_array($response->getTransactionType(), ['credit', 'void'])
-                    && ($response->getTransactionId() == ''
-                        || ($response->getAuthCode() == '' && $response->getMethod() != 'ECHECK')))
-            ) {
-                $response->setIsError(true);
+        if (in_array($response->getResponseReasonCode(), [16, 54])) {
+            return $response;
+        }
 
-                $this->helper->log(
-                    $this->code,
-                    sprintf(
-                        "Transaction error: %s\n%s\n%s",
-                        $response->getResponseReasonText(),
-                        json_encode($response->getData()),
-                        $this->log
-                    )
-                );
+        /**
+         * Fail if:
+         * Error result
+         * OR error/decline response code
+         * OR no transID on a charge txn
+         */
+        if ($transactionResult['messages']['resultCode'] !== 'Ok'
+            || $response->getResponseCode() === 2
+            || $response->getResponseCode() === 3
+            || (empty($response->getTransactionId()) && !in_array($response->getTransactionType(), ['credit', 'void']))
+        ) {
+            $response->setIsError(true);
 
-                throw new PaymentException(
-                    __('Authorize.Net CIM Gateway: Transaction failed. ' . $response->getResponseReasonText())
-                );
-            }
+            $this->helper->log(
+                $this->code,
+                sprintf(
+                    "Transaction error: %s\n%s\n%s",
+                    $response->getResponseReasonText(),
+                    json_encode($response->getData()),
+                    $this->log
+                )
+            );
+
+            throw new PaymentException(
+                __('Authorize.Net CIM Gateway: Transaction failed. ' . $response->getResponseReasonText())
+            );
         }
 
         return $response;
