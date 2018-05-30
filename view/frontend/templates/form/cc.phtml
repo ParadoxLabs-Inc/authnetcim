@@ -129,7 +129,8 @@ $storedCards    = $block->getStoredCards();
 <script type="text/x-magento-init">
     {
         "#payment_form_<?php echo $code ?>": {
-            "tokenbaseForm":{"code":"<?php echo $code ?>"}
+            "tokenbaseForm":{"code":"<?php echo $code ?>"},
+            "tokenbaseCardFormatter": {}
             <?php if ($block->getTokenbaseMethod()->isAcceptJsEnabled() === true): ?>,
             "authnetcimAcceptjs": {
                 "apiLoginId": "<?php echo $block->escapeJsQuote($block->getMethod()->getConfigData('login')); ?>",

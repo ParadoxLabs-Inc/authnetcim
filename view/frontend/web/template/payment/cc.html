@@ -19,7 +19,8 @@
         'sandbox': getSandbox(),
         'submitSelector': '#' + getCode() + '-submit',
         'processingSelector': 'div.field.required'
-    }
+    },
+    'tokenbaseCardFormatter': {}
     }">
         <!-- ko if: (useAcceptJs()) -->
             <input type="hidden" name="payment[acceptjs_key]" value="" data-bind="attr: {id: getCode() + '-acceptjs-key'}, value: acceptJsKey"/>
@@ -97,7 +98,7 @@
                     <span><!-- ko text: $t('Credit Card Number')--><!-- /ko --></span>
                 </label>
                 <div class="control">
-                    <input type="text" name="payment[cc_number]" class="input-text" value=""
+                    <input type="text" name="payment[cc_number]" class="input-text" value="" autocomplete="cc-number"
                            data-bind="attr: {id: getCode() + '-cc-number', title: $t('Credit Card Number'), 'data-container': getCode() + '-cc-number', 'data-validate': JSON.stringify({'required':true, 'validate-cc-number':'#' + getCode() + '-cc-type', 'validate-cc-type':'#' + getCode() + '-cc-type'})},
                     enable: true, value: creditCardNumber"/>
                 </div>
@@ -110,7 +111,7 @@
                     <div class="fields group group-2">
                         <div class="field no-label month">
                             <div class="control">
-                                <select  name="payment[cc_exp_month]" class="select month"
+                                <select  name="payment[cc_exp_month]" class="select month" autocomplete="cc-exp-month"
                                          data-bind="attr: {id: getCode() + '-cc-exp-month', 'data-container': getCode() + '-cc-month', 'data-validate': JSON.stringify({required:true, 'validate-cc-exp':'#' + getCode() + '-cc-exp-year'})},
                                 enable: true,
                                 options: getCcMonthsValues(),
@@ -123,7 +124,7 @@
                         </div>
                         <div class="field no-label year">
                             <div class="control">
-                                <select name="payment[cc_exp_year]" class="select year"
+                                <select name="payment[cc_exp_year]" class="select year" autocomplete="cc-exp-year"
                                         data-bind="attr: {id: getCode() + '-cc-exp-year', 'data-container': getCode() + '-cc-year', 'data-validate': JSON.stringify({required:true})},
                                 enable: true,
                                 options: getCcYearsValues(),
@@ -147,6 +148,7 @@
                            class="input-text cvv"
                            name="payment[cc_cid]"
                            value=""
+                           autocomplete="cc-csc"
                            data-bind="attr: {id: getCode() + '-cc-cid',
                        title: $t('Card Verification Number'),
                        'data-container': getCode() + '-cc-cvv',

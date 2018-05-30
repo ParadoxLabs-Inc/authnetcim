@@ -183,7 +183,8 @@
 <script type="text/x-magento-init">
     {
         "#form-validate": {
-            "validation": {}
+            "validation": {},
+            "tokenbaseCardFormatter": {}
             <?php if ($block->getMethod()->isAcceptJsEnabled() === true): ?>,
             "authnetcimAcceptjs": {
                 "apiLoginId": "<?php echo $block->escapeJsQuote($block->getMethod()->getConfigData('login')); ?>",

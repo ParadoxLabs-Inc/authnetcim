@@ -15,7 +15,8 @@
 </div>
 
 <form action="<?php echo $block->escapeUrl($block->getAction()); ?>" method="post" id="<?php echo $code; ?>-form-validate" data-hasrequired="<?php echo $block->escapeQuote(__('* Required Fields')) ?>" data-mage-init='{
-    "validation": {}
+    "validation": {},
+    "tokenbaseCardFormatter": {}
     <?php if ($block->getMethod()->isAcceptJsEnabled() === true): ?>,
     "authnetcimAcceptjs": {
         "apiLoginId": "<?php echo $block->escapeJsQuote($block->getMethod()->getConfigData('login')); ?>",
