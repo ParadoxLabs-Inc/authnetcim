@@ -268,13 +268,18 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
             }
         } else {
             // Config does not exist. We'll have to add it.
+            $default = $this->scopeConfig->getValue('dev/js/minify_exclude');
+            if (is_array($default)) {
+                $default = trim(implode("\n", $default));
+            }
+
             $db->insert(
                 $setup->getTable('core_config_data'),
                 [
                     'scope' => 'default',
                     'scope_id' => 0,
                     'path' => 'dev/js/minify_exclude',
-                    'value' => trim($this->scopeConfig->getValue('dev/js/minify_exclude')) . "\nAccept",
+                    'value' => $default . "\nAccept",
                 ]
             );
         }

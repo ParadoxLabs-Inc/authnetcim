@@ -244,7 +244,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $httpClient = $this->httpClientFactory->create();
 
         $clientConfig = [
-            'adapter'     => '\Zend_Http_Client_Adapter_Curl',
+            'adapter'     => \Zend_Http_Client_Adapter_Curl::class,
             'timeout'     => 900,
             'curloptions' => [
                 CURLOPT_CAINFO         => $this->moduleDir->getDir('ParadoxLabs_Authnetcim') . '/authorizenet-cert.pem',

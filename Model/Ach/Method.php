@@ -26,12 +26,12 @@ class Method extends \ParadoxLabs\Authnetcim\Model\Method
     /**
      * @var string
      */
-    protected $_formBlockType = 'ParadoxLabs\Authnetcim\Block\Form\Ach';
+    protected $_formBlockType = \ParadoxLabs\Authnetcim\Block\Form\Ach::class;
 
     /**
      * @var string
      */
-    protected $_infoBlockType = 'ParadoxLabs\Authnetcim\Block\Info\Ach';
+    protected $_infoBlockType = \ParadoxLabs\Authnetcim\Block\Info\Ach::class;
 
     /**
      * @var array
