@@ -600,7 +600,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 sprintf("Transaction not found. Attempting to recapture.\n%s", json_encode($response->getData()))
             );
 
-            $this->clearParameters()
+            $this->setParameter('transId', null)
                  ->setHaveAuthorized(false)
                  ->setCard($this->getData('card'));
 
