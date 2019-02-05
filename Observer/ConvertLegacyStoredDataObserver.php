@@ -242,7 +242,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
         &$affectedCards
     ) {
         foreach ($cards as $k => $card) {
-            if (!isset($card['payment']['creditCard'])
+            if (!isset($card['payment']['creditCard'], $card['billTo']['country'])
                 || $this->cardAlreadyExists($customer->getId(), $profileId, $card['customerPaymentProfileId'])) {
                 continue;
             }
@@ -262,20 +262,22 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
                 $storedCard->setActive(0);
             }
 
-            $region = $this->regionFactory->create();
-            $region->loadByName($card['billTo']['state'], $card['billTo']['country']);
+            if (isset($card['billTo']['state'])) {
+                $region = $this->regionFactory->create();
+                $region->loadByName($card['billTo']['state'], $card['billTo']['country']);
+            }
 
             $addressData = [
                 'parent_id'   => $customer->getId(),
                 'customer_id' => $customer->getId(),
-                'firstname'   => $card['billTo']['firstName'],
-                'lastname'    => $card['billTo']['lastName'],
-                'street'      => $card['billTo']['address'],
-                'city'        => $card['billTo']['city'],
-                'country_id'  => $card['billTo']['country'],
-                'region'      => $card['billTo']['state'],
-                'region_id'   => $region->getId(),
-                'postcode'    => $card['billTo']['zip'],
+                'firstname'   => isset($card['billTo']['firstName']) ? $card['billTo']['firstName'] : '',
+                'lastname'    => isset($card['billTo']['lastName']) ? $card['billTo']['lastName'] : '',
+                'street'      => isset($card['billTo']['address']) ? $card['billTo']['address'] : '',
+                'city'        => isset($card['billTo']['city']) ? $card['billTo']['city'] : '',
+                'country_id'  => isset($card['billTo']['country']) ? $card['billTo']['country'] : '',
+                'region'      => isset($card['billTo']['state']) ? $card['billTo']['state'] : '',
+                'region_id'   => isset($region) ? $region->getId() : '',
+                'postcode'    => isset($card['billTo']['zip']) ? $card['billTo']['zip'] : '',
                 'telephone'   => isset($card['billTo']['phoneNumber']) ? $card['billTo']['phoneNumber'] : '',
                 'fax'         => isset($card['billTo']['faxNumber']) ? $card['billTo']['faxNumber'] : '',
             ];
