@@ -24,21 +24,23 @@
 /*jshint jquery:true*/
 define([
     "jquery",
-    "mage/translate"
-], function($) {
+    "ko",
+    'Magento_Ui/js/modal/alert',
+    "mage/translate",
+    'mage/validation'
+    // NB: using jQuery rather than $ to avoid conflict on admin order form.
+], function(jQuery, ko, alert) {
     "use strict";
 
-    $.widget('mage.authnetcimAcceptjs', {
+    jQuery.widget('mage.authnetcimAcceptjs', {
         options: {
             apiLoginId: '',
             clientKey: '',
             method: '',
+            formSelector: '',
             submitSelector: '',
-            sandbox: false,
-            processingSelector: '',
-            processingOpacity: 0.5,
-            messageFadeDelay: 1500,
-            nonceRefreshDelay: 60000
+            cardSelector: '',
+            sandbox: false
         },
 
         fields: [
@@ -53,33 +55,42 @@ define([
             '-cc-number'
         ],
 
-        tmpHaveAllFields: null,
-        tmpConcat: null,
-        nonceConcat: null,
-        timeout: null,
+        // Change certain error responses to be more useful.
+        errorMap: {
+            'E_WC_10': 'API credentials invalid. If you are an administrator, please correct the API Login ID.',
+            'E_WC_19': 'API credentials invalid. If you are an administrator, please correct the API Login ID and'
+                       + ' Client Key.',
+            'E_WC_21': 'API credentials invalid. If you are an administrator, please correct the API Login ID and'
+                       + ' Client Key.'
+        },
+
+        alreadyProcessing: false,
 
         /**
          * Initialize Accept.js interface
          */
         _create: function() {
-            this.hasError = false;
-
             // If we aren't configured, stop here, do nothing.
-            if (this.options.method == '' || this.options.apiLoginId == '' || this.options.clientKey == '') {
+            if (this.options.method === '' || this.options.apiLoginId === '' || this.options.clientKey === '') {
                 return;
             }
 
+            this.form = this.options.formSelector ? jQuery(this.options.formSelector) : this.element;
+
+            this.isSubmitActionAllowed = ko.observable(null);
+            this.acceptJsKey = ko.observable(null);
+            this.acceptJsValue = ko.observable(null);
+            this.creditCardLast4 = ko.observable(null);
+            this.creditCardBin = ko.observable(null);
+            this.creditCardType = ko.observable(null);
+
             if (this.options.sandbox) {
                 require(['authorizeNetAcceptjsSandbox'],
-                    function() {
-                        this.bind();
-                    }.bind(this)
+                    this._bind.bind(this)
                 );
             } else {
                 require(['authorizeNetAcceptjs'],
-                    function() {
-                        this.bind();
-                    }.bind(this)
+                    this._bind.bind(this)
                 );
             }
         },
@@ -87,23 +98,62 @@ define([
         /**
          * Hook onto elements of the current page, if we can
          */
-        bind: function () {
+        _bind: function () {
+            // Initialize Accept.js callback
             // Global callback and param is necessary for the vendor JS library.
-            window['acceptJs_' + this.options.method + '_callback'] = function(response) {
-                this.handlePaymentResponse(response);
-            }.bind(this);
-
+            window[this.options.method + '_acceptJs_callback'] = this.handlePaymentResponse.bind(this);
             window.isReady = true;
 
-            this.nonceConcat = null;
+            // Bind listeners
+            if (jQuery('#tokenbase-wrapper').length > 0) {
+                this.form.on('tokenbaseSave', this.handleFormSubmit.bind(this));
+                this.form.on('tokenbaseFailure', this.handlePaymentResponseError.bind(this));
+            } else {
+                this.form.on('submit submitOrder', this.handleFormSubmit.bind(this));
+            }
 
             if (this.element) {
                 this.element.on(
-                    'input change keyup',
+                    'input change keyup paste',
                     'input:not([type=hidden]), select',
                     this.onFieldChange.bind(this)
                 );
+                this.form.on(
+                    'change',
+                    'input[name="payment[method]"]',
+                    this.onFieldChange.bind(this)
+                );
             }
+
+            this.isSubmitActionAllowed.subscribe(function (isSubmitActionAllowed) {
+                var button = jQuery(this.options.submitSelector);
+
+                if (isSubmitActionAllowed) {
+                    button.removeClass('disabled').prop('disabled', false);
+                } else {
+                    button.addClass('disabled').prop('disabled', true);
+                }
+            }.bind(this));
+
+            this.acceptJsKey.subscribe(function (acceptJsKey) {
+                this.element.find('#' + this.options.method + '-acceptjs-key').val(acceptJsKey).trigger('change');
+            }.bind(this));
+
+            this.acceptJsValue.subscribe(function (acceptJsValue) {
+                this.element.find('#' + this.options.method + '-acceptjs-value').val(acceptJsValue).trigger('change');
+            }.bind(this));
+
+            this.creditCardLast4.subscribe(function (creditCardLast4) {
+                this.element.find('#' + this.options.method + '-cc-last4').val(creditCardLast4).trigger('change');
+            }.bind(this));
+
+            if (this.element.find('#' + this.options.method + '-cc-bin').length > 0) {
+                this.creditCardBin.subscribe(function (creditCardBin) {
+                    this.element.find('#' + this.options.method + '-cc-bin').val(creditCardBin).trigger('change');
+                }.bind(this));
+            }
+
+            this.onFieldChange();
 
             // Disable server-side validation
             if (typeof window.order != 'undefined' && typeof window.order.addExcludedPaymentMethod == 'function') {
@@ -111,56 +161,28 @@ define([
             }
         },
 
-        /**
-         * Check validity, request accept.js nonce if everything checks out
-         */
-        onFieldChange: function () {
-            if (this.isValidForAcceptjs()) {
-                this.tmpHaveAllFields = true;
-
-                $(this.fields).each(function (i, elemIndex) {
-                    var field = $(this.element).find('#' + this.options.method + elemIndex);
-
-                    if (typeof field != 'undefined' && field.length > 0 && elemIndex != '-cc-type') {
-                        // If we're missing a value or find a masked one, not valid for sending.
-                        if ($(field).val().length < 1 || $(field).val().indexOf('XX') >= 0) {
-                            this.tmpHaveAllFields = false;
-                        }
-                        else if (elemIndex == '-cc-cid' && $(field).val().length < 3) {
-                            this.tmpHaveAllFields = false;
-                        }
-                    }
-                }.bind(this));
-
-                // If all fields are filled in, the form validates, and something has changed, request a nonce.
-                if (this.tmpHaveAllFields === true && this.validate() && this.concatFields() != this.nonceConcat) {
-                    this.nonceConcat = this.tmpConcat;
-
-                    this.sendPaymentInfo();
-
-                    // Refresh periodically to avoid 15-minute token expiration, and try to play nice with checkout errors.
-                    if (this.timeout !== null) {
-                        clearTimeout(this.timeout);
-                    }
-
-                    this.timeout = setTimeout(
-                        function () {
-                            this.nonceConcat = null;
-                            this.onFieldChange();
-                        }.bind(this),
-                        this.options.nonceRefreshDelay
-                    );
+        isActivePaymentMethod: function() {
+            // Check the selected method.
+            if (this.element) {
+                if (typeof window.checkoutConfig !== 'undefined'
+                    && typeof window.checkoutConfig.selectedPaymentMethod !== 'undefined'
+                    && window.checkoutConfig.selectedPaymentMethod === this.options.method) {
+                    return true;
                 }
-            }
-        },
 
-        /**
-         * Check whether Accept.js applies in the current situation
-         */
-        isValidForAcceptjs: function () {
-            // In admin order process, check selected method.
-            if (this.element && ( typeof window.order == 'undefined' || typeof window.order.paymentMethod == 'undefined' || window.order.paymentMethod == this.options.method )) {
-                if ($(this.element).find('#' + this.options.method + '-cc-number').val() != '') {
+                if (typeof this.form !== 'undefined'
+                    && this.form.find('[name="payment[method]"]:checked').val() === this.options.method) {
+                    return true;
+                }
+
+                if (typeof window.order !== 'undefined'
+                    && typeof window.order.paymentMethod !== 'undefined'
+                    && window.order.paymentMethod === this.options.method) {
+                    return true;
+                }
+
+                if (typeof this.form !== 'undefined'
+                    && this.form.find('[name="method"]').val() === this.options.method) {
                     return true;
                 }
             }
@@ -168,25 +190,83 @@ define([
             return false;
         },
 
+        selectedCard: function () {
+            if (this.options.cardSelector !== '') {
+                return this.element.find(this.options.cardSelector).val();
+            }
+
+            return '';
+        },
+
+        handleFormSubmit: function(event) {
+            if (this.isActivePaymentMethod() && !this.selectedCard() && !this.acceptJsValue()) {
+                if (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+
+                if (this.validate() && this.form.validation('isValid')) {
+                    if (this.alreadyProcessing !== true) {
+                        this.startLoadWaiting();
+                        this.sendPaymentInfo();
+                    }
+                } else {
+                    this.stopLoadWaiting();
+                }
+
+                this.form.data('preventSave', true);
+            }
+        },
+
+        onFieldChange: function () {
+            if (this.isActivePaymentMethod()) {
+                if (this.selectedCard()) {
+                    this.isSubmitActionAllowed(true);
+                    return;
+                }
+
+                var haveAllFields = true;
+                jQuery(this.fields).each(function (i, elemIndex) {
+                    var field = this.element.find('#' + this.options.method + elemIndex);
+
+                    if (typeof field !== 'undefined' && field.length > 0 && elemIndex !== '-cc-type') {
+                        // If we're missing a value or find a masked one, not valid for sending.
+                        if (jQuery(field).val().length < 1 || jQuery(field).val().indexOf('XX') >= 0) {
+                            haveAllFields = false;
+                        } else if (elemIndex === '-cc-cid' && jQuery(field).val().length < 3) {
+                            haveAllFields = false;
+                        }
+                    }
+                }.bind(this));
+
+                // Update isSubmitActionAllowed state
+                this.isSubmitActionAllowed(haveAllFields);
+            } else {
+                this.isSubmitActionAllowed(true);
+            }
+        },
+
         /**
          * Validate payment form fields before submit
-         *
-         * This isn't strictly necessary at this point. Accept.js has card validation built in.
          */
         validate: function () {
-            return true;
+            if (this.selectedCard()) {
+                return true;
+            }
+
+            return jQuery.validator.validateSingleElement('#' + this.options.method + '-cc-number')
+                   && jQuery.validator.validateSingleElement('#' + this.options.method + '-cc-exp-month')
+                   && jQuery.validator.validateSingleElement('#' + this.options.method + '-cc-cid');
         },
 
         /**
          * Send payment info via Accept.js
          */
         sendPaymentInfo: function () {
-            this.startLoadWaiting();
-
-            var form = $(this.element);
+            var form = this.element;
             var paymentData = {
                 cardData: {
-                    cardNumber: form.find('#' + this.options.method + '-cc-number').val().replace(/\D/g, ''),
+                    cardNumber: this.getCcNumber(),
                     month: form.find('#' + this.options.method + '-cc-exp-month').val(),
                     year: form.find('#' + this.options.method + '-cc-exp-year').val(),
                     cardCode: ''
@@ -201,10 +281,9 @@ define([
                 paymentData['cardData']['cardCode'] = form.find('#' + this.options.method + '-cc-cid').val();
             }
 
-            // Vendor JS library creates itself as a global object; we have to call it as such.
             Accept.dispatchData(
                 paymentData,
-                'acceptJs_' + this.options.method + '_callback'
+                this.options.method + '_acceptJs_callback'
             );
         },
 
@@ -213,139 +292,92 @@ define([
          */
         handlePaymentResponse: function (response) {
             if (response.messages.resultCode === 'Error') {
-                this.hasError = true;
+                this.handlePaymentResponseError(response);
+            } else {
+                this.handlePaymentResponseSuccess(response);
+            }
+        },
 
-                var messages = '';
+        handlePaymentResponseError: function (response) {
+            this.acceptJsKey(null);
+            this.acceptJsValue(null);
+            this.creditCardLast4(null);
+            this.creditCardBin(null);
+
+            if (response.messages) {
+                var messages = [];
                 for (var i = 0; i < response.messages.message.length; i++) {
-                    if (i > 0) {
-                        messages += "\n";
+                    var errorText = response.messages.message[i].text;
+                    if (typeof this.errorMap[response.messages.message[i].code] !== 'undefined') {
+                        errorText = this.errorMap[response.messages.message[i].code];
                     }
 
-                    messages += $.mage.__(response.messages.message[i].text + ' (' + response.messages.message[i].code + ')');
+                    messages.push(
+                        jQuery.mage.__('Payment Error: %1 <small><em>(%2)</em></small>')
+                            .replace('%1', jQuery.mage.__(errorText))
+                            .replace('%2', response.messages.message[i].code)
+                    );
                 }
 
-                // Unset data
-                $(this.element).find('#' + this.options.method + '-acceptjs-key').val('').trigger('change');
-                $(this.element).find('#' + this.options.method + '-acceptjs-value').val('').trigger('change');
-                $(this.element).find('#' + this.options.method + '-cc-last4').val('').trigger('change');
-
-                this.stopLoadWaiting(messages);
+                this.stopLoadWaiting(messages.join("\n"));
+            } else {
+                this.stopLoadWaiting();
             }
-            else {
-                var cc_no = $(this.element).find('#' + this.options.method + '-cc-number').val().replace(/\D/g,'');
+        },
 
-                // Set data
-                $(this.element).find('#' + this.options.method + '-acceptjs-key').val(response.opaqueData.dataDescriptor).trigger('change');
-                $(this.element).find('#' + this.options.method + '-acceptjs-value').val(response.opaqueData.dataValue).trigger('change');
-                $(this.element).find('#' + this.options.method + '-cc-last4').val(cc_no.substring(cc_no.length - 4)).trigger('change');
+        handlePaymentResponseSuccess: function (response) {
+            var cc_no = this.getCcNumber();
 
-                var binField = $(this.element).find('#' + this.options.method + '-cc-bin');
-                if (binField.length > 0) {
-                    binField.val(cc_no.substring(0, 6)).trigger('change');
+            // Set data
+            this.acceptJsKey(response.opaqueData.dataDescriptor);
+            this.acceptJsValue(response.opaqueData.dataValue);
+            this.creditCardLast4(cc_no.substring(cc_no.length - 4));
+            this.creditCardBin(cc_no.substring(0, 6));
+
+            // Remove fields from request
+            jQuery(this.protectedFields).each(function (i, elemIndex) {
+                if (typeof this.element.find('#' + this.options.method + elemIndex) != 'undefined') {
+                    this.element.find('#' + this.options.method + elemIndex).attr('name', '');
                 }
+            }.bind(this));
 
-                // Remove fields from request
-                $(this.protectedFields).each(function (i, elemIndex) {
-                    if (typeof $(this.element).find('#' + this.options.method + elemIndex) != 'undefined') {
-                        $(this.element).find('#' + this.options.method + elemIndex).attr('name', '');
-                    }
-                }.bind(this));
+            // Submit form
+            // TODO: Save went through even with cc_number present?
+            this.stopLoadWaiting();
 
-                this.stopLoadWaiting(false);
+            if (jQuery('#tokenbase-wrapper').length > 0) {
+                this.form.trigger('submit');
+            } else {
+                jQuery(this.options.submitSelector).first().trigger('click');
             }
+        },
+
+        getCcNumber: function() {
+            return this.element.find('#' + this.options.method + '-cc-number').val().replace(/\D/g,'');
         },
 
         /**
          * Show the spinner effect on the CC fields while loading.
          */
         startLoadWaiting: function () {
-            try {
-                // Field opacity
-                $(this.fields).each(function (i, elemIndex) {
-                    var field = $(this.element).find('#' + this.options.method + elemIndex);
-
-                    if (typeof field != 'undefined' && field.length > 0 && this.options.processingSelector != '') {
-                        $(field).closest(this.options.processingSelector).css({
-                            opacity: this.options.processingOpacity
-                        });
-                    }
-                }.bind(this));
-
-                // Spinner / messages
-                $(this.element).find('#' + this.options.method + '-processing').addClass('_active').removeClass('no-display _hidden');
-                $(this.element).find('#' + this.options.method + '-complete').addClass('no-display _hidden').removeClass('_active');
-                $(this.element).find('#' + this.options.method + '-failed').addClass('no-display _hidden').removeClass('_active');
-                $(this.element).find('#' + this.options.method + '-failed').find('.error-text').html('');
-
-                // Button disable
-                if (this.options.submitSelector && $(this.options.submitSelector).length > 0) {
-                    $(this.options.submitSelector).addClass('disabled').prop('disabled', true);
-                }
-            } catch (error) {
-                // do nothing on load-waiting error.
-            }
+            this.alreadyProcessing = true;
+            this.isSubmitActionAllowed(false);
+            this.form.trigger('processStart');
         },
 
         /**
          * Remove the spinner effect on the CC fields.
          */
         stopLoadWaiting: function (error) {
-            try {
-                // Field opacity
-                $(this.fields).each(function (i, elemIndex) {
-                    var field = $(this.element).find('#' + this.options.method + elemIndex);
+            this.alreadyProcessing = false;
+            this.onFieldChange();
+            this.form.trigger('processStop');
 
-                    if (typeof field != 'undefined' && field.length > 0 && this.options.processingSelector != '') {
-                        $(field).closest(this.options.processingSelector).css({opacity: ''});
-                    }
-                }.bind(this));
-
-                // Spinner / messages
-                $(this.element).find('#' + this.options.method + '-processing').addClass('no-display _hidden').removeClass('_active');
-
-                if (error == false) {
-                    $(this.element).find('#' + this.options.method + '-complete').addClass('_active').removeClass('no-display _hidden').css({opacity: ''});
-
-                    setTimeout(
-                        function () {
-                            $(this.element).find('#' + this.options.method + '-complete').fadeOut(function() {
-                                $(this).addClass('no-display _hidden').removeClass('_active').css('display', '');
-                            });
-                        }.bind(this),
-                        this.options.messageFadeDelay
-                    );
-                }
-                else {
-                    $(this.element).find('#' + this.options.method + '-failed').find('.error-text').html(error);
-                    $(this.element).find('#' + this.options.method + '-failed').addClass('_active').removeClass('no-display _hidden').css({opacity: ''});
-                }
-
-                // Button disable
-                if (this.options.submitSelector && $(this.options.submitSelector).length > 0) {
-                    $(this.options.submitSelector).removeClass('disabled').prop('disabled', false);
-                }
-            } catch (error) {
-                // do nothing on load-waiting error.
+            if (error) {
+                alert({content:error});
             }
-        },
-
-        /**
-         * Combine all fields into a single string for quick comparison purposes.
-         */
-        concatFields: function () {
-            this.tmpConcat = '';
-
-            $(this.fields).each(function (i, elemIndex) {
-                var field = $(this.element).find('#' + this.options.method + elemIndex);
-
-                if (typeof field != 'undefined' && field.length > 0 && $(field).val().length > 0) {
-                    this.tmpConcat += $(field).val();
-                }
-            }.bind(this));
-
-            return this.tmpConcat;
         }
     });
 
-    return $.mage.authnetcimAcceptjs;
+    return jQuery.mage.authnetcimAcceptjs;
 });

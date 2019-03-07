@@ -14,7 +14,7 @@
     </h2>
 </div>
 
-<form action="<?php echo $block->escapeUrl($block->getAction()); ?>" method="post" id="form-validate" data-hasrequired="<?php echo $block->escapeQuote(__('* Required Fields')) ?>">
+<form action="<?php echo $block->escapeUrl($block->getAction()); ?>" method="post" id="form-validate" class="checkout-payment-method" data-hasrequired="<?php echo $block->escapeQuote(__('* Required Fields')) ?>">
     <?php echo $block->getBlockHtml('formkey'); ?>
     <input type="hidden" name="id" value="<?php echo $block->getCard()->getId() ? $block->escapeQuote($block->getCard()->getHash()) : ''; ?>" />
     <input type="hidden" name="method" value="<?php echo $code; ?>" />
@@ -100,22 +100,22 @@
         <legend class="legend"><span><?php echo $block->escapeHtml(__('Credit Card Information')) ?></span></legend><br>
 
         <div class="field type required">
-            <label for="<?php echo $code ?>-cc-type" class="label"><span><?php echo $block->escapeHtml(__('CC Type')) ?></span></label>
             <div class="control">
-                <select id="<?php echo $code ?>-cc-type"
-                        name="payment[cc_type]" data-validate='{required:true<?php if ($block->isEdit() === false): ?>, "validate-cc-type-select":"#<?php echo $code ?>-cc-number"<?php endif; ?>}' class="select">
-                    <option value=""><?php echo $block->escapeHtml(__('--Please Select--'))?></option>
-                    <?php $_ccType = $block->getCard()->getAdditional('cc_type') ?>
+                <?php $_ccType = $block->getCard()->getAdditional('cc_type') ?>
+                <ul class="credit-card-types">
                     <?php foreach ($block->getCcBlock()->getCcAvailableTypes() as $_typeCode => $_typeName): ?>
-                        <option value="<?php echo $block->escapeQuote($_typeCode) ?>"<?php if ($_typeCode == $_ccType): ?> selected="selected"<?php endif ?>><?php echo $block->escapeHtml($_typeName) ?></option>
-                    <?php endforeach ?>
-                </select>
+                        <li class="item<?php if ($_typeCode == $_ccType): ?> _active<?php endif; ?>" data-type="<?php echo $block->escapeQuote($_typeCode); ?>">
+                            <img src="<?php echo $block->getViewFileUrl('Magento_Payment::images/cc/' . strtolower($_typeCode) . '.png'); ?>" alt="<?php echo $block->escapeQuote($_typeName); ?>" />
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+                <input type="hidden" name="payment[cc_type]" id="<?php echo $code ?>-cc-type" value="<?php echo $block->escapeQuote($_ccType); ?>" />
             </div>
         </div>
         <div class="field number required">
             <label for="<?php echo $code ?>-cc-number" class="label"><span><?php echo $block->escapeHtml(__('CC Number')) ?></span></label>
             <div class="control">
-                <input type="text" id="<?php echo $code ?>-cc-number" name="payment[cc_number]" title="<?php echo $block->escapeQuote(__('Credit Card Number')) ?>" class="input-text" value="<?php echo $block->escapeQuote($block->getCard()->getLabel(false)); ?>" data-validate='{"required-number":true<?php if ($block->isEdit() === false): ?>, "validate-cc-number":"#<?php echo $code ?>-cc-type", "validate-cc-type":"#<?php echo $code ?>-cc-type"<?php endif; ?>}' autocomplete="cc-number" />
+                <input type="text" id="<?php echo $code ?>-cc-number" name="payment[cc_number]" title="<?php echo $block->escapeQuote(__('Credit Card Number')) ?>" class="input-text" value="<?php echo $block->escapeQuote($block->getCard()->getLabel(false)); ?>" data-validate='{"required-number":true, "validate-cc-number":"#<?php echo $code ?>-cc-type", "validate-cc-type":"#<?php echo $code ?>-cc-type"}' autocomplete="cc-number" />
             </div>
         </div>
         <div class="field date required" id="<?php echo $code ?>-cc-type_exp_div">
@@ -157,17 +157,6 @@
                 </div>
             </div>
         <?php endif; ?>
-        <?php if ($block->getMethod()->isAcceptJsEnabled() === true): ?>
-            <div class="no-display _hidden" id="<?php echo $code; ?>-processing">
-                <?php echo $block->escapeHtml(__('Processing, please wait...')); ?>
-            </div>
-            <div class="no-display _hidden" id="<?php echo $code; ?>-complete">
-                <?php echo $block->escapeHtml(__('&#128077; Okay, ready to continue!')); ?>
-            </div>
-            <div class="no-display _hidden" id="<?php echo $code; ?>-failed">
-                <?php echo $block->escapeHtml(__('&#10060; Please fix your payment info before continuing.')); ?> <span class="error-text"></span>
-            </div>
-        <?php endif; ?>
     </fieldset>
     <div class="actions-toolbar">
         <div class="primary">
@@ -184,14 +173,17 @@
     {
         "#form-validate": {
             "validation": {},
-            "tokenbaseCardFormatter": {}
+            "tokenbaseCardFormatter": {
+                "ccTypeSelector": "#<?php echo $code ?>-cc-type",
+                "ccTypeContainer": ".credit-card-types"
+            }
             <?php if ($block->getMethod()->isAcceptJsEnabled() === true): ?>,
             "authnetcimAcceptjs": {
                 "apiLoginId": "<?php echo $block->escapeJsQuote($block->getMethod()->getConfigData('login')); ?>",
                 "clientKey": "<?php echo $block->escapeJsQuote($block->getMethod()->getConfigData('client_key')); ?>",
                 "method": "<?php echo $code; ?>",
-                "submitSelector": "#form-validate button",
-                "processingSelector": "div.field",
+                "formSelector": "#form-validate",
+                "submitSelector": "#form-validate button[type=submit]",
                 "sandbox": <?php echo $block->getMethod()->getConfigData('test') ? 'true' : 'false'; ?>
             }
             <?php endif; ?>

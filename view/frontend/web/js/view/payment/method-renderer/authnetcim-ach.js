@@ -15,13 +15,11 @@ define(
                 logoImage: config ? config.logoImage : false,
                 achImage: config ? config.achImage : false
             },
+
             initVars: function() {
                 this.canSaveCard     = config ? config.canSaveCard : false;
                 this.forceSaveCard   = config ? config.forceSaveCard : false;
                 this.defaultSaveCard = config ? config.defaultSaveCard : false;
-            },
-            getCode: function () {
-                return 'authnetcim_ach';
             }
         });
     }

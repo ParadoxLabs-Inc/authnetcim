@@ -11,17 +11,7 @@
         <label class="label" data-bind="attr: {'for': getCode()}"><span data-bind="text: getTitle()"></span></label>
     </div>
 
-    <div class="payment-method-content" data-bind="mageInit: {
-    'authnetcimAcceptjs': {
-        'apiLoginId': getApiLoginId(),
-        'clientKey': getClientKey(),
-        'method': getCode(),
-        'sandbox': getSandbox(),
-        'submitSelector': '#' + getCode() + '-submit',
-        'processingSelector': 'div.field.required'
-    },
-    'tokenbaseCardFormatter': {}
-    }">
+    <form class="payment-method-content" data-bind="mageInit: {'tokenbaseCardFormatter': {}, 'validation': {}}">
         <!-- ko if: (useAcceptJs()) -->
             <input type="hidden" name="payment[acceptjs_key]" value="" data-bind="attr: {id: getCode() + '-acceptjs-key'}, value: acceptJsKey"/>
             <input type="hidden" name="payment[acceptjs_value]" value="" data-bind="attr: {id: getCode() + '-acceptjs-value'}, value: acceptJsValue"/>
@@ -42,7 +32,7 @@
             <!-- /ko -->
             <!-- ko if: (getLogoImage())-->
             <div class="sorter">
-                <img data-bind="attr: {'src': getLogoImage()}" />
+                <img data-bind="attr: {'src': getLogoImage(), 'alt': $t('Processed by Authorize.Net')}" />
             </div>
             <!--/ko-->
             <!-- ko if: (useVault()) -->
@@ -65,10 +55,7 @@
             </div>
             <div>&nbsp;</div>
             <!-- /ko -->
-            <div class="field type required widget" data-bind="visible: isCcFormShown">
-                <label data-bind="attr: {for: getCode() + '-cc-type'}" class="label">
-                    <span><!-- ko text: $t('Credit Card Type')--><!-- /ko --></span>
-                </label>
+            <div class="field type required widget" data-bind="visible: isFormShown">
                 <div class="control">
                     <ul class="credit-card-types">
                         <!-- ko foreach: {data: getCcAvailableTypesValues(), as: 'item'} -->
@@ -93,17 +80,17 @@
                        ">
                 </div>
             </div>
-            <div class="field number required" data-bind="visible: isCcFormShown">
+            <div class="field number required" data-bind="visible: isFormShown">
                 <label data-bind="attr: {for: getCode() + '-cc-number'}" class="label">
                     <span><!-- ko text: $t('Credit Card Number')--><!-- /ko --></span>
                 </label>
                 <div class="control">
-                    <input type="text" name="payment[cc_number]" class="input-text" value="" autocomplete="cc-number"
-                           data-bind="attr: {id: getCode() + '-cc-number', title: $t('Credit Card Number'), 'data-container': getCode() + '-cc-number', 'data-validate': JSON.stringify({'required':true, 'validate-cc-number':'#' + getCode() + '-cc-type', 'validate-cc-type':'#' + getCode() + '-cc-type'})},
+                    <input type="text" class="input-text" value="" autocomplete="cc-number"
+                           data-bind="attr: {id: getCode() + '-cc-number', name: !useAcceptJs() ? 'payment[cc_number]' : null, title: $t('Credit Card Number'), 'data-container': getCode() + '-cc-number', 'data-validate': JSON.stringify({'required':true, 'validate-cc-number':'#' + getCode() + '-cc-type', 'validate-cc-type':'#' + getCode() + '-cc-type'})},
                     enable: true, value: creditCardNumber"/>
                 </div>
             </div>
-            <div class="field date required" data-bind="attr: {id: getCode() + '-cc-type-exp-div'}, visible: isCcFormShown">
+            <div class="field date required" data-bind="attr: {id: getCode() + '-cc-type-exp-div'}, visible: isFormShown">
                 <label data-bind="attr: {for: getCode() + '-cc-exp-month'}" class="label">
                     <span><!-- ko text: $t('Expiration Date')--><!-- /ko --></span>
                 </label>
@@ -170,7 +157,7 @@
             </div>
             <!-- /ko -->
             <!-- ko if: (canSaveCard)-->
-            <div class="field" data-bind="visible: isCcFormShown">
+            <div class="field" data-bind="visible: isFormShown">
                 <label class="label">
                     <span></span>
                 </label>
@@ -181,7 +168,7 @@
                            value="1"
                            checked="checked"
                            class="checkbox"
-                           data-bind="checked: save, attr: {id: getCode() + '-save'}"/>
+                           data-bind="attr: {id: getCode() + '-save'}, checked: save"/>
                     <label class="label" data-bind="attr: {for: getCode() + '-save'}">
                         <span><!-- ko text: $t('For your convenience, this data will be stored securely by our payment processor.')--><!-- /ko --></span>
                     </label>
@@ -192,23 +179,12 @@
                            value="1"
                            checked="checked"
                            class="checkbox"
-                           data-bind="checked: save, attr: {id: getCode() + '-save'}"/>
+                           data-bind="attr: {id: getCode() + '-save'}, checked: save"/>
                     <label class="label" data-bind="attr: {for: getCode() + '-save'}">
                         <span><!-- ko text: $t('Save for next time')--><!-- /ko --></span>
                     </label>
                     <!-- /ko -->
                 </div>
-            </div>
-            <!-- /ko -->
-            <!-- ko if: (useAcceptJs()) -->
-            <div class="no-display _hidden" data-bind="attr: {id: getCode() + '-processing'}">
-                <!-- ko text: $t('Processing, please wait...')--><!-- /ko -->
-            </div>
-            <div class="no-display _hidden" data-bind="attr: {id: getCode() + '-complete'}">
-                &#128077; <!-- ko text: $t('Okay, ready to continue!')--><!-- /ko -->
-            </div>
-            <div class="no-display _hidden"  data-bind="attr: {id: getCode() + '-failed'}">
-                &#10060; <!-- ko text: $t('Please fix your payment info before continuing.')--><!-- /ko --> <span class="error-text"></span>
             </div>
             <!-- /ko -->
         </fieldset>
@@ -235,6 +211,6 @@
                 </div>
             </div>
         </div>
-    </div>
+    </form>
 
 </div>

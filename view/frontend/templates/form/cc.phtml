@@ -6,7 +6,7 @@ $code           = $block->escapeQuote($block->getMethodCode());
 $image          = $block->getBrandingImage();
 $storedCards    = $block->getStoredCards();
 ?>
-<fieldset class="fieldset items <?php echo $code ?>" id="payment_form_<?php echo $code ?>" style="display:none;">
+<fieldset class="fieldset payment items ccard <?php echo $code ?>" id="payment_form_<?php echo $code ?>" style="display:none;">
     <?php if ($block->getTokenbaseMethod()->isAcceptJsEnabled() === true): ?>
         <input type="hidden" name="payment[acceptjs_key]" id="<?php echo $code ?>-acceptjs-key" value="" />
         <input type="hidden" name="payment[acceptjs_value]" id="<?php echo $code ?>-acceptjs-value" value="" />
@@ -38,16 +38,16 @@ $storedCards    = $block->getStoredCards();
         </div>
     <?php endif; ?>
     <div class="field type required hide-if-card-selected">
-        <label for="<?php echo $code ?>-cc-type" class="label"><span><?php echo $block->escapeHtml(__('Credit Card Type')) ?></span></label>
         <div class="control">
-            <select id="<?php echo $code ?>-cc-type"
-                    name="payment[cc_type]" data-validate='{required:true, "validate-cc-type-select":"#<?php echo $code ?>-cc-number"}' class="select">
-                <option value=""><?php echo $block->escapeHtml(__('--Please Select--'))?></option>
-                <?php $_ccType = $block->getInfoData('cc_type') ?>
+            <?php $_ccType = $block->getInfoData('cc_type') ?>
+            <ul class="credit-card-types">
                 <?php foreach ($block->getCcAvailableTypes() as $_typeCode => $_typeName): ?>
-                    <option value="<?php echo $block->escapeQuote($_typeCode) ?>"<?php if ($_typeCode == $_ccType): ?> selected="selected"<?php endif ?>><?php echo $block->escapeHtml($_typeName) ?></option>
-                <?php endforeach ?>
-            </select>
+                    <li class="item<?php if ($_typeCode == $_ccType): ?> _active<?php endif; ?>" data-type="<?php echo $block->escapeQuote($_typeCode); ?>">
+                        <img src="<?php echo $block->getViewFileUrl('Magento_Payment::images/cc/' . strtolower($_typeCode) . '.png'); ?>" alt="<?php echo $block->escapeQuote($_typeName); ?>" />
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+            <input type="hidden" name="payment[cc_type]" id="<?php echo $code ?>-cc-type" value="<?php echo $block->escapeQuote($_ccType); ?>" />
         </div>
     </div>
     <div class="field number required hide-if-card-selected">
@@ -90,7 +90,7 @@ $storedCards    = $block->getStoredCards();
         <div class="field cvv required <?php if ($block->getMethod()->getConfigData('require_ccv') == 0): ?>hide-if-card-selected<?php endif; ?>">
             <label for="<?php echo $code ?>-cc-cid" class="label"><span><?php echo $block->escapeHtml(__('Card Verification Number')) ?></span></label>
             <div class="control">
-                <input type="text" title="<?php echo $block->escapeQuote(__('Card Verification Number')) ?>" class="input-text cvv" id="<?php echo $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true}' autocomplete="cc-csc" />
+                <input type="text" title="<?php echo $block->escapeQuote(__('Card Verification Number')) ?>" class="input-text cvv" id="<?php echo $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true, "validate-cc-cvn":"#<?php echo $code ?>-cc-type"}' autocomplete="cc-csc" />
             </div>
             <?php $_content = '<img src=\"' . $block->escapeUrl($block->getViewFileUrl('Magento_Checkout::cvv.png')) . '\" alt=\"' . $block->escapeQuote(__('Card Verification Number Visual Reference')) . '\" title=\"' . $block->escapeQuote(__('Card Verification Number Visual Reference')) . '\" />'; ?>
             <div class="note">
@@ -114,30 +114,25 @@ $storedCards    = $block->getStoredCards();
             </div>
         </div>
     <?php endif; ?>
-    <?php if ($block->getTokenbaseMethod()->isAcceptJsEnabled() === true): ?>
-        <div class="no-display _hidden" id="<?php echo $code; ?>-processing">
-            <?php echo $block->escapeHtml(__('Processing, please wait...')); ?>
-        </div>
-        <div class="no-display _hidden" id="<?php echo $code; ?>-complete">
-            <?php echo $block->escapeHtml(__('&#128077; Okay, ready to continue!')); ?>
-        </div>
-        <div class="no-display _hidden" id="<?php echo $code; ?>-failed">
-            <?php echo $block->escapeHtml(__('&#10060; Please fix your payment info before continuing.')); ?> <span class="error-text"></span>
-        </div>
-    <?php endif; ?>
 </fieldset>
 <script type="text/x-magento-init">
     {
         "#payment_form_<?php echo $code ?>": {
-            "tokenbaseForm":{"code":"<?php echo $code ?>"},
-            "tokenbaseCardFormatter": {}
+            "tokenbaseForm": {
+                "code":"<?php echo $code ?>"
+            },
+            "tokenbaseCardFormatter": {
+                "ccTypeSelector": "#<?php echo $code ?>-cc-type",
+                "ccTypeContainer": ".credit-card-types"
+            }
             <?php if ($block->getTokenbaseMethod()->isAcceptJsEnabled() === true): ?>,
             "authnetcimAcceptjs": {
                 "apiLoginId": "<?php echo $block->escapeJsQuote($block->getMethod()->getConfigData('login')); ?>",
                 "clientKey": "<?php echo $block->escapeJsQuote($block->getMethod()->getConfigData('client_key')); ?>",
                 "method": "<?php echo $code; ?>",
-                "submitSelector": "form button[type=submit]",
-                "processingSelector": "div.field",
+                "formSelector": ".main form",
+                "submitSelector": ".payments button[type=submit], button#payment-continue",
+                "cardSelector": "#<?php echo $code; ?>-card-id",
                 "sandbox": <?php echo $block->getMethod()->getConfigData('test') ? 'true' : 'false'; ?>
             }
             <?php endif; ?>

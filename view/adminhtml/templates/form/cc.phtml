@@ -6,16 +6,20 @@ $code           = $block->escapeQuote($block->getMethodCode());
 $image          = $block->getBrandingImage();
 $storedCards    = $block->getStoredCards();
 ?>
-<div id="payment_form_<?php echo $code ?>" class="admin__page-section-item" style="display:none" data-mage-init='{
-     "tokenbaseForm":{"code":"<?php echo $code ?>"},
-     "tokenbaseCardFormatter": {}
+<div id="payment_form_<?php echo $code ?>" class="admin__page-section-item checkout-payment-method" style="display:none" data-mage-init='{
+    "tokenbaseForm":{"code":"<?php echo $code ?>"},
+    "tokenbaseCardFormatter": {
+        "ccTypeSelector": "#<?php echo $code ?>-cc-type",
+        "ccTypeContainer": ".credit-card-types"
+    }
 <?php if ($block->getTokenbaseMethod()->isAcceptJsEnabled() === true): ?>,
     "authnetcimAcceptjs": {
         "apiLoginId": "<?php echo $block->escapeJsQuote($block->getMethod()->getConfigData('login')); ?>",
         "clientKey": "<?php echo $block->escapeJsQuote($block->getMethod()->getConfigData('client_key')); ?>",
         "method": "<?php echo $code; ?>",
+        "formSelector": "#edit_form",
         "submitSelector": "#edit_form button.save, #submit_order_top_button",
-        "processingSelector": "div.admin__field",
+        "cardSelector": "#<?php echo $code ?>-card-id",
         "sandbox": <?php echo $block->getMethod()->getConfigData('test') ? 'true' : 'false'; ?>
     }
 <?php endif; ?>
@@ -29,7 +33,7 @@ $storedCards    = $block->getStoredCards();
             <input type="hidden" name="payment[cc_bin]" id="<?php echo $code ?>-cc-bin" value="" />
         <?php endif; ?>
     <?php endif; ?>
-    <fieldset class="admin__fieldset">
+    <fieldset class="admin__fieldset payment items ccard">
         <?php if ($image): ?>
             <div class="page-actions">
                 <img src="<?php echo $block->escapeUrl($image); ?>" />
@@ -51,35 +55,36 @@ $storedCards    = $block->getStoredCards();
                 </div>
             </div>
         <?php endif; ?>
-        <div class="admin__field hide-if-card-selected">
-            <label class="label admin__field-label" for="<?php echo $code ?>-cc-type" ><?php echo $block->escapeHtml(__('Credit Card Type')) ?><span class="required">*</span></label>
+        <div class="admin__field _required type hide-if-card-selected">
             <div class="admin__field-control control">
-                <select id="<?php echo $code ?>-cc-type" name="payment[cc_type]" class="required-entry _required select admin__control-select validate-cc-type-select">
-                    <option value="">--<?php echo $block->escapeHtml(__('Please Select'))?>--</option>
-                    <?php $_ccType = $block->getInfoData('cc_type') ?>
+                <?php $_ccType = $block->getInfoData('cc_type') ?>
+                <ul class="credit-card-types">
                     <?php foreach ($block->getCcAvailableTypes() as $_typeCode => $_typeName): ?>
-                        <option value="<?php echo $block->escapeQuote($_typeCode) ?>"<?php if ($_typeCode==$_ccType): ?> selected="selected"<?php endif ?>><?php echo $block->escapeHtml($_typeName) ?></option>
-                    <?php endforeach ?>
-                </select>
+                        <li class="item<?php if ($_typeCode == $_ccType): ?> _active<?php endif; ?>" data-type="<?php echo $block->escapeQuote($_typeCode); ?>">
+                            <img src="<?php echo $block->getViewFileUrl('Magento_Payment::images/cc/' . strtolower($_typeCode) . '.png'); ?>" alt="<?php echo $block->escapeQuote($_typeName); ?>" />
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+                <input type="hidden" name="payment[cc_type]" id="<?php echo $code ?>-cc-type" value="<?php echo $block->escapeQuote($_ccType); ?>" />
             </div>
         </div>
-        <div class="admin__field hide-if-card-selected">
-            <label class="label admin__field-label" for="<?php echo $code ?>-cc-number"><?php echo $block->escapeHtml(__('Credit Card Number')) ?><span class="required">*</span></label>
+        <div class="admin__field _required number hide-if-card-selected">
+            <label class="label admin__field-label" for="<?php echo $code ?>-cc-number"><span><?php echo $block->escapeHtml(__('Credit Card Number')) ?></span></label>
             <div class="admin__field-control control">
-                <input type="text" id="<?php echo $code ?>-cc-number" name="payment[cc_number]"  title="<?php echo $block->escapeQuote(__('Credit Card Number')) ?>" class="input-text admin__control-text validate-cc-number validate-cc-type" value="<?php echo $block->escapeQuote($block->getInfoData('cc_number')); ?>" autocomplete="cc-number" />
+                <input type="text" id="<?php echo $code ?>-cc-number" name="payment[cc_number]"  title="<?php echo $block->escapeQuote(__('Credit Card Number')) ?>" class="input-text admin__control-text validate-cc-number validate-cc-type" value="<?php echo $block->escapeQuote($block->getInfoData('cc_number')); ?>" data-validate='{"required-number":true, "validate-cc-number":"#<?php echo $code ?>-cc-type", "validate-cc-type":"#<?php echo $code ?>-cc-type"}' autocomplete="cc-number" />
             </div>
         </div>
-        <div class="admin__field hide-if-card-selected">
-            <label class="label admin__field-label" for="<?php echo $code ?>-cc-exp-month" ><?php echo $block->escapeHtml(__('Expiration Date')) ?><span class="required">*</span></label>
+        <div class="admin__field _required date hide-if-card-selected">
+            <label class="label admin__field-label" for="<?php echo $code ?>-cc-exp-month"><span><?php echo $block->escapeHtml(__('Expiration Date')) ?></span></label>
             <div class="admin__field-control control">
-                <select id="<?php echo $code ?>-cc-exp-month" name="payment[cc_exp_month]" class="month validate-cc-exp required-entry _required select admin__control-select" autocomplete="cc-exp-month">
+                <select id="<?php echo $code ?>-cc-exp-month" name="payment[cc_exp_month]" class="month validate-cc-exp required-entry _required select admin__control-select" data-validate='{required:true, "validate-cc-exp":"#<?php echo $code ?>-cc-exp-year"}' autocomplete="cc-exp-month">
                     <?php $_ccExpMonth = $block->getInfoData('cc_exp_month') ?>
                     <?php foreach ($block->getCcMonths() as $k=>$v): ?>
                         <option value="<?php echo $k?$block->escapeQuote($k):'' ?>"<?php if ($k==$_ccExpMonth): ?> selected="selected"<?php endif ?>><?php echo $block->escapeHtml($v) ?></option>
                     <?php endforeach ?>
                 </select>
                 <?php $_ccExpYear = $block->getInfoData('cc_exp_year') ?>
-                <select id="<?php echo $code ?>-cc-exp-year" name="payment[cc_exp_year]" class="year required-entry _required select admin__control-select" autocomplete="cc-exp-year">
+                <select id="<?php echo $code ?>-cc-exp-year" name="payment[cc_exp_year]" class="year required-entry _required select admin__control-select" data-validate='{required:true}' autocomplete="cc-exp-year">
                     <?php foreach ($block->getCcYears() as $k=>$v): ?>
                         <option value="<?php echo $k?$block->escapeQuote($k):'' ?>"<?php if ($k==$_ccExpYear): ?> selected="selected"<?php endif ?>><?php echo $block->escapeHtml($v) ?></option>
                     <?php endforeach ?>
@@ -88,17 +93,17 @@ $storedCards    = $block->getStoredCards();
         </div>
         <?php echo $block->getChildHtml() ?>
         <?php if ($block->hasVerification()): ?>
-            <div class="admin__field <?php if ($block->getMethod()->getConfigData('require_ccv') == 0): ?>hide-if-card-selected<?php endif; ?>">
-                <label class="label admin__field-label" for="<?php echo $code ?>-cc-cid" ><?php echo $block->escapeHtml(__('Card Verification Number')) ?><span class="required">*</span></label>
+            <div class="admin__field _required cvv <?php if ($block->getMethod()->getConfigData('require_ccv') == 0): ?>hide-if-card-selected<?php endif; ?>">
+                <label class="label admin__field-label" for="<?php echo $code ?>-cc-cid" ><span><?php echo $block->escapeHtml(__('Card Verification Number')) ?></span></label>
                 <div class="admin__field-control control">
                     <div class="v-fix">
-                        <input type="text" title="<?php echo $block->escapeQuote(__('Card Verification Number')) ?>" class="input-text admin__control-text cvv required-entry validate-cc-cvn" id="<?php echo $code ?>-cc-cid" name="payment[cc_cid]" value="<?php echo $block->escapeQuote($block->getInfoData('cc_cid')); ?>" autocomplete="cc-csc" />
+                        <input type="text" title="<?php echo $block->escapeQuote(__('Card Verification Number')) ?>" class="input-text admin__control-text cvv required-entry validate-cc-cvn" id="<?php echo $code ?>-cc-cid" name="payment[cc_cid]" value="<?php echo $block->escapeQuote($block->getInfoData('cc_cid')); ?>" data-validate='{"required-number":true, "validate-cc-cvn":"#<?php echo $code ?>-cc-type"}' autocomplete="cc-csc" />
                     </div>
                 </div>
             </div>
         <?php endif; ?>
         <?php if (!$block->isGuestCheckout()): ?>
-            <div class="admin__field hide-if-card-selected">
+            <div class="admin__field save hide-if-card-selected">
                 <div class="admin__field-control control">
                     <?php if ($block->getMethod()->getConfigData('allow_unsaved')): ?>
                         <input type="hidden" name="payment[save]" value="0" />
@@ -109,17 +114,6 @@ $storedCards    = $block->getStoredCards();
                         <label class="label admin__field-label" for="<?php echo $code ?>-save"><?php echo $block->escapeHtml(__('For your convenience, this data will be stored securely by our payment processor.')) ?></label>
                     <?php endif; ?>
                 </div>
-            </div>
-        <?php endif; ?>
-        <?php if ($block->getTokenbaseMethod()->isAcceptJsEnabled() === true): ?>
-            <div class="no-display _hidden" id="<?php echo $code; ?>-processing">
-                <?php echo $block->escapeHtml(__('Processing, please wait...')); ?>
-            </div>
-            <div class="no-display _hidden" id="<?php echo $code; ?>-complete">
-                <?php echo $block->escapeHtml(__('&#128077; Okay, ready to continue!')); ?>
-            </div>
-            <div class="no-display _hidden" id="<?php echo $code; ?>-failed">
-                <?php echo $block->escapeHtml(__('&#10060; Please fix your payment info before continuing.')); ?> <span class="error-text"></span>
             </div>
         <?php endif; ?>
     </fieldset>
