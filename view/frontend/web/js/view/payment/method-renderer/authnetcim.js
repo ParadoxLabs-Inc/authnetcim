@@ -28,7 +28,6 @@ define(
                 save: config ? config.canSaveCard && config.defaultSaveCard : false,
                 selectedCard: config ? config.selectedCard : '',
                 storedCards: config ? config.storedCards : {},
-                availableCardTypes: config ? config.availableCardTypes : {},
                 creditCardExpMonth: config ? config.creditCardExpMonth : null,
                 creditCardExpYear: config ? config.creditCardExpYear : null,
                 logoImage: config ? config.logoImage : false,

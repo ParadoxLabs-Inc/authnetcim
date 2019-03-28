@@ -369,8 +369,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
 
         /**
          * Check for 'Record cannot be found' errors (changed Authorize.Net accounts).
-         * If we find it, clear our data and try again (once, and only once!).
-         * If Accept.js is enabled, this will fail--token already used.
+         * If we find it, clear our data and try again (once, and only once!), if no Accept.js.
          */
         $response = $gateway->getLastResponse();
         if ($retry === true
@@ -384,20 +383,39 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
                 $profileId = $profileId->getValue();
             }
 
+            /**
+             * We know the authnetcim_profile_id is invalid, so get rid of it. Except we're in the middle
+             * of a transaction... so any change will just be rolled back. Save it for a little later.
+             * @see \ParadoxLabs\Authnetcim\Observer\CheckoutFailureClearProfileIdObserver::execute()
+             */
             if (!empty($profileId)) {
                 $this->getCustomer()->setCustomAttribute('authnetcim_profile_id', '');
 
-                /**
-                 * We know the authnetcim_profile_id is invalid, so get rid of it. Except we're in the middle
-                 * of a transaction... so any change will just be rolled back. Save it for a little later.
-                 * @see \ParadoxLabs\Authnetcim\Observer\CheckoutFailureClearProfileIdObserver::execute()
-                 */
                 $this->_registry->unregister('queue_profileid_deletion');
                 $this->_registry->register('queue_profileid_deletion', $this->getCustomer());
             }
 
+            /**
+             * If this is an existing stored card that kicked out a no-such-entity error, get rid of it.
+             * @see \ParadoxLabs\TokenBase\Observer\CardLoadProcessDeleteQueueObserver::execute()
+             */
+            if ($this->getId()) {
+                $this->_registry->unregister('queue_card_deletion');
+                $this->_registry->register('queue_card_deletion', $this);
+            }
+
+            if ($this->getMethodInstance()->isAcceptJsEnabled()) {
+                // This is an unrecoverable error with Accept.js (we just consumed the nonce), so kick out a nice error.
+                throw new \Magento\Framework\Exception\PaymentException(
+                    __('Sorry, we were unable to find your payment record. '
+                        . 'Please re-enter your payment info and try again.')
+                );
+            }
+
             return $this->syncCustomerPaymentProfile(false);
-        } elseif ($response['messages']['resultCode'] !== 'Ok'
+        }
+
+        if ($response['messages']['resultCode'] !== 'Ok'
             && ($response['messages']['message']['code'] !== 'E00039' || empty($paymentId))) {
             $errorCode = $response['messages']['message']['code'];
             $errorText = $response['messages']['message']['text'];
@@ -405,7 +423,9 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $this->helper->log($this->getMethod(), sprintf('API error: %s: %s', $errorCode, $errorText));
             $gateway->logLogs();
 
-            throw new LocalizedException(__(sprintf('Authorize.Net CIM Gateway: %s', $errorText)));
+            throw new \Magento\Framework\Exception\PaymentException(
+                __(sprintf('Authorize.Net CIM Gateway: %s', $errorText))
+            );
         }
 
         if (!empty($paymentId)) {
@@ -417,7 +437,9 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
         } else {
             $gateway->logLogs();
 
-            throw new LocalizedException(__('Authorize.Net CIM Gateway: Unable to create payment record.'));
+            throw new \Magento\Framework\Exception\PaymentException(
+                __('Authorize.Net CIM Gateway: Unable to create payment record.')
+            );
         }
 
         return $this;

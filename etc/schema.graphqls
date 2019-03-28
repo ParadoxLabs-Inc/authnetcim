@@ -1,0 +1,11 @@
+type TokenBaseCheckoutConfig {
+    apiLoginId: String
+    clientKey: String
+    achImage: String
+    achAccountTypes: [TokenBaseKeyValue]
+}
+
+input TokenBaseCardPaymentInput {
+    acceptjs_key: String
+    acceptjs_value: String
+}

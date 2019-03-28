@@ -79,6 +79,14 @@
         </arguments>
     </type>
 
+    <type name="ParadoxLabs\TokenBase\Model\Api\GraphQL\GetCheckoutConfig">
+        <arguments>
+            <argument name="configProviders" xsi:type="array">
+                <item name="authnetcim" xsi:type="object">ParadoxLabs\Authnetcim\Model\ConfigProvider</item>
+            </argument>
+        </arguments>
+    </type>
+
     <!-- Methods -->
     <type name="ParadoxLabs\Authnetcim\Model\Method" shared="false">
         <arguments>

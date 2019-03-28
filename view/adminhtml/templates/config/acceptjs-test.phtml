@@ -1,0 +1,76 @@
+<?php /** @var \ParadoxLabs\Authnetcim\Block\Adminhtml\Config\AcceptjsTest $block */ ?>
+
+<div id="authnetcim-accept-test">Testing Accept.js...</div>
+<script type="text/javascript">
+    var acceptJsTest = {
+        errorMap: {
+            'E_WC_10': 'API credentials invalid. Please confirm and re-enter your API Login ID.',
+            'E_WC_19': 'API credentials invalid. Please confirm and re-enter your API Login ID and Client Key.',
+            'E_WC_21': 'API credentials invalid. Please confirm and re-enter your API Login ID and Client Key.'
+        },
+
+        _create: function() {
+            require(
+                [
+                    'jquery',
+                    'mage/translate',
+                    'domReady!',
+                    <?php if ($block->getMethodInstance()->getConfigData('test')): ?>
+                    'authorizeNetAcceptjsSandbox'
+                    <?php else: ?>
+                    'authorizeNetAcceptjs'
+                    <?php endif; ?>
+                ],
+                function() {
+                    setTimeout(this.runTest.bind(this), 2000);
+                }.bind(this)
+            );
+        },
+
+        runTest: function () {
+            window['authnetcim_acceptJs_callback'] = this.handlePaymentResponse.bind(this);
+            window.isReady = true;
+
+            Accept.dispatchData(
+                {
+                    cardData: {
+                        cardNumber: '4111111111111111',
+                        month: "<?php echo date('m'); ?>",
+                        year: "<?php echo date('Y'); ?>",
+                        cardCode: '900'
+                    },
+                    authData: {
+                        clientKey: "<?php echo $block->getMethodInstance()->getConfigData('client_key'); ?>",
+                        apiLoginID: "<?php echo $block->getMethodInstance()->getConfigData('login'); ?>"
+                    }
+                },
+                'authnetcim_acceptJs_callback'
+            );
+        },
+
+        handlePaymentResponse: function (response) {
+            var element = document.getElementById('authnetcim-accept-test');
+
+            if (response.messages.resultCode === 'Ok') {
+                element.innerHTML = '<strong style="color:#0a0;"><?php echo $block->escapeQuote(__("Accept.js connected successfully")); ?>.</strong>';
+            } else {
+                var messages = [];
+                for (var i = 0; i < response.messages.message.length; i++) {
+                    var errorText = response.messages.message[i].text;
+                    if (typeof this.errorMap[response.messages.message[i].code] !== 'undefined') {
+                        errorText = this.errorMap[response.messages.message[i].code];
+                    }
+
+                    messages.push(
+                        "<?php echo $block->escapeQuote(__('Accept.js Error: %1 (%2)')); ?>"
+                            .replace('%1', jQuery.mage.__(errorText))
+                            .replace('%2', response.messages.message[i].code)
+                    );
+                }
+
+                element.innerHTML = '<strong style="color:#D40707;">' + messages.join("<br />") + '</strong>';
+            }
+        },
+    };
+    acceptJsTest._create();
+</script>

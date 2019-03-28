@@ -48,7 +48,7 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
          */
         $acceptJsValue = $payment->getAdditionalInformation('acceptjs_value');
 
-        if (empty($acceptJsValue)) {
+        if (empty($fails) && empty($acceptJsValue)) {
             return parent::validate($validationSubject);
         }
 

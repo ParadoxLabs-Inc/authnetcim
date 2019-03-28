@@ -21,7 +21,7 @@
                     <label>Title</label>
                 </field>
                 <field id="login" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Api Login ID</label>
+                    <label>API Login ID</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                 </field>
                 <field id="trans_key" translate="label comment" type="obscure" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
@@ -29,10 +29,19 @@
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                     <comment>Get these from your Authorize.Net account settings.</comment>
                 </field>
+                <field id="client_key" translate="label comment" type="text" sortOrder="45" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Client Key</label>
+                    <comment><![CDATA[In order to use Accept.js, you must enter your Client Key. Find this in Authorize.Net at <em>Account &gt; Settings &gt; Security Settings &gt; General Security Settings &gt; Manage Public Client Key</em>.]]></comment>
+                </field>
                 <field id="test" translate="label comment" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Authorize.Net Sandbox Account</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>'Yes' only if the API credentials are for a sandbox account. The account must have test mode disabled.</comment>
+                </field>
+                <field id="acceptjs" translate="label comment" type="select" sortOrder="55" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enable Accept.js</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Recommended. If enabled, card data is sent directly to Authorize.Net, so it doesn't touch your server at all. This is very good for security and PCI compliance. It may cause problems with some fraud services and custom solutions.</comment>
                 </field>
                 <field id="payment_action" translate="label comment" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment Action</label>
@@ -102,18 +111,6 @@
                     <label>Advanced Settings</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
                     <attribute type="shared">1</attribute>
-                </field>
-                <field id="acceptjs" translate="label comment" type="select" sortOrder="175" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Enable Accept.js</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Recommended. If enabled, card data is sent directly to Authorize.Net, so it doesn't touch your server at all. This is very good for security and PCI compliance. It may cause problems with some fraud services and custom solutions.</comment>
-                </field>
-                <field id="client_key" translate="label comment" type="text" sortOrder="176" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Client Key</label>
-                    <comment><![CDATA[In order to use Accept.js, you must enter your Client Key. To find this, log in to Authorize.Net and navigate to <em>Account &gt; Settings &gt; Security Settings &gt; General Security Settings &gt; Manage Public Client Key</em>.]]></comment>
-                    <depends>
-                        <field id="acceptjs">1</field>
-                    </depends>
                 </field>
                 <field id="require_ccv" translate="label comment" type="select" sortOrder="180" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Require CCV for all transactions</label>

@@ -133,20 +133,6 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
     }
 
     /**
-     * Catch execution before authorizing to include shipping address.
-     *
-     * @param \Magento\Payment\Model\InfoInterface $payment
-     * @param $amount
-     * @return void
-     */
-    protected function beforeAuthorize(\Magento\Payment\Model\InfoInterface $payment, $amount)
-    {
-        $this->handleShippingAddress($payment);
-
-        parent::beforeAuthorize($payment, $amount);
-    }
-
-    /**
      * Catch execution after authorizing to look for card type.
      *
      * @param \Magento\Payment\Model\InfoInterface $payment
@@ -159,24 +145,9 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
         $amount,
         \ParadoxLabs\TokenBase\Model\Gateway\Response $response
     ) {
-        $payment = $this->fixLegacyCcType($payment, $response);
-        $payment = $this->storeTransactionStatuses($payment, $response);
+        $this->fixLegacyCcType($payment, $response);
 
         parent::afterAuthorize($payment, $amount, $response);
-    }
-
-    /**
-     * Catch execution before capturing to include shipping address.
-     *
-     * @param \Magento\Payment\Model\InfoInterface $payment
-     * @param float $amount
-     * @return void
-     */
-    protected function beforeCapture(\Magento\Payment\Model\InfoInterface $payment, $amount)
-    {
-        $this->handleShippingAddress($payment);
-
-        parent::beforeCapture($payment, $amount);
     }
 
     /**
@@ -192,79 +163,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
         $amount,
         \ParadoxLabs\TokenBase\Model\Gateway\Response $response
     ) {
-        /** @var \Magento\Sales\Model\Order\Payment $payment */
-
-        $outstanding = round($payment->getOrder()->getBaseTotalDue() - $amount, 4);
-
-        /**
-         * If this is a pre-auth capture for less than the total value of the order,
-         * try to reauthorize any remaining balance. So we have it.
-         */
-        if ($outstanding > 0) {
-            $wasTransId   = $payment->getTransactionId();
-            $wasParentId  = $payment->getParentTransactionId();
-            $authResponse = null;
-            $message      = false;
-
-            if ($this->getConfigData('reauthorize_partial_invoice') == 1) {
-                try {
-                    $this->log(sprintf('afterCapture(): Reauthorizing for %s', $outstanding));
-
-                    $this->gateway()->clearParameters();
-                    $this->gateway()->setCard($this->gateway()->getCard());
-                    $this->handleShippingAddress($payment);
-                    $this->gateway()->setHaveAuthorized(true);
-
-                    $authResponse    = $this->gateway()->authorize($payment, $outstanding);
-                } catch (\Exception $e) {
-                    // Reauth failed: Take no action
-                    $this->log('afterCapture(): Reauthorization not successful. Continuing with original transaction.');
-                }
-            }
-
-            /**
-             * Even if the auth didn't go through, we need to create a new 'transaction'
-             * so we can still do an online capture for the remainder.
-             */
-            if ($authResponse !== null) {
-                $payment->setTransactionId(
-                    $this->getValidTransactionId($payment, $authResponse->getTransactionId())
-                );
-
-                $payment->setTransactionAdditionalInfo(
-                    \Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS,
-                    $authResponse->getData()
-                );
-
-                $message = __(
-                    'Reauthorized outstanding amount of %1.',
-                    $payment->formatPrice($outstanding)
-                );
-            } else {
-                $payment->setTransactionId(
-                    $this->getValidTransactionId($payment, $response->getTransactionId() . '-auth')
-                );
-            }
-
-            $payment->setData('parent_transaction_id', null);
-            $payment->setIsTransactionClosed(0);
-
-            $transaction = $payment->addTransaction(
-                \Magento\Sales\Model\Order\Payment\Transaction::TYPE_AUTH,
-                $payment->getOrder(),
-                false
-            );
-
-            if ($message !== null) {
-                $payment->addTransactionCommentsToOrder($transaction, $message);
-            }
-
-            $payment->setTransactionId($wasTransId);
-            $payment->setData('parent_transaction_id', $wasParentId);
-        }
-
-        $payment = $this->fixLegacyCcType($payment, $response);
-        $payment = $this->storeTransactionStatuses($payment, $response);
+        $this->fixLegacyCcType($payment, $response);
 
         parent::afterCapture($payment, $amount, $response);
     }

@@ -207,7 +207,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         parent::clearParameters();
 
-        if (isset($this->defaults['login']) && isset($this->defaults['password'])) {
+        if (isset($this->defaults['login'], $this->defaults['password'])) {
             $this->setParameter('loginId', $this->defaults['login']);
             $this->setParameter('transactionKey', $this->defaults['password']);
         }
@@ -1480,8 +1480,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $data = [
             'response_code'            => (int)$this->helper->getArrayValue($response, 'responseCode'),
             'response_subcode'         => '',
-            'response_reason_code'     => (int)$this->helper->getArrayValue($response, 'errors/error/errorCode'),
-            'response_reason_text'     => $this->helper->getArrayValue($response, 'errors/error/errorText'),
+            'response_reason_code'     => (int)$this->helper->getArrayValue($response, 'errors/error/errorCode')
+                ?: (int)$this->helper->getArrayValue($response, 'messages/message/code'),
+            'response_reason_text'     => $this->helper->getArrayValue($response, 'errors/error/errorText')
+                ?: $this->helper->getArrayValue($response, 'messages/message/description'),
             'approval_code'            => $this->helper->getArrayValue($response, 'authCode'),
             'auth_code'                => $this->helper->getArrayValue($response, 'authCode'),
             'avs_result_code'          => $this->helper->getArrayValue($response, 'avsResultCode'),
@@ -1490,7 +1492,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             'invoice_number'           => $this->getParameter('invoiceNumber'),
             'description'              => $this->getParameter('description'),
             'amount'                   => $this->getParameter('amount'),
-            'method'                   => $this->helper->getArrayValue($response, 'accountType') == 'eCheck'
+            'method'                   => $this->helper->getArrayValue($response, 'accountType') === 'eCheck'
                 ? 'ECHECK'
                 : 'CC',
             'transaction_type'         => $this->txnTypeMap[ $this->getParameter('transactionType') ],
