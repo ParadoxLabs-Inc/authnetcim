@@ -90,7 +90,7 @@ $storedCards    = $block->getStoredCards();
         <div class="field cvv required <?php if ($block->getMethod()->getConfigData('require_ccv') == 0): ?>hide-if-card-selected<?php endif; ?>">
             <label for="<?php echo $code ?>-cc-cid" class="label"><span><?php echo $block->escapeHtml(__('Card Verification Number')) ?></span></label>
             <div class="control">
-                <input type="text" title="<?php echo $block->escapeQuote(__('Card Verification Number')) ?>" class="input-text cvv" id="<?php echo $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true, "validate-cc-cvn":"#<?php echo $code ?>-cc-type"}' autocomplete="cc-csc" />
+                <input type="text" title="<?php echo $block->escapeQuote(__('Card Verification Number')) ?>" class="input-text cvv" id="<?php echo $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true, "validate-cc-cvn":"#<?php echo $code ?>-cc-type"}' autocomplete="cc-csc" maxlength="4" />
             </div>
             <?php $_content = '<img src=\"' . $block->escapeUrl($block->getViewFileUrl('Magento_Checkout::cvv.png')) . '\" alt=\"' . $block->escapeQuote(__('Card Verification Number Visual Reference')) . '\" title=\"' . $block->escapeQuote(__('Card Verification Number Visual Reference')) . '\" />'; ?>
             <div class="note">

@@ -342,7 +342,6 @@ define([
             }.bind(this));
 
             // Submit form
-            // TODO: Save went through even with cc_number present?
             this.stopLoadWaiting();
 
             if (jQuery('#tokenbase-wrapper').length > 0) {
