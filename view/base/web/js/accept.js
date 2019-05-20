@@ -40,7 +40,8 @@ define([
             formSelector: '',
             submitSelector: '',
             cardSelector: '',
-            sandbox: false
+            sandbox: false,
+            validateForm: true
         },
 
         fields: [
@@ -108,8 +109,15 @@ define([
             if (jQuery('#tokenbase-wrapper').length > 0) {
                 this.form.on('tokenbaseSave', this.handleFormSubmit.bind(this));
                 this.form.on('tokenbaseFailure', this.handlePaymentResponseError.bind(this));
+            } else if (typeof order === 'object') {
+                if (this.isActivePaymentMethod()) {
+                    this.form.off('submitOrder');
+                }
+
+                this.form.on('submitOrder', this.handleFormSubmit.bind(this));
+                this.form.on('changePaymentMethod', this.handleFormPaymentChange.bind(this));
             } else {
-                this.form.on('submit submitOrder', this.handleFormSubmit.bind(this));
+                this.form.on('submit', this.handleFormSubmit.bind(this));
             }
 
             if (this.element) {
@@ -199,13 +207,19 @@ define([
         },
 
         handleFormSubmit: function(event) {
-            if (this.isActivePaymentMethod() && !this.selectedCard() && !this.acceptJsValue()) {
+            if (this.isActivePaymentMethod()) {
+                if (this.selectedCard() || this.acceptJsValue()) {
+                    this.form.trigger('realOrder');
+
+                    return;
+                }
+
                 if (event) {
                     event.preventDefault();
                     event.stopPropagation();
                 }
 
-                if (this.validate() && this.form.validation('isValid')) {
+                if (this.validate() && this.options.validateForm && this.form.validation('isValid')) {
                     if (this.alreadyProcessing !== true) {
                         this.startLoadWaiting();
                         this.sendPaymentInfo();
@@ -215,6 +229,14 @@ define([
                 }
 
                 this.form.data('preventSave', true);
+            }
+        },
+
+        handleFormPaymentChange: function(event, method) {
+            if (method === this.options.method) {
+                // If we've switched to this method, rebind the submitOrder event (for admin ordering) to enforce
+                // proper order of operations.
+                this.form.off('submitOrder').on('submitOrder', this.handleFormSubmit.bind(this));
             }
         },
 

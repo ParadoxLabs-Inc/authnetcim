@@ -7,7 +7,10 @@ $image          = $block->getBrandingImage();
 $storedCards    = $block->getStoredCards();
 ?>
 <div id="payment_form_<?php echo $code ?>" class="admin__page-section-item checkout-payment-method" style="display:none" data-mage-init='{
-    "tokenbaseForm":{"code":"<?php echo $code ?>"},
+    "tokenbaseForm": {
+        "code":"<?php echo $code ?>",
+        "validateForm": false
+    },
     "tokenbaseCardFormatter": {
         "ccTypeSelector": "#<?php echo $code ?>-cc-type",
         "ccTypeContainer": ".credit-card-types"
