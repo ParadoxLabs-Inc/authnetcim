@@ -65,6 +65,12 @@ class PaymentConfigSaveObserver implements \Magento\Framework\Event\ObserverInte
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $changedPaths = $observer->getData('changed_paths');
+
+        // Check that we have changed_paths, older versions of Magento may not. #1905113
+        if ($changedPaths === null) {
+            return;
+        }
+
         $groups = $this->request->getParam('groups');
 
         $methodCodes = [
