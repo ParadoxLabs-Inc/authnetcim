@@ -183,12 +183,6 @@ define([
                     return true;
                 }
 
-                if (typeof window.order !== 'undefined'
-                    && typeof window.order.paymentMethod !== 'undefined'
-                    && window.order.paymentMethod === this.options.method) {
-                    return true;
-                }
-
                 if (typeof this.form !== 'undefined'
                     && this.form.find('[name="method"]').val() === this.options.method) {
                     return true;

@@ -92,7 +92,10 @@ class PaymentConfigSaveObserver implements \Magento\Framework\Event\ObserverInte
                 try {
                     $this->purgeCachedProfileIds();
                 } catch (\Exception $e) {
-                    // No-op
+                    $this->helper->log(
+                        'authnetcim',
+                        __('Error when purging cached authnetcim_profile_id values: %1', $e->getMessage())
+                    );
                 }
 
                 break;

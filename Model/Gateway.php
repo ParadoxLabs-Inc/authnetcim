@@ -742,12 +742,14 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $response = $this->responseFactory->create();
         $response->setData($result + ['is_approved' => false, 'is_denied' => false]);
 
-        if ((int)$response->getData('respon_response_code') == 254
-            || $response->getData('transaction_status') == 'voided'
+        $responseReasonCode = (int)$response->getData('response_reason_code');
+        if (in_array($responseReasonCode, [2, 254], true)
+            || (int)$response->getData('response_code') === 2
+            || $response->getData('transaction_status') === 'voided'
         ) {
             // Transaction pending review -> denied
             $response->setData('is_denied', true);
-        } elseif ((int)$response->getData('response_code') == 1) {
+        } elseif ((int)$response->getData('response_code') === 1) {
             $response->setData('is_approved', true);
         }
 
@@ -1435,7 +1437,6 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             'method'                  => $directResponse[10],
             'transaction_type'        => $directResponse[11],
             'customer_id'             => $directResponse[12],
-            'md5_hash'                => $directResponse[37],
             'card_code_response_code' => $directResponse[38],
             'cavv_response_code'      => $directResponse[39],
             'acc_number'              => $directResponse[50],
@@ -1497,7 +1498,6 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 : 'CC',
             'transaction_type'         => $this->txnTypeMap[ $this->getParameter('transactionType') ],
             'customer_id'              => $this->getParameter('merchantCustomerId'),
-            'md5_hash'                 => $this->helper->getArrayValue($response, 'transHash'),
             'card_code_response_code'  => $this->helper->getArrayValue($response, 'cvvResultCode'),
             'cavv_response_code'       => $this->helper->getArrayValue($response, 'cavvResultCode'),
             'acc_number'               => $this->helper->getArrayValue($response, 'accountNumber'),

@@ -35,13 +35,13 @@
                 {
                     cardData: {
                         cardNumber: '4111111111111111',
-                        month: "<?php echo $block->escapeQuote(date('m')); ?>",
-                        year: "<?php echo $block->escapeQuote(date('Y')); ?>",
+                        month: "<?= $block->escapeQuote(date('m')) ?>",
+                        year: "<?= $block->escapeQuote(date('Y')) ?>",
                         cardCode: '900'
                     },
                     authData: {
-                        clientKey: "<?php echo $block->escapeQuote($block->getMethodInstance()->getConfigData('client_key')); ?>",
-                        apiLoginID: "<?php echo $block->escapeQuote($block->getMethodInstance()->getConfigData('login')); ?>"
+                        clientKey: "<?= $block->escapeQuote($block->getMethodInstance()->getConfigData('client_key')) ?>",
+                        apiLoginID: "<?= $block->escapeQuote($block->getMethodInstance()->getConfigData('login')) ?>"
                     }
                 },
                 'authnetcim_acceptJs_callback'
@@ -52,7 +52,7 @@
             var element = document.getElementById('authnetcim-accept-test');
 
             if (response.messages.resultCode === 'Ok') {
-                element.innerHTML = '<strong style="color:#0a0;"><?php echo $block->escapeQuote(__("Accept.js connected successfully")); ?>.</strong>';
+                element.innerHTML = '<strong style="color:#0a0;"><?= $block->escapeQuote(__("Accept.js connected successfully")) ?>.</strong>';
             } else {
                 var messages = [];
                 for (var i = 0; i < response.messages.message.length; i++) {
@@ -62,7 +62,7 @@
                     }
 
                     messages.push(
-                        "<?php echo $block->escapeQuote(__('Accept.js Error: %1 (%2)')); ?>"
+                        "<?= $block->escapeQuote(__('Accept.js Error: %1 (%2)')) ?>"
                             .replace('%1', jQuery.mage.__(errorText))
                             .replace('%2', response.messages.message[i].code)
                     );
