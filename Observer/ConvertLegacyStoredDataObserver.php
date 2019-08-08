@@ -244,6 +244,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
         foreach ($cards as $k => $card) {
             if (!isset($card['payment']['creditCard'], $card['billTo']['country'])
                 || $this->cardAlreadyExists($customer->getId(), $profileId, $card['customerPaymentProfileId'])) {
+                unset($cards[$k]);
                 continue;
             }
 
