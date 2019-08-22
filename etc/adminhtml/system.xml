@@ -4,7 +4,7 @@
         <section id="payment">
             <group id="authnetcim" translate="label comment" type="text" sortOrder="500" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Authorize.Net CIM</label>
-                <comment><![CDATA[<div style="float:right;text-align:center;"><img src="https://store.paradoxlabs.com/media/wysiwyg/AuthorizeNetCertified.gif" width="140" height="50" border="0" alt="Authorize.Net Certified Solution" /><br />by <a href="https://store.paradoxlabs.com/" target="_blank">ParadoxLabs, inc.</a></div>]]></comment>
+                <comment><![CDATA[<div style="float:right;text-align:center;"><img src="https://store.paradoxlabs.com/media/wysiwyg/AuthorizeNetCertified.gif" width="140" height="50" border="0" alt="Authorize.Net Certified Solution" /><br />by <a href="http://support.paradoxlabs.com/" target="_blank">ParadoxLabs, inc.</a></div>]]></comment>
                 <field id="version" translate="label" type="label" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Version Installed</label>
                     <backend_model>ParadoxLabs\Authnetcim\Model\Config\Version</backend_model>

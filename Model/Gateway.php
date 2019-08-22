@@ -29,6 +29,20 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     const SOLUTION_ID = 'A1000133';
 
     /**
+     * Transaction status codes indicating denial on review
+     *
+     * @var string[]
+     */
+    const DENY_STATUSES = [
+        'declined',
+        'expired',
+        'failedReview',
+        'generalError',
+        'returnedItem',
+        'voided',
+    ];
+
+    /**
      * @var string
      */
     protected $code = 'authnetcim';
@@ -745,7 +759,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $responseReasonCode = (int)$response->getData('response_reason_code');
         if (in_array($responseReasonCode, [2, 254], true)
             || (int)$response->getData('response_code') === 2
-            || $response->getData('transaction_status') === 'voided'
+            || in_array($response->getData('transaction_status'), static::DENY_STATUSES, true)
         ) {
             // Transaction pending review -> denied
             $response->setData('is_denied', true);
