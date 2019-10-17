@@ -16,7 +16,7 @@ namespace ParadoxLabs\Authnetcim\Block\Adminhtml\Config;
 /**
  * AcceptjsTest Class
  */
-class AcceptjsTest extends \Magento\Framework\View\Element\Template
+class AcceptjsTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
 {
     /**
      * @var string
@@ -34,24 +34,6 @@ class AcceptjsTest extends \Magento\Framework\View\Element\Template
     protected $method;
 
     /**
-     * Constructor
-     *
-     * @param \Magento\Framework\View\Element\Template\Context $context
-     * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
-     * @param array $data
-     */
-    public function __construct(
-        \Magento\Framework\View\Element\Template\Context $context,
-        \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
-        array $data = []
-    ) {
-        parent::__construct($context, $data);
-
-        $this->methodFactory = $methodFactory;
-        $this->setTemplate('ParadoxLabs_Authnetcim::config/acceptjs-test.phtml');
-    }
-
-    /**
      * @return \ParadoxLabs\Authnetcim\Model\Method
      * @throws \Magento\Framework\Exception\LocalizedException
      */
@@ -62,5 +44,16 @@ class AcceptjsTest extends \Magento\Framework\View\Element\Template
         $this->method->setStore($this->getStoreId());
 
         return $this->method;
+    }
+
+    /**
+     * Method to test the API connection. Should return a string indicating success or error.
+     * NOTE: This is not used for Accept.js testing.
+     *
+     * @return mixed
+     */
+    protected function testApi()
+    {
+        return null;
     }
 }
