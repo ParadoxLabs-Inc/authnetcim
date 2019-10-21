@@ -27,7 +27,8 @@ define([
     "ko",
     'Magento_Ui/js/modal/alert',
     "mage/translate",
-    'mage/validation'
+    'mage/validation',
+    'domReady!'
     // NB: using jQuery rather than $ to avoid conflict on admin order form.
 ], function(jQuery, ko, alert) {
     "use strict";
