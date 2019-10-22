@@ -431,7 +431,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     __('Sorry, we were unable to find your payment record. '
                         . 'Please re-enter your payment info and try again.')
                 );
-            } elseif ($errorCode === 'E00040' && $errorText === 'Customer Shipping Address ID not found.') {
+            }
+
+            if ($errorCode === 'E00040' && $errorText === 'Customer Shipping Address ID not found.') {
                 /**
                  * Invalid shipping ID. We should retry, but that's hard to do with this architecture.
                  * In a transaction, no events, ...
@@ -471,7 +473,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $response = $this->responseFactory->create();
         $response->setData($data);
 
-        if ($response->getResponseCode() == 4) {
+        if ((int)$response->getResponseCode() === 4) {
             $response->setIsFraud(true);
         }
 
@@ -479,7 +481,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
          * Response 54 is 'can't refund; txn has not settled.' 16 is 'cannot find txn' (expired).
          * Allow those through; they're handled elsewhere.
          */
-        if (in_array($response->getResponseReasonCode(), [16, 54])) {
+        if (in_array((int)$response->getResponseReasonCode(), [16, 54], true)) {
             return $response;
         }
 
@@ -490,8 +492,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
          * OR no transID on a charge txn
          */
         if ($transactionResult['messages']['resultCode'] !== 'Ok'
-            || $response->getResponseCode() === 2
-            || $response->getResponseCode() === 3
+            || (int)$response->getResponseCode() === 2
+            || (int)$response->getResponseCode() === 3
             || (empty($response->getTransactionId()) && !in_array($response->getTransactionType(), ['credit', 'void']))
         ) {
             $response->setIsError(true);
@@ -558,14 +560,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             }
         }
 
-        if ($payment->hasData('cc_cid') && $payment->getData('cc_cid') != '') {
+        if ($payment->hasData('cc_cid') && !empty($payment->getData('cc_cid'))) {
             $this->setParameter('cardCode', $payment->getData('cc_cid'));
         }
 
         $result = $this->createTransaction();
-        $response = $this->interpretTransaction($result);
-
-        return $response;
+        return $this->interpretTransaction($result);
     }
 
     /**
@@ -599,7 +599,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         $this->captureGetAmountInfo($payment);
 
-        if ($payment->hasData('cc_cid') && $payment->getData('cc_cid') != '') {
+        if ($payment->hasData('cc_cid') && !empty($payment->getData('cc_cid'))) {
             $this->setParameter('cardCode', $payment->getData('cc_cid'));
         }
 
@@ -609,7 +609,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         /**
          * Check for and handle 'transaction not found' error (expired authorization).
          */
-        if ($response->getResponseReasonCode() == 16 && $this->getParameter('transId') != '') {
+        if ((int)$response->getResponseReasonCode() === 16 && !empty($this->getParameter('transId'))) {
             $this->helper->log(
                 $this->code,
                 sprintf("Transaction not found. Attempting to recapture.\n%s", json_encode($response->getData()))
@@ -654,7 +654,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         if ($transactionId !== null) {
             $this->setParameter('transId', $transactionId);
-        } elseif ($payment->getTransactionId() != '') {
+        } elseif (!empty($payment->getTransactionId())) {
             $this->setParameter('transId', $payment->getTransactionId());
         }
 
@@ -664,7 +664,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         /**
          * Check for 'transaction unsettled' error.
          */
-        if ($response->getResponseReasonCode() == 54) {
+        if ((int)$response->getResponseReasonCode() === 54) {
             /**
              * Is this a full refund? If so, just void it. Nobody will see the difference.
              */
@@ -675,23 +675,23 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 return $this->clearParameters()
                             ->setCard($this->getData('card'))
                             ->void($payment, $transactionId);
-            } else {
-                $response->setIsError(true);
-
-                $this->helper->log(
-                    $this->code,
-                    sprintf(
-                        "Transaction error: %s\n%s\n%s",
-                        $response->getResponseReasonText(),
-                        json_encode($response->getData()),
-                        $this->log
-                    )
-                );
-
-                throw new LocalizedException(
-                    __('Authorize.Net CIM Gateway: Transaction failed. ' . $response->getResponseReasonText())
-                );
             }
+
+            $response->setIsError(true);
+
+            $this->helper->log(
+                $this->code,
+                sprintf(
+                    "Transaction error: %s\n%s\n%s",
+                    $response->getResponseReasonText(),
+                    json_encode($response->getData()),
+                    $this->log
+                )
+            );
+
+            throw new LocalizedException(
+                __('Authorize.Net CIM Gateway: Transaction failed. ' . $response->getResponseReasonText())
+            );
         }
 
         return $response;
@@ -712,14 +712,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         if ($transactionId !== null) {
             $this->setParameter('transId', $transactionId);
-        } elseif ($payment->getTransactionId() != '') {
+        } elseif (!empty($payment->getTransactionId())) {
             $this->setParameter('transId', $payment->getTransactionId());
         }
 
         $result = $this->createTransaction();
-        $response = $this->interpretTransaction($result);
-
-        return $response;
+        return $this->interpretTransaction($result);
     }
 
     /**
@@ -835,18 +833,20 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         if (isset($result['customerProfileId'])) {
             return $result['customerProfileId'];
-        } elseif (strpos($text, 'duplicate') !== false) {
-            return preg_replace('/[^0-9]/', '', $text);
-        } else {
-            $this->logLogs();
-
-            throw new LocalizedException(
-                __(
-                    'Authorize.Net CIM Gateway: Unable to create customer profile. %1',
-                    $result['messages']['message']['text']
-                )
-            );
         }
+
+        if (strpos($text, 'duplicate') !== false) {
+            return preg_replace('/[^0-9]/', '', $text);
+        }
+
+        $this->logLogs();
+
+        throw new LocalizedException(
+            __(
+                'Authorize.Net CIM Gateway: Unable to create customer profile. %1',
+                $result['messages']['message']['text']
+            )
+        );
     }
 
     /**
@@ -961,7 +961,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         if (isset($result['customerAddressId'])) {
             return $result['customerAddressId'];
-        } elseif (strpos($text, 'duplicate') !== false) {
+        }
+
+        if (strpos($text, 'duplicate') !== false) {
             /**
              * Handle duplicate address errors. blah.
              */
@@ -970,11 +972,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             if (isset($profile['profile']['shipToList']) && !empty($profile['profile']['shipToList'])) {
                 if (isset($profile['profile']['shipToList']['customerAddressId'])) {
                     return $profile['profile']['shipToList']['customerAddressId'];
-                } else {
-                    foreach ($profile['profile']['shipToList'] as $address) {
-                        if ($this->isAddressDuplicate($address, $params['address']) === true) {
-                            return $address['customerAddressId'];
-                        }
+                }
+
+                foreach ($profile['profile']['shipToList'] as $address) {
+                    if ($this->isAddressDuplicate($address, $params['address']) === true) {
+                        return $address['customerAddressId'];
                     }
                 }
             }
@@ -1003,14 +1005,14 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             if (isset($profile['profile']['paymentProfiles']['billTo'])) {
                 $card = $profile['profile']['paymentProfiles'];
                 return $card['customerPaymentProfileId'];
-            } else {
-                // Otherwise, compare end of the card number for each until one matches.
-                foreach ($profile['profile']['paymentProfiles'] as $card) {
-                    if (isset($card['payment']['creditCard'])
-                        && $lastFour == substr($card['payment']['creditCard']['cardNumber'], -4)
-                    ) {
-                        return $card['customerPaymentProfileId'];
-                    }
+            }
+
+            // Otherwise, compare end of the card number for each until one matches.
+            foreach ($profile['profile']['paymentProfiles'] as $card) {
+                if (isset($card['payment']['creditCard'])
+                    && $lastFour === substr($card['payment']['creditCard']['cardNumber'], -4)
+                ) {
+                    return $card['customerPaymentProfileId'];
                 }
             }
         }
@@ -1021,7 +1023,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Run an actual transaction with Authorize.Net with stored data.
      *
-     * @return string Raw transaction result (XML)
+     * @return array Raw transaction result (XML)
      * @deprecated since 2.2.4 - see createTransaction()
      */
     public function createCustomerProfileTransaction()
@@ -1090,7 +1092,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      * Implements the new generic API method (createTransactionRequest), as opposed
      * to the CIM-specific implementation in createCustomerProfileTransaction().
      *
-     * @return string Raw transaction result (XML)
+     * @return array Raw transaction result (XML)
      */
     public function createTransaction()
     {
@@ -1201,7 +1203,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Delete a CIM customer profile
      *
-     * @return string Raw transaction result (XML)
+     * @return array Raw transaction result (XML)
      */
     public function deleteCustomerProfile()
     {
@@ -1215,7 +1217,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Delete a CIM payment profile
      *
-     * @return string Raw transaction result (XML)
+     * @return array Raw transaction result (XML)
      */
     public function deleteCustomerPaymentProfile()
     {
@@ -1230,7 +1232,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Delete a CIM shipping address
      *
-     * @return string Raw transaction result (XML)
+     * @return array Raw transaction result (XML)
      */
     public function deleteCustomerShippingAddress()
     {
@@ -1245,7 +1247,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Get all CIM customer profile IDs.
      *
-     * @return string Raw transaction result (XML)
+     * @return array Raw transaction result (XML)
      */
     public function getCustomerProfileIds()
     {
@@ -1255,7 +1257,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Get all data for a CIM customer profile.
      *
-     * @return string Raw transaction result (XML)
+     * @return array Raw transaction result (XML)
      */
     public function getCustomerProfile()
     {
@@ -1271,7 +1273,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Get all data for a CIM payment profile.
      *
-     * @return string Raw transaction result (XML)
+     * @return array Raw transaction result (XML)
      */
     public function getCustomerPaymentProfile()
     {
@@ -1288,7 +1290,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Get all data for a CIM shipping address.
      *
-     * @return string Raw transaction result (XML)
+     * @return array Raw transaction result (XML)
      */
     public function getCustomerShippingAddress()
     {
@@ -1319,7 +1321,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Update a CIM customer profile.
      *
-     * @return string Raw transaction result (XML)
+     * @return array Raw transaction result (XML)
      */
     public function updateCustomerProfile()
     {
@@ -1338,7 +1340,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Update a CIM payment profile.
      *
-     * @return string Raw transaction result (XML)
+     * @return array Raw transaction result (XML)
      */
     public function updateCustomerPaymentProfile()
     {
@@ -1374,7 +1376,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Update a CIM shipping address.
      *
-     * @return string Raw transaction result (XML)
+     * @return array Raw transaction result (XML)
      */
     public function updateCustomerShippingAddress()
     {
@@ -1401,7 +1403,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Run a validation transaction against the stored CIM profile info.
      *
-     * @return string Raw transaction result (XML)
+     * @return array Raw transaction result (XML)
      */
     public function validateCustomerPaymentProfile()
     {
@@ -1689,9 +1691,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             ['authOnlyTransaction', 'authCaptureTransaction', 'captureOnlyTransaction']
         )) {
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -1703,9 +1705,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         if ($this->hasParameter('customerProfileId') && $this->hasParameter('customerPaymentProfileId')) {
             return false;
-        } else {
-            return true;
         }
+
+        return true;
     }
 
     /**
@@ -1716,11 +1718,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      */
     protected function getIsRefundTransaction($type)
     {
-        if ($type == 'refundTransaction') {
+        if ($type === 'refundTransaction') {
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -1755,9 +1757,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $params['splitTenderId'] = $this->getParameter('splitTenderId');
         }
 
-        if ($type == 'captureOnlyTransaction'
+        if ($type === 'captureOnlyTransaction'
             && $this->hasParameter('approvalCode')
-            && strlen($this->getParameter('approvalCode')) == 6
+            && strlen($this->getParameter('approvalCode')) === 6
         ) {
             $params['authCode'] = $this->getParameter('approvalCode');
         }
@@ -1813,7 +1815,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             }
 
             $params['profile']['createProfile'] = 'true';
-        } elseif ($type != 'captureOnlyTransaction') {
+        } elseif ($type !== 'captureOnlyTransaction') {
             /**
              * Otherwise, send the tokens we already have.
              */
@@ -1823,7 +1825,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             ];
 
             // Include CCV if available.
-            if ($this->hasParameter('cardCode') && $type != 'priorAuthCaptureTransaction') {
+            if ($type !== 'priorAuthCaptureTransaction' && $this->hasParameter('cardCode')) {
                 $params['profile']['paymentProfile']['cardCode'] = $this->getParameter('cardCode');
             }
 
@@ -1854,7 +1856,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             ];
         }
 
-        if ($this->hasParameter('invoiceNumber') && $type != 'priorAuthCaptureTransaction') {
+        if ($type !== 'priorAuthCaptureTransaction' && $this->hasParameter('invoiceNumber')) {
             if ($this->hasParameter('description') === false) {
                 $store = $this->helper->getCurrentStore();
                 $this->setParameter('description', __('%1 (%2)', $store->getName(), $store->getBaseUrl()));
@@ -1887,7 +1889,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $count = 0;
             /** @var \Magento\Sales\Model\Order\Item $item */
             foreach ($this->lineItems as $item) {
-                if (($item instanceof \Magento\Framework\DataObject) == false) {
+                if (($item instanceof \Magento\Framework\DataObject) === false) {
                     continue;
                 }
 
@@ -2067,7 +2069,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 = $this->getParameter('customerShippingAddressId');
         }
 
-        if ($this->hasParameter('invoiceNumber') && $type != 'profileTransPriorAuthCapture') {
+        if ($type !== 'profileTransPriorAuthCapture' && $this->hasParameter('invoiceNumber')) {
             $params['transaction'][$type]['order'] = [
                 'invoiceNumber'       => $this->getParameter('invoiceNumber'),
                 'description'         => $this->getParameter('description'),
@@ -2075,15 +2077,15 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             ];
         }
 
-        if ($this->hasParameter('taxExempt') && $type != 'profileTransPriorAuthCapture') {
+        if ($type !== 'profileTransPriorAuthCapture' && $this->hasParameter('taxExempt')) {
             $params['transaction'][$type]['taxExempt'] = $this->getParameter('taxExempt');
         }
 
-        if ($this->hasParameter('cardCode') && $type != 'profileTransPriorAuthCapture') {
+        if ($type !== 'profileTransPriorAuthCapture' && $this->hasParameter('cardCode')) {
             $params['transaction'][$type]['cardCode'] = $this->getParameter('cardCode');
         }
 
-        if ($this->hasParameter('transId') && $type != 'profileTransAuthOnly') {
+        if ($type !== 'profileTransAuthOnly' && $this->hasParameter('transId')) {
             $params['transaction'][$type]['transId'] = $this->getParameter('transId');
         }
 
@@ -2092,8 +2094,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         if ($this->hasParameter('approvalCode')
-            && strlen($this->getParameter('approvalCode')) == 6
-            && !in_array($type, ['profileTransRefund', 'profileTransPriorAuthCapture', 'profileTransAuthOnly'])
+            && strlen($this->getParameter('approvalCode')) === 6
+            && !in_array($type, ['profileTransRefund', 'profileTransPriorAuthCapture', 'profileTransAuthOnly'], true)
         ) {
             $params['transaction'][$type]['approvalCode'] = $this->getParameter('approvalCode');
         }
@@ -2118,7 +2120,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $count = 0;
             /** @var \Magento\Sales\Model\Order\Item $item */
             foreach ($this->lineItems as $item) {
-                if (($item instanceof \Magento\Framework\DataObject) == false) {
+                if (($item instanceof \Magento\Framework\DataObject) === false) {
                     continue;
                 }
 
@@ -2208,7 +2210,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      */
     protected function handleTransactionError()
     {
-        if ($this->lastResponse['messages']['resultCode'] != 'Ok') {
+        if ($this->lastResponse['messages']['resultCode'] !== 'Ok') {
             $errorCode = $this->helper->getArrayValue($this->lastResponse, 'messages/message/code');
             $errorText = $this->helper->getArrayValue($this->lastResponse, 'messages/message/text');
             $errorText2 = $this->helper->getArrayValue(
@@ -2216,7 +2218,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 'transactionResponse/errors/error/errorText'
             );
 
-            if ($errorText2 != '') {
+            if (!empty($errorText2)) {
                 $errorText .= ' ' . $errorText2;
             }
 
@@ -2230,16 +2232,16 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             ];
 
             if (!empty($errorCode)
-                && !in_array($errorCode, $okayErrorCodes)
-                && !in_array($errorText, $okayErrorTexts)
-                && !in_array($errorText2, $okayErrorTexts)
+                && !in_array($errorCode, $okayErrorCodes, true)
+                && !in_array($errorText, $okayErrorTexts, true)
+                && !in_array($errorText2, $okayErrorTexts, true)
             ) {
                 $this->helper->log(
                     $this->code,
                     sprintf("API error: %s: %s\n%s", $errorCode, $errorText, $this->log)
                 );
 
-                if ($errorText == 'Invalid OTS Token.') {
+                if ($errorText === 'Invalid OTS Token.') {
                     $errorText = 'Invalid token. Please re-enter your payment info.';
                 }
 
