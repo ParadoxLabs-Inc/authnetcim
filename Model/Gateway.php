@@ -155,6 +155,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         ],
         'transId'                   => ['charMask' => '\d'],
         'unmaskExpirationDate'      => ['enum' => ['true', 'false']],
+        'userFields'                => [],
         'validationMode'            => ['enum' => ['liveMode', 'testMode', 'none']],
     ];
 
@@ -1170,6 +1171,20 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 'settingName'  => 'emailCustomer',
                 'settingValue' => $this->getParameter('emailCustomer', 'false'),
             ];
+
+            // Add user fields.
+            if ($this->hasParameter('userFields')) {
+                $params['userFields'] = [
+                    'userField' => [],
+                ];
+
+                foreach ($this->getParameter('userFields') as $key => $value) {
+                    $params['userFields']['userField'][] = [
+                        'name'  => $key,
+                        'value' => $value,
+                    ];
+                }
+            }
         }
 
         if (empty($params['payment'])) {
@@ -1840,6 +1855,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         if ($this->hasParameter('invoiceNumber') && $type != 'priorAuthCaptureTransaction') {
+            if ($this->hasParameter('description') === false) {
+                $store = $this->helper->getCurrentStore();
+                $this->setParameter('description', __('%1 (%2)', $store->getName(), $store->getBaseUrl()));
+            }
+
             $params['order'] = [
                 'invoiceNumber' => $this->getParameter('invoiceNumber'),
                 'description'   => $this->getParameter('description'),
