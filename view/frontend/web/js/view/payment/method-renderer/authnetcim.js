@@ -167,9 +167,9 @@ define(
                 }
 
                 this.handleFailedOrder({
-                    responseText: {
+                    responseText: JSON.stringify({
                         message: messages.join("\n")
-                    }
+                    })
                 });
             },
 
