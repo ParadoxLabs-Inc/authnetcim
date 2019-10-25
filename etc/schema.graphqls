@@ -9,8 +9,3 @@ input TokenBaseCardPaymentInput {
     acceptjs_key: String
     acceptjs_value: String
 }
-
-input PaymentMethodInput {
-    acceptjs_key: String
-    acceptjs_value: String
-}
