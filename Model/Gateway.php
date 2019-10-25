@@ -29,6 +29,13 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     const SOLUTION_ID = 'A1000133';
 
     /**
+     * Authorize.Net transaction duplicate window
+     *
+     * @var int
+     */
+    const DUPLICATE_WINDOW = 30;
+
+    /**
      * Transaction status codes indicating denial on review
      *
      * @var string[]
@@ -1035,7 +1042,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 $type => [
                 ],
             ],
-            'extraOptions' => ['@cdata' => 'x_duplicate_window=15'],
+            'extraOptions' => ['@cdata' => 'x_duplicate_window=' . static::DUPLICATE_WINDOW],
         ];
 
         if ($this->hasParameter('amount')) {
@@ -1166,7 +1173,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
             $params['transactionSettings']['setting'][] = [
                 'settingName'  => 'duplicateWindow',
-                'settingValue' => $this->getParameter('duplicateWindow', '15'),
+                'settingValue' => $this->getParameter('duplicateWindow', static::DUPLICATE_WINDOW),
             ];
 
             $params['transactionSettings']['setting'][] = [
