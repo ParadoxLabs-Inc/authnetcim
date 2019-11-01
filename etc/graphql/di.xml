@@ -4,6 +4,7 @@
         <arguments>
             <argument name="dataProviders" xsi:type="array">
                 <item name="authnetcim" xsi:type="object">ParadoxLabs\TokenBase\Model\Api\GraphQL\CheckoutPaymentDataProvider</item>
+                <item name="authnetcim_ach" xsi:type="object">ParadoxLabs\TokenBase\Model\Api\GraphQL\CheckoutPaymentDataProvider</item>
             </argument>
         </arguments>
     </type>
