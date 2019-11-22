@@ -214,6 +214,8 @@ define([
                     event.stopPropagation();
                 }
 
+                // PDL#1918599 -- Be sure the validation is initialised, even though it will be 99.9% of the time.
+                this.form.validation();
                 if (this.validate() && this.options.validateForm && this.form.validation('isValid')) {
                     if (this.alreadyProcessing !== true) {
                         this.startLoadWaiting();
