@@ -204,7 +204,6 @@
                         click: placeOrder,
                         attr: {title: $t('Place Order'), id: getCode() + '-submit'},
                         enable: (getCode() == isChecked() && isPlaceOrderActionAllowed()),
-                        css: {disabled: !isPlaceOrderActionAllowed()}
                         "
                             disabled>
                         <span data-bind="text: $t('Place Order')"></span>
