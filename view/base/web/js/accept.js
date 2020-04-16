@@ -6,8 +6,6 @@
  * Need help? Open a ticket in our support system:
  *  http://support.paradoxlabs.com
  *
- * @category    ParadoxLabs
- * @package     AuthorizeNetCim
  * @author      Ryan Hoerr <support@paradoxlabs.com>
  * @license     http://store.paradoxlabs.com/license.html
  */
@@ -23,15 +21,15 @@
 
 /*jshint jquery:true*/
 define([
-    "jquery",
-    "ko",
+    'jquery',
+    'ko',
     'Magento_Ui/js/modal/alert',
-    "mage/translate",
+    'mage/translate',
     'mage/validation',
     'domReady!'
     // NB: using jQuery rather than $ to avoid conflict on admin order form.
 ], function(jQuery, ko, alert) {
-    "use strict";
+    'use strict';
 
     jQuery.widget('mage.authnetcimAcceptjs', {
         options: {

@@ -72,7 +72,7 @@
                 </field>
                 <field id="cctypes" translate="label comment" type="multiselect" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Allowed Credit Card Types</label>
-                    <source_model>Magento\Authorizenet\Model\Source\Cctype</source_model>
+                    <source_model>ParadoxLabs\Authnetcim\Model\Config\Cctype</source_model>
                     <attribute type="shared">1</attribute>
                 </field>
                 <field id="useccv" translate="label comment" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
