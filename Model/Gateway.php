@@ -1429,6 +1429,40 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     }
 
     /**
+     * Get Account Updater summary report
+     *
+     * @return array|string
+     */
+    public function getAccountUpdaterSummary()
+    {
+        $params = [
+            'month' => date('Y-m', strtotime('-1 month')),
+        ];
+
+        return $this->runTransaction('getAUJobSummaryRequest', $params);
+    }
+
+    /**
+     * Get Account Updater change details report
+     *
+     * @param int $page
+     * @param int $size
+     * @return array|string
+     */
+    public function getAccountUpdaterDetails($page = 1, $size = 1000)
+    {
+        $params = [
+            'month' => date('Y-m', strtotime('-1 month')),
+            'paging' => [
+                'limit' => $size,
+                'offset' => $page,
+            ]
+        ];
+
+        return $this->runTransaction('getAUJobDetailsRequest', $params);
+    }
+
+    /**
      * Turn the direct response string into an array, as best we can.
      *
      * @param string $directResponse

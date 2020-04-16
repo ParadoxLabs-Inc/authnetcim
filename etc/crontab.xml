@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+    <group id="default">
+        <!-- Run on the first of the month, around 3 AM EST. The AccountUpdater report becomes available on the 1st of the month after it runs. -->
+        <job name="paradoxlabs_authnetcim_account_updater" instance="ParadoxLabs\Authnetcim\Model\Cron\AccountUpdater" method="execute">
+            <schedule>0 8 1 * *</schedule>
+        </job>
+    </group>
+</config>
