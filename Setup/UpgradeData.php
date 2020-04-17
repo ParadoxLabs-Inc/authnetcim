@@ -94,7 +94,7 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
                     'visible'          => false,
                     'required'         => false,
                     'system'           => false,
-                    'user_defined'     => true,
+                    'user_defined'     => false,
                     'visible_on_front' => false,
                 ]
             );
@@ -149,6 +149,18 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
                     0
                 );
             }
+
+            /**
+             * ... is_user_defined should be 0 to prevent the attribute showing on forms.
+             */
+            if ($attribute['is_user_defined'] != 0) {
+                $customerSetup->updateAttribute(
+                    Customer::ENTITY,
+                    $attribute['attribute_id'],
+                    'is_user_defined',
+                    0
+                );
+            }
         }
     }
 
@@ -174,7 +186,7 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
                     'visible'          => false,
                     'required'         => false,
                     'system'           => false,
-                    'user_defined'     => true,
+                    'user_defined'     => false,
                     'visible_on_front' => false,
                 ]
             );
@@ -226,6 +238,18 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
                     Customer::ENTITY,
                     $attribute['attribute_id'],
                     'is_visible',
+                    0
+                );
+            }
+
+            /**
+             * ... is_user_defined should be 0 to prevent the attribute showing on forms.
+             */
+            if ($attribute['is_user_defined'] != 0) {
+                $customerSetup->updateAttribute(
+                    Customer::ENTITY,
+                    $attribute['attribute_id'],
+                    'is_user_defined',
                     0
                 );
             }

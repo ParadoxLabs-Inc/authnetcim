@@ -515,6 +515,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 )
             );
 
+            if ($response->getTransactionId() === '0' && $response->getAuthCode() === '000000') {
+                throw new PaymentException(
+                    __('Transaction failed. Please disable test mode in Authorize.Net.')
+                );
+            }
+
             throw new PaymentException(
                 __('Authorize.Net CIM Gateway: Transaction failed. ' . $response->getResponseReasonText())
             );

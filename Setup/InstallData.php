@@ -91,7 +91,7 @@ class InstallData implements \Magento\Framework\Setup\InstallDataInterface
                 'visible'          => false,
                 'required'         => false,
                 'system'           => false,
-                'user_defined'     => true,
+                'user_defined'     => false,
                 'visible_on_front' => false,
             ]
         );
@@ -131,7 +131,7 @@ class InstallData implements \Magento\Framework\Setup\InstallDataInterface
                 'visible'          => false,
                 'required'         => false,
                 'system'           => false,
-                'user_defined'     => true,
+                'user_defined'     => false,
                 'visible_on_front' => false,
             ]
         );
