@@ -13,8 +13,6 @@
 
 namespace ParadoxLabs\Authnetcim\Observer;
 
-use Magento\Payment\Observer\AbstractDataAssignObserver;
-
 /**
  * PaymentMethodAssignAcceptjsDataObserver Class
  */
