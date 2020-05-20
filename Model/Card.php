@@ -557,7 +557,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             // If we were not given a full CC number, grab the masked value from Authorize.Net.
             $profile = $gateway->getCustomerPaymentProfile();
 
-            if (isset($profile['paymentProfile'], $profile['paymentProfile']['payment']['creditCard'])) {
+            if (isset($profile['paymentProfile']['payment']['creditCard'])) {
                 $gateway->setParameter('cardNumber', $profile['paymentProfile']['payment']['creditCard']['cardNumber']);
             } else {
                 $this->helper->log(

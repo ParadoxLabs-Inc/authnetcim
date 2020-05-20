@@ -1899,7 +1899,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         if ($isRefund !== true) {
             $params['solution'] = [
-                'id' => static::SOLUTION_ID,
+                'id' => self::SOLUTION_ID,
             ];
         }
 
