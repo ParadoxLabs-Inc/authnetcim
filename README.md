@@ -63,7 +63,5 @@ If you have any integrations or custom functionality based on this extension, we
 
 **Support System: [support.paradoxlabs.com](http://support.paradoxlabs.com)**
 
-If you have a problem, you can also email [support@paradoxlabs.com](mailto:support@paradoxlabs.com), or contact us by phone at 717-431-3330.
 
-
-© 2018 [ParadoxLabs](http://www.paradoxlabs.com)
+© 2020 [ParadoxLabs](http://www.paradoxlabs.com)
