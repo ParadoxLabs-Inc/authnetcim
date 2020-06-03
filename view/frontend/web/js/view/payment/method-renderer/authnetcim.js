@@ -166,6 +166,8 @@ define(
                     );
                 }
 
+                this.isTokenizing(false);
+
                 this.handleFailedOrder({
                     responseText: JSON.stringify({
                         message: messages.join("\n")
@@ -177,6 +179,8 @@ define(
                 this.acceptJsKey(response.opaqueData.dataDescriptor);
                 this.acceptJsValue(response.opaqueData.dataValue);
 
+                this.isTokenizing(false);
+
                 this.placeOrder();
             },
 
@@ -186,6 +190,8 @@ define(
                 if (this.selectedCard() || this.acceptJsValue() || !this.useAcceptJs()) {
                     return this._super(data, event);
                 } else {
+                    this.isTokenizing(true);
+
                     var cc_no = this.creditCardNumber().replace(/\D/g,'');
                     this.creditCardLast4(cc_no.substring(cc_no.length - 4));
                     if (this.canStoreBin) {
