@@ -224,6 +224,8 @@ define([
                 }
 
                 this.form.data('preventSave', true);
+            } else {
+                this.form.trigger('realOrder');
             }
         },
 
