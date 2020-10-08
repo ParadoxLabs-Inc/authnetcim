@@ -49,7 +49,7 @@ $storedCards    = $block->getStoredCards();
                         <?php /** @var \ParadoxLabs\TokenBase\Model\Card $card */ ?>
                         <?php foreach ($storedCards as $card): ?>
                             <?php $card = $card->getTypeInstance(); ?>
-                            <option value="<?php echo $block->escapeQuote($card->getHash()) ?>" <?php if ($card->getId() == $block->getInfoData('tokenbase_id') || count($storedCards) == 1): ?>selected="selected"<?php endif; ?>>
+                            <option value="<?php echo $block->escapeQuote($card->getHash()) ?>" <?php if ($card->getId() == $block->getInfoData('tokenbase_id') || count($storedCards) == 1): ?>selected="selected"<?php endif; ?> data-type="<?php echo $block->escapeQuote($card->getType()) ?>">
                                 <?php echo $block->escapeHtml($card->getLabel()) ?>
                             </option>
                         <?php endforeach; ?>

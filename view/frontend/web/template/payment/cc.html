@@ -43,7 +43,6 @@
                 <div class="control">
                     <select name="payment[card_id]" class="select"
                             data-bind="attr: {id: getCode() + '-card-id', 'data-container': getCode() + '-card-id'},
-                                    mageInit: {creditCardType:{creditCardTypeContainer:'#' + getCode() + '-cc-type-ss-div'}},
                                     enable: true,
                                     options: getStoredCards(),
                                     optionsValue: 'id',
@@ -76,7 +75,7 @@
                            class="input-text"
                            value=""
                            data-bind="attr: {id: getCode() + '-cc-type', 'data-container': getCode() + '-cc-type'},
-                       textInput: creditCardType
+                       textInput: creditCardType, afterRender: handleSelectedCardType()
                        ">
                 </div>
             </div>

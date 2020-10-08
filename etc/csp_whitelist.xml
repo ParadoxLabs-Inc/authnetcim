@@ -3,14 +3,12 @@
     <policies>
         <policy id="script-src">
             <values>
-                <value id="authorizenet_acceptjs" type="host">js.authorize.net</value>
-                <value id="authorizenet_acceptjs_sandbox" type="host">jstest.authorize.net</value>
+                <value id="authorizenet_acceptjs" type="host">*.authorize.net</value>
             </values>
         </policy>
         <policy id="connect-src">
             <values>
-                <value id="authorizenet_acceptjs" type="host">js.authorize.net</value>
-                <value id="authorizenet_acceptjs_sandbox" type="host">jstest.authorize.net</value>
+                <value id="authorizenet_acceptjs" type="host">*.authorize.net</value>
             </values>
         </policy>
     </policies>
