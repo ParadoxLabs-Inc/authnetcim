@@ -14,7 +14,7 @@
 namespace ParadoxLabs\Authnetcim\Model\Ach;
 
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\PaymentException;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Authorize.Net CIM API Gateway - custom built for perfection.
@@ -32,7 +32,7 @@ class Gateway extends \ParadoxLabs\Authnetcim\Model\Gateway
      * @param string $transactionResult
      * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
      * @throws LocalizedException
-     * @throws PaymentException
+     * @throws LocalizedException
      */
     protected function interpretTransaction($transactionResult)
     {

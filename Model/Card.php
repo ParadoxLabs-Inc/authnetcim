@@ -406,7 +406,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
 
             if ($this->getMethodInstance()->isAcceptJsEnabled()) {
                 // This is an unrecoverable error with Accept.js (we just consumed the nonce), so kick out a nice error.
-                throw new \Magento\Framework\Exception\PaymentException(
+                throw new \Magento\Framework\Exception\LocalizedException(
                     __('Sorry, we were unable to find your payment record. '
                         . 'Please re-enter your payment info and try again.')
                 );
@@ -423,7 +423,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $this->helper->log($this->getMethod(), sprintf('API error: %s: %s', $errorCode, $errorText));
             $gateway->logLogs();
 
-            throw new \Magento\Framework\Exception\PaymentException(
+            throw new \Magento\Framework\Exception\LocalizedException(
                 __(sprintf('Authorize.Net CIM Gateway: %s', $errorText))
             );
         }
@@ -437,7 +437,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
         } else {
             $gateway->logLogs();
 
-            throw new \Magento\Framework\Exception\PaymentException(
+            throw new \Magento\Framework\Exception\LocalizedException(
                 __('Authorize.Net CIM Gateway: Unable to create payment record.')
             );
         }

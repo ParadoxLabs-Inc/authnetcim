@@ -14,7 +14,7 @@
 namespace ParadoxLabs\Authnetcim\Model;
 
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\PaymentException;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Authorize.Net CIM API Gateway - custom built for perfection.
@@ -244,7 +244,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      * @param array $params
      * @return array|string
      * @throws LocalizedException
-     * @throws PaymentException
+     * @throws LocalizedException
      */
     protected function runTransaction($request, $params)
     {
@@ -404,7 +404,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      * @param array $transactionResult
      * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
      * @throws LocalizedException
-     * @throws PaymentException
+     * @throws LocalizedException
      */
     protected function interpretTransaction($transactionResult)
     {
@@ -434,7 +434,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     sprintf("API error: %s: %s\n%s", $errorCode, $errorText, $this->log)
                 );
 
-                throw new PaymentException(
+                throw new LocalizedException(
                     __('Sorry, we were unable to find your payment record. '
                         . 'Please re-enter your payment info and try again.')
                 );
@@ -470,7 +470,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 sprintf("Authorize.Net CIM Gateway: Transaction failed; no response.\n%s", $this->log)
             );
 
-            throw new PaymentException(
+            throw new LocalizedException(
                 __('Authorize.Net CIM Gateway: Transaction failed; no response. '
                     . 'Please re-enter your payment info and try again.')
             );
@@ -516,12 +516,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             );
 
             if ($response->getTransactionId() === '0' && $response->getAuthCode() === '000000') {
-                throw new PaymentException(
+                throw new LocalizedException(
                     __('Transaction failed. Please disable test mode in Authorize.Net.')
                 );
             }
 
-            throw new PaymentException(
+            throw new LocalizedException(
                 __('Authorize.Net CIM Gateway: Transaction failed. ' . $response->getResponseReasonText())
             );
         }
@@ -828,7 +828,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      *
      * @return string CIM customer profile ID
      * @throws LocalizedException
-     * @throws PaymentException
+     * @throws LocalizedException
      */
     public function createCustomerProfile()
     {
@@ -867,7 +867,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      *
      * @return string CIM card payment ID
      * @throws LocalizedException
-     * @throws PaymentException
+     * @throws LocalizedException
      */
     public function createCustomerPaymentProfile()
     {
@@ -1473,7 +1473,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      *
      * @param string $directResponse
      * @return array
-     * @throws PaymentException
+     * @throws LocalizedException
      */
     protected function getDataFromDirectResponse($directResponse)
     {
@@ -1491,7 +1491,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 sprintf("Authorize.Net CIM Gateway: Transaction failed; no direct response.\n%s", $this->log)
             );
 
-            throw new PaymentException(
+            throw new LocalizedException(
                 __('Authorize.Net CIM Gateway: Transaction failed; no direct response. '
                     . 'Please re-enter your payment info and try again.')
             );
@@ -1536,7 +1536,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      *
      * @param array $response
      * @return array
-     * @throws PaymentException
+     * @throws LocalizedException
      */
     protected function getDataFromTransactionResponse($response)
     {
@@ -1546,7 +1546,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 sprintf("Authorize.Net CIM Gateway: Transaction failed; no response.\n%s", $this->log)
             );
 
-            throw new PaymentException(
+            throw new LocalizedException(
                 __('Authorize.Net CIM Gateway: Transaction failed; no response. '
                     . 'Please re-enter your payment info and try again.')
             );
@@ -1643,7 +1643,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      *
      * @param array $response Results of API call getTransactionDetails
      * @return array Data keyed to match normal transaction responses.
-     * @throws PaymentException
+     * @throws LocalizedException
      */
     protected function mapTransactionDetails($response)
     {
@@ -1653,7 +1653,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 sprintf("Authorize.Net CIM Gateway: Transaction failed; no response.\n%s", $this->log)
             );
 
-            throw new PaymentException(
+            throw new LocalizedException(
                 __('Authorize.Net CIM Gateway: Transaction failed; no response. '
                     . 'Please re-enter your payment info and try again.')
             );
@@ -2253,7 +2253,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      * Split out to reduce that method's cyclomatic complexity.
      *
      * @return void
-     * @throws PaymentException
+     * @throws LocalizedException
      */
     protected function handleTransactionError()
     {
@@ -2292,7 +2292,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     $errorText = 'Invalid token. Please re-enter your payment info.';
                 }
 
-                throw new PaymentException(
+                throw new LocalizedException(
                     __(sprintf('Authorize.Net CIM Gateway: %s (%s)', $errorText, $errorCode))
                 );
             }
