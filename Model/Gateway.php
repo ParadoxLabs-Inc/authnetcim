@@ -14,7 +14,6 @@
 namespace ParadoxLabs\Authnetcim\Model;
 
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Authorize.Net CIM API Gateway - custom built for perfection.
