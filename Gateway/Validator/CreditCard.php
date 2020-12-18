@@ -32,6 +32,17 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
         /** @var \Magento\Payment\Model\Info $payment */
         $payment = $validationSubject['payment'];
 
+        /**
+         * Comply with the configuration settings for allowed card types.
+         */
+        $typeInfo = $payment->getData('cc_type');
+        $availableTypes = explode(',', $this->config->getValue('cctypes'));
+        if (isset($typeInfo) && in_array($typeInfo, $availableTypes, true) === false) {
+            // Is the type allowed?
+            $isValid = false;
+            $fails[] = __('This credit card type is not allowed for this payment method.');
+        }
+
         if ($this->isAcceptJsEnabled() === true
             && strlen(str_replace(['X', '-'], '', $payment->getData('cc_number'))) > 4) {
             // This gets triggered if Accept.js is enabled but we received raw credit card data anyway.
