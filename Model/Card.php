@@ -209,7 +209,15 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             try {
                 $gateway->deleteCustomerPaymentProfile();
             } catch (\Exception $e) {
-                $this->helper->log($this->getMethod(), $e->getMessage());
+                $this->helper->log(
+                    $this->getMethod(),
+                    sprintf(
+                        'Error deleting card (%s, %s): %s',
+                        $this->getProfileId(),
+                        $this->getPaymentId(),
+                        $e->getMessage()
+                    )
+                );
             }
         }
 
