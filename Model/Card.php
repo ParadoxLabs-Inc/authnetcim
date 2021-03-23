@@ -13,7 +13,7 @@
 
 namespace ParadoxLabs\Authnetcim\Model;
 
-use Magento\Framework\Exception\LocalizedException;
+use Magento\Payment\Gateway\Command\CommandException;
 
 /**
  * Authorize.Net CIM card model
@@ -75,7 +75,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
      *
      * @param \Magento\Payment\Model\InfoInterface $payment
      * @return $this
-     * @throws LocalizedException
+     * @throws CommandException
      */
     public function importLegacyData(\Magento\Payment\Model\InfoInterface $payment)
     {
@@ -104,7 +104,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
                 'Authorize.Net CIM: Unable to covert legacy data for processing. Please seek support.'
             );
 
-            throw new LocalizedException(
+            throw new CommandException(
                 __('Authorize.Net CIM: Unable to covert legacy data for processing. Please seek support.')
             );
         }
@@ -222,7 +222,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
      * Attempt to create a CIM customer profile
      *
      * @return $this
-     * @throws LocalizedException
+     * @throws CommandException
      */
     protected function createCustomerProfile()
     {
@@ -249,7 +249,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
                     'Authorize.Net CIM Gateway: Unable to create customer profile.'
                 );
 
-                throw new LocalizedException(__('Authorize.Net CIM Gateway: Unable to create customer profile.'));
+                throw new CommandException(__('Authorize.Net CIM Gateway: Unable to create customer profile.'));
             }
         } else {
             $this->helper->log(
@@ -257,7 +257,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
                 'Authorize.Net CIM Gateway: Unable to create customer profile; email or user ID is required.'
             );
 
-            throw new LocalizedException(
+            throw new CommandException(
                 __('Authorize.Net CIM Gateway: Unable to create customer profile; email or user ID is required.')
             );
         }
@@ -270,7 +270,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
      *
      * @param bool $retry
      * @return $this
-     * @throws LocalizedException
+     * @throws CommandException
      */
     protected function syncCustomerPaymentProfile($retry = true)
     {
@@ -406,7 +406,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
 
             if ($this->getMethodInstance()->isAcceptJsEnabled()) {
                 // This is an unrecoverable error with Accept.js (we just consumed the nonce), so kick out a nice error.
-                throw new \Magento\Framework\Exception\LocalizedException(
+                throw new \Magento\Payment\Gateway\Command\CommandException(
                     __('Sorry, we were unable to find your payment record. '
                         . 'Please re-enter your payment info and try again.')
                 );
@@ -423,7 +423,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $this->helper->log($this->getMethod(), sprintf('API error: %s: %s', $errorCode, $errorText));
             $gateway->logLogs();
 
-            throw new \Magento\Framework\Exception\LocalizedException(
+            throw new \Magento\Payment\Gateway\Command\CommandException(
                 __(sprintf('Authorize.Net CIM Gateway: %s', $errorText))
             );
         }
@@ -437,7 +437,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
         } else {
             $gateway->logLogs();
 
-            throw new \Magento\Framework\Exception\LocalizedException(
+            throw new \Magento\Payment\Gateway\Command\CommandException(
                 __('Authorize.Net CIM Gateway: Unable to create payment record.')
             );
         }
@@ -525,7 +525,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
      *
      * @param \ParadoxLabs\TokenBase\Api\GatewayInterface $gateway
      * @return $this
-     * @throws LocalizedException
+     * @throws CommandException
      */
     protected function setPaymentInfoOnUpdate(\ParadoxLabs\TokenBase\Api\GatewayInterface $gateway)
     {
@@ -567,7 +567,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
 
                 $gateway->logLogs();
 
-                throw new LocalizedException(__('Authorize.Net CIM Gateway: Could not load payment record.'));
+                throw new CommandException(__('Authorize.Net CIM Gateway: Could not load payment record.'));
             }
         }
 
