@@ -182,12 +182,12 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
         $card = $this->getCard();
 
         /** @var \Magento\Sales\Model\Order\Payment $payment */
-        if ($card->getAdditional('cc_type') == null && $response->getData('card_type') != '') {
+        if ($card->getType() == null && $response->getData('card_type') != '') {
             $ccType = $this->helper->mapCcTypeToMagento($response->getData('card_type'));
 
             if ($ccType !== null) {
-                $card->setAdditional('cc_type', $ccType)
-                                ->setData('no_sync', true);
+                $card->setType($ccType)
+                     ->setData('no_sync', true);
 
                 $this->card = $this->cardRepository->save($card);
 

@@ -318,6 +318,17 @@
         </arguments>
     </virtualType>
 
+    <type name="ParadoxLabs\Authnetcim\Model\Card">
+        <arguments>
+            <argument name="cardContext" xsi:type="object">ParadoxLabs\Authnetcim\Model\Card\VirtualContext</argument>
+        </arguments>
+    </type>
+    <virtualType name="ParadoxLabs\Authnetcim\Model\Card\VirtualContext" type="ParadoxLabs\TokenBase\Model\Card\Context">
+        <arguments>
+            <argument name="helper" xsi:type="object">ParadoxLabs\Authnetcim\Helper\Data</argument>
+        </arguments>
+    </virtualType>
+
     <!-- Proxies for dependency resolution and efficiency -->
     <type name="ParadoxLabs\Authnetcim\Block\Form\Cc">
         <arguments>

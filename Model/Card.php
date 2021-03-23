@@ -596,4 +596,25 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
 
         return $this;
     }
+
+    /**
+     * Get type
+     *
+     * @return string
+     */
+    public function getType()
+    {
+        $type = parent::getType();
+
+        // Handle legacy edge cases where stored card may have full type rather than 2-letter type code.
+        if (strlen($type) > 2 && method_exists($this->helper, 'mapCcTypeToMagento')) {
+            $properType = $this->helper->mapCcTypeToMagento($type) ?: $type;
+
+            if ($properType !== $type) {
+                $this->setType($properType);
+            }
+        }
+
+        return parent::getType();
+    }
 }

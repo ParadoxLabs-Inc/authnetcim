@@ -101,7 +101,7 @@
 
         <div class="field type required">
             <div class="control">
-                <?php $_ccType = $block->getCard()->getAdditional('cc_type') ?>
+                <?php $_ccType = $block->getCard()->getType() ?>
                 <ul class="credit-card-types">
                     <?php foreach ($block->getCcBlock()->getCcAvailableTypes() as $_typeCode => $_typeName): ?>
                         <li class="item<?php if ($_typeCode == $_ccType): ?> _active<?php endif; ?>" data-type="<?php echo $block->escapeQuote($_typeCode); ?>">
