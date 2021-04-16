@@ -634,10 +634,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             } else {
                 $this->setParameter('isSubsequentAuth', 'true');
             }
-        }
 
-        if ((int)$payment->getAdditionalInformation('is_subscription_generated') === 1) {
-            $this->setParameter('recurringBilling', 'true');
+            if ((int)$payment->getAdditionalInformation('is_subscription_generated') === 1) {
+                $this->setParameter('recurringBilling', 'true');
+            }
         }
 
         $this->setParameter('amount', $amount);
