@@ -114,6 +114,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'expirationDate'            => ['maxLength' => 7],
         'includeIssuerInfo'         => ['enum' => ['true', 'false']],
         'invoiceNumber'             => ['maxLength' => 20, 'noSymbols' => true],
+        'isFirstRecurringPayment'   => ['enum' => ['true', 'false']],
+        'isFirstSubsequentAuth'     => ['enum' => ['true', 'false']],
+        'isStoredCredentials'       => ['enum' => ['true', 'false']],
+        'isSubsequentAuth'          => ['enum' => ['true', 'false']],
         'itemName'                  => ['maxLength' => 31, 'noSymbols' => true],
         'loginId'                   => ['maxLength' => 20],
         'merchantCustomerId'        => ['maxLength' => 20],
@@ -136,6 +140,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'shipToState'               => ['maxLength' => 40, 'noSymbols' => true],
         'shipToZip'                 => ['maxLength' => 20, 'noSymbols' => true],
         'splitTenderId'             => ['maxLength' => 6],
+        'subsequentAuthReason'      => ['enum' => ['delayedCharge', 'noShow', 'resubmission', 'reauthorization']],
         'taxAmount'                 => [],
         'taxDescription'            => ['maxLength' => 255],
         'taxExempt'                 => ['enum' => ['true', 'false']],
@@ -570,10 +575,28 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             if ($payment->getBaseShippingAmount()) {
                 $this->setParameter('shipAmount', $payment->getBaseShippingAmount());
             }
+        } else {
+            $this->setParameter('subsequentAuthReason', 'reauthorization');
         }
 
         if ($payment->hasData('cc_cid') && !empty($payment->getData('cc_cid'))) {
             $this->setParameter('cardCode', $payment->getData('cc_cid'));
+        }
+
+        if ($this->getCard()->getLastUse() === null
+            && $payment->getMethodInstance() !== null
+            && $payment->getMethodInstance()->getConfigData('validation_mode') !== 'liveMode') {
+            $this->setParameter('isFirstSubsequentAuth', 'true');
+        }
+
+        if ($this->helper->getIsFrontend()) {
+            $this->setParameter('isStoredCredentials', 'true');
+        } else {
+            $this->setParameter('isSubsequentAuth', 'true');
+        }
+
+        if ((int)$payment->getAdditionalInformation('is_subscription_generated') === 1) {
+            $this->setParameter('recurringBilling', 'true');
         }
 
         $result = $this->createTransaction();
@@ -604,6 +627,17 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         if ($this->getHaveAuthorized() === false || empty($this->getTransactionId())) {
             $this->setParameter('transactionType', 'authCaptureTransaction');
+            $this->setParameter('subsequentAuthReason', 'reauthorization');
+
+            if ($this->helper->getIsFrontend()) {
+                $this->setParameter('isStoredCredentials', 'true');
+            } else {
+                $this->setParameter('isSubsequentAuth', 'true');
+            }
+        }
+
+        if ((int)$payment->getAdditionalInformation('is_subscription_generated') === 1) {
+            $this->setParameter('recurringBilling', 'true');
         }
 
         $this->setParameter('amount', $amount);
@@ -1184,6 +1218,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 'settingName'  => 'emailCustomer',
                 'settingValue' => $this->getParameter('emailCustomer', 'false'),
             ];
+
+            $params = $this->createTransactionAddCOFIndicators($params);
 
             // Add user fields.
             if ($this->hasParameter('userFields')) {
@@ -2335,6 +2371,51 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     'echeckType'    => $this->getParameter('echeckType'),
                     'bankName'      => $this->getParameter('bankName'),
                 ],
+            ];
+        }
+
+        return $params;
+    }
+
+    /**
+     * Add card-on-file flags to a createCustomerPaymentProfile API request's parameters.
+     *
+     * Split out to reduce that method's cyclomatic complexity.
+     *
+     * @param array $params
+     * @return array
+     */
+    protected function createTransactionAddCOFIndicators(array $params)
+    {
+        /**
+         * Card-On-File indicators convey the transaction context to the card processor. Mandated for stored card
+         * transactions by certain processors.
+         * @see https://developer.authorize.net/api/reference/features/card-on-file.html
+         */
+        $processingOptions    = [];
+        $processingOptionKeys = [
+            'isFirstRecurringPayment',
+            'isFirstSubsequentAuth',
+            'isStoredCredentials',
+            'isSubsequentAuth',
+        ];
+        foreach ($processingOptionKeys as $key) {
+            if ($this->hasParameter($key)) {
+                $processingOptions[$key] = $this->getParameter($key);
+            }
+        }
+        if (!empty($processingOptions)) {
+            $params['processingOptions'] = $processingOptions;
+        }
+
+        if ($this->hasParameter('subsequentAuthReason')) {
+            $params['subsequentAuthInformation']['reason'] = $this->getParameter('subsequentAuthReason');
+        }
+
+        if ($this->hasParameter('recurringBilling')) {
+            $params['transactionSettings']['setting'][] = [
+                'settingName'  => 'recurringBilling',
+                'settingValue' => $this->getParameter('recurringBilling', 'false'),
             ];
         }
 
