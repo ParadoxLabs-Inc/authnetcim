@@ -627,7 +627,6 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         if ($this->getHaveAuthorized() === false || empty($this->getTransactionId())) {
             $this->setParameter('transactionType', 'authCaptureTransaction');
-            $this->setParameter('subsequentAuthReason', 'reauthorization');
 
             if ($this->helper->getIsFrontend()) {
                 $this->setParameter('isStoredCredentials', 'true');
@@ -2392,6 +2391,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
          * transactions by certain processors.
          * @see https://developer.authorize.net/api/reference/features/card-on-file.html
          */
+
+        if ($this->hasParameter('isStoredCredentials') && $this->hasParameter('isSubsequentAuth')) {
+            // Never allow CIT flag and MIT flag to be set at the same time; these are mutually exclusive.
+            $this->setParameter('isSubsequentAuth', null);
+        }
+
         $processingOptions    = [];
         $processingOptionKeys = [
             'isFirstRecurringPayment',
@@ -2408,7 +2413,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $params['processingOptions'] = $processingOptions;
         }
 
-        if ($this->hasParameter('subsequentAuthReason')) {
+        if ($this->hasParameter('subsequentAuthReason')
+            && $this->getParameter('isSubsequentAuth') === 'true') {
             $params['subsequentAuthInformation']['reason'] = $this->getParameter('subsequentAuthReason');
         }
 
