@@ -33,7 +33,7 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
      *
      * @return \Magento\Framework\Phrase|string
      */
-    protected function testApi()
+    public function testApi()
     {
         $method = $this->getMethodInstance();
 
@@ -124,7 +124,7 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
      * @return \ParadoxLabs\Authnetcim\Model\Method
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    protected function getMethodInstance()
+    public function getMethodInstance()
     {
         /** @var \ParadoxLabs\Authnetcim\Model\Method $method */
         $this->method = $this->methodFactory->getMethodInstance($this->code);

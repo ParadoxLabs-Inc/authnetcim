@@ -10,6 +10,7 @@
                 <cctypes>AE,VI,MC,DI</cctypes>
                 <login backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
                 <trans_key backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
+                <signature_key backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
                 <model>ParadoxLabs\Authnetcim\Gateway\VirtualFacade</model>
                 <card_model>ParadoxLabs\Authnetcim\Model\Card</card_model>
                 <method_model>ParadoxLabs\Authnetcim\Model\Method</method_model>
@@ -28,6 +29,7 @@
                 <savecard_opt_out>1</savecard_opt_out>
                 <verify_ssl>1</verify_ssl>
                 <acceptjs>1</acceptjs>
+                <enable_webhooks>0</enable_webhooks>
                 <client_key />
                 <group>tokenbase</group>
                 <!-- Feature flags -->
@@ -59,6 +61,7 @@
                 <title>Bank Account (eCheck)</title>
                 <login backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
                 <trans_key backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
+                <signature_key backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
                 <model>ParadoxLabs\Authnetcim\Gateway\Ach\VirtualFacade</model>
                 <card_model>ParadoxLabs\Authnetcim\Model\Ach\Card</card_model>
                 <method_model>ParadoxLabs\Authnetcim\Model\Ach\Method</method_model>
@@ -74,6 +77,7 @@
                 <reauthorize_partial_invoice>1</reauthorize_partial_invoice>
                 <savecard_opt_out>1</savecard_opt_out>
                 <verify_ssl>1</verify_ssl>
+                <enable_webhooks>0</enable_webhooks>
                 <group>tokenbase</group>
                 <!-- Feature flags -->
                 <can_order>1</can_order>

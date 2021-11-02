@@ -200,17 +200,13 @@ class ConfigProvider extends CcGenericConfigProvider
     }
 
     /**
-     * Get API Login ID - ONLY if Accept.js is enabled
+     * Get API Login ID
      *
      * @return string
      */
     public function getApiLoginId()
     {
-        if ($this->methods[static::CODE]->getConfigData('acceptjs')) {
-            return $this->methods[static::CODE]->getConfigData('login');
-        }
-
-        return '';
+        return $this->methods[static::CODE]->getConfigData('login');
     }
 
     /**
@@ -225,6 +221,16 @@ class ConfigProvider extends CcGenericConfigProvider
         }
 
         return '';
+    }
+
+    /**
+     * Get Signature Key
+     *
+     * @return string
+     */
+    public function getSignatureKey()
+    {
+        return $this->methods[static::CODE]->getConfigData('signature_key');
     }
 
     /**
@@ -245,5 +251,25 @@ class ConfigProvider extends CcGenericConfigProvider
     public function getCanStoreBin()
     {
         return (bool)$this->methods[static::CODE]->getConfigData('can_store_bin');
+    }
+
+    /**
+     * Are webhooks active?
+     *
+     * @return bool
+     */
+    public function isWebhookEnabled(): bool
+    {
+        return (bool)$this->methods[static::CODE]->getConfigData('enable_webhooks');
+    }
+
+    /**
+     * Get payment method code
+     *
+     * @return string
+     */
+    public function getCode(): string
+    {
+        return static::CODE;
     }
 }

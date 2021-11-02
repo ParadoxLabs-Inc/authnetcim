@@ -2,7 +2,7 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
     <system>
         <section id="payment">
-            <group id="authnetcim" translate="label comment" type="text" sortOrder="500" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="authnetcim" translate="label comment" type="text" sortOrder="33" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Authorize.Net CIM</label>
                 <comment><![CDATA[<div style="float:right;text-align:center;"><img src="https://store.paradoxlabs.com/media/wysiwyg/AuthorizeNetCertified.gif" width="140" height="50" border="0" alt="Authorize.Net Certified Solution" /><br />by <a href="http://support.paradoxlabs.com/" target="_blank">ParadoxLabs, inc.</a></div>]]></comment>
                 <field id="version" translate="label" type="label" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="1">
@@ -20,7 +20,7 @@
                 <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
                 </field>
-                <field id="login" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="login" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>API Login ID</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                 </field>
@@ -34,7 +34,7 @@
                     <comment><![CDATA[In order to use Accept.js, you must enter your Client Key. Find this in Authorize.Net at <em>Account &gt; Settings &gt; Security Settings &gt; General Security Settings &gt; Manage Public Client Key</em>.]]></comment>
                 </field>
                 <field id="test" translate="label comment" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Authorize.Net Sandbox Account</label>
+                    <label>Sandbox Account</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>'Yes' only if the API credentials are for a sandbox account. The account must have test mode disabled.</comment>
                 </field>
@@ -107,6 +107,25 @@
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
                 </field>
+                <field id="heading_webhooks" translate="label" sortOrder="161" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Webhooks</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                    <attribute type="shared">1</attribute>
+                </field>
+                <field id="enable_webhooks" translate="label comment" type="select" sortOrder="162" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enable Webhooks</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If yes, Authorize.net transaction changes will automatically synchronize to Magento (when possible). This includes fraud approve/deny, captures, and refunds. If you don't do 'hold for review', and process all transactions through Magento, you don't need webhooks. See the user manual for more details and constraints.</comment>
+                </field>
+                <field id="signature_key" translate="label comment" type="obscure" sortOrder="163" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Signature Key</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment>Get this from your Authorize.Net account settings.</comment>
+                </field>
+                <field id="validate_and_init" translate="label comment" type="button" sortOrder="164" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <frontend_model>ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ValidateButton</frontend_model>
+                    <label></label>
+                </field>
                 <field id="heading_advanced" translate="label" sortOrder="170" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Advanced Settings</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
@@ -146,7 +165,7 @@
                     <comment>Strongly recommended. Do not disable unless you get SSL errors and your host is unable to fix them.</comment>
                 </field>
             </group>
-            <group id="authnetcim_ach" translate="label" type="text" sortOrder="510" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="authnetcim_ach" translate="label" type="text" sortOrder="34" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Authorize.Net CIM - ACH (eCheck)</label>
                 <comment><![CDATA[<div style="float:right;text-align:center;"><img src="https://store.paradoxlabs.com/media/wysiwyg/AuthorizeNetCertified.gif" width="140" height="50" border="0" alt="Authorize.Net Certified Solution" /><br />by <a href="http://support.paradoxlabs.com/" target="_blank">ParadoxLabs, inc.</a></div>]]></comment>
                 <field id="version" translate="label" type="label" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="1">
@@ -164,7 +183,7 @@
                 <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
                 </field>
-                <field id="login" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="login" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Api Login ID</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                 </field>
@@ -231,6 +250,25 @@
                 <field id="sort_order" translate="label" type="text" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
+                </field>
+                <field id="heading_webhooks" translate="label" sortOrder="161" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Webhooks</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                    <attribute type="shared">1</attribute>
+                </field>
+                <field id="enable_webhooks" translate="label comment" type="select" sortOrder="162" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enable Webhooks</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If yes, Authorize.net transaction changes will automatically synchronize to Magento (when possible). This includes fraud approve/deny, captures, and refunds.</comment>
+                </field>
+                <field id="signature_key" translate="label comment" type="obscure" sortOrder="163" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Signature Key</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment>Get this from your Authorize.Net account settings.</comment>
+                </field>
+                <field id="validate_and_init" translate="label comment" type="button" sortOrder="164" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <frontend_model>ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ValidateButton</frontend_model>
+                    <label></label>
                 </field>
                 <field id="heading_advanced" translate="label" sortOrder="170" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Advanced Settings</label>
