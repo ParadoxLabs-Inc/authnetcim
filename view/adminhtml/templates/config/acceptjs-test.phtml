@@ -35,13 +35,13 @@
                 {
                     cardData: {
                         cardNumber: '4111111111111111',
-                        month: "<?= $block->escapeHtmlAttr(date('m')) ?>",
-                        year: "<?= $block->escapeHtmlAttr(date('Y')) ?>",
+                        month: "<?= $block->escapeJsQuote(date('m'), '"') ?>",
+                        year: "<?= $block->escapeJsQuote(date('Y'), '"') ?>",
                         cardCode: '900'
                     },
                     authData: {
-                        clientKey: "<?= $block->escapeHtmlAttr($block->getMethodInstance()->getConfigData('client_key')) ?>",
-                        apiLoginID: "<?= $block->escapeHtmlAttr($block->getMethodInstance()->getConfigData('login')) ?>"
+                        clientKey: "<?= $block->escapeJsQuote($block->getMethodInstance()->getConfigData('client_key'), '"') ?>",
+                        apiLoginID: "<?= $block->escapeJsQuote($block->getMethodInstance()->getConfigData('login'), '"') ?>"
                     }
                 },
                 'authnetcim_acceptJs_callback'
@@ -62,9 +62,9 @@
                     }
 
                     messages.push(
-                        "<?= $block->escapeHtmlAttr(__('Accept.js Error: %1 (%2)')) ?>"
-                            .replace('%1', jQuery.mage.__(errorText))
-                            .replace('%2', response.messages.message[i].code)
+                        "<?= $block->escapeJsQuote(__('Accept.js Error: %1 (%2)'), '"') ?>"
+                            .replace('<?= $block->escapeJsQuote('%1', '"') ?>', jQuery.mage.__(errorText))
+                            .replace('<?= $block->escapeJsQuote('%2', '"') ?>', response.messages.message[i].code)
                     );
                 }
 
