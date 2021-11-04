@@ -75,6 +75,10 @@ class WebhookProcessor
      * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $storeManager;
+    /**
+     * @var \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider
+     */
+    protected $achConfigProvider;
 
     /**
      * WebhookProcessor constructor.
@@ -92,6 +96,7 @@ class WebhookProcessor
      * @param \Magento\Sales\Api\CreditmemoManagementInterface $creditmemoService
      * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider $achConfigProvider
      */
     public function __construct(
         \ParadoxLabs\TokenBase\Helper\Data $helper,
@@ -122,10 +127,7 @@ class WebhookProcessor
         $this->creditmemoFactory = $creditmemoFactory;
         $this->methodFactory = $methodFactory;
         $this->storeManager = $storeManager;
-
-        if ((bool)$this->request->getParam('ach', false) === true) {
-            $this->configProvider = $achConfigProvider;
-        }
+        $this->achConfigProvider = $achConfigProvider;
     }
 
     /**
@@ -136,6 +138,10 @@ class WebhookProcessor
      */
     public function process(): void
     {
+        if ((bool)$this->request->getParam('ach', false) === true) {
+            $this->configProvider = $this->achConfigProvider;
+        }
+
         if ($this->configProvider->isWebhookEnabled() !== true) {
             $this->helper->log($this->configProvider->getCode(), 'Webhook received, but disabled in config.');
             return;
@@ -211,6 +217,13 @@ class WebhookProcessor
             'spt.order_id=main_table.entity_id',
             ''
         );
+        $orders->getSelect()->joinInner(
+            [
+                'sop' => $orders->getTable('sales_order_payment'),
+            ],
+            'sop.parent_id=main_table.entity_id',
+            ''
+        );
         $orders->getSelect()->joinLeft(
             [
                 'si' => $orders->getTable('sales_invoice'),
@@ -221,6 +234,7 @@ class WebhookProcessor
             ]
         );
         $orders->addFieldToFilter('spt.txn_id', $transactionId);
+        $orders->addFieldToFilter('sop.method', $this->configProvider->getCode());
         $orders->setPageSize(1);
 
         /** @var \Magento\Sales\Model\Order $order */
@@ -267,7 +281,9 @@ class WebhookProcessor
             $gateway->setParameter('transId', $transactionId);
             $txnDetails = $gateway->getTransactionDetails();
 
-            $transactionState = null;
+            if ($eventType === 'net.authorize.payment.refund.created') {
+                $transactionId = $txnDetails['reference_transaction_id'];
+            }
 
             $order = $this->getOrderByTxnId($transactionId);
             if ($order instanceof \Magento\Sales\Model\Order === false || empty($order->getId())) {
@@ -509,6 +525,8 @@ class WebhookProcessor
             $creditmemo = $this->creditmemoFactory->createByOrder($order);
         }
 
-        $this->creditmemoService->refund($creditmemo, true);
+        if ($creditmemo->getGrandTotal() > 0) {
+            $this->creditmemoService->refund($creditmemo, true);
+        }
     }
 }
