@@ -1,0 +1,56 @@
+<?php /** @var $block \ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ValidateButton */ ?>
+
+<script>
+    require([
+        'jquery',
+        'Magento_Ui/js/modal/alert',
+        'mage/translate'
+    ], function($, alert) {
+        $('#<?= $block->escapeJs($block->getButtonId()) ?>').on('click', function() {
+            $('#<?= $block->escapeJs($block->getButtonId()) ?>_results').hide();
+            $('body').trigger('processStart');
+            $.post({
+                url: '<?= $block->escapeUrl($block->getAjaxUrl()) ?>',
+                data: {
+                    apiLoginId: $('input[name="groups[authnetcim][fields][login][value]"]').val(),
+                    transactionKey: $('input[name="groups[authnetcim][fields][trans_key][value]"]').val(),
+                    signatureKey: $('input[name="groups[authnetcim][fields][signature_key][value]"]').val(),
+                    sandbox: $('select[name="groups[authnetcim][fields][test][value]"]').val(),
+                    webhooks: $('select[name="groups[authnetcim][fields][webhooks][value]"]').val(),
+                    website: <?= (int)$block->getRequest()->getParam('website') ?: 'null' ?>,
+                    store: <?= (int)$block->getRequest()->getParam('store') ?: 'null' ?>
+                },
+                dataType: 'json',
+                complete: function() {
+                    $('body').trigger('processStop');
+                },
+                success: function(response) {
+                    $('#<?= $block->escapeJs($block->getButtonId()) ?>_results').html(response.message).show();
+                },
+                error: function(jqXHR, status, error) {
+                    var message = $.mage.__('An error occurred. Please try again.');
+
+                    try {
+                        var responseJson = JSON.parse(jqXHR.responseText);
+                        if (responseJson.message !== undefined) {
+                            message = responseJson.message;
+                        }
+                    } catch (error) {}
+
+                    try {
+                        alert({
+                            title: $.mage.__('Error'),
+                            content: message
+                        });
+                    } catch (error) {
+                        // Fall back to standard alert if jq widget hasn't initialized yet
+                        window.alert(message);
+                    }
+                }
+            });
+        });
+    });
+</script>
+
+<?= $block->getButtonHtml() ?>
+<div style="color:#0a0;" id="<?= $block->escapeJs($block->getButtonId()) ?>_results"></div>

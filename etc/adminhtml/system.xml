@@ -2,7 +2,7 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
     <system>
         <section id="payment">
-            <group id="authnetcim" translate="label comment" type="text" sortOrder="500" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="authnetcim" translate="label comment" type="text" sortOrder="33" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Authorize.Net CIM</label>
                 <comment><![CDATA[<div style="float:right;text-align:center;"><img src="https://store.paradoxlabs.com/media/wysiwyg/AuthorizeNetCertified.gif" width="140" height="50" border="0" alt="Authorize.Net Certified Solution" /><br />by <a href="http://support.paradoxlabs.com/" target="_blank">ParadoxLabs, inc.</a></div>]]></comment>
                 <field id="version" translate="label" type="label" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="1">
@@ -20,7 +20,7 @@
                 <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
                 </field>
-                <field id="login" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="login" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>API Login ID</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                 </field>
@@ -34,33 +34,33 @@
                     <comment><![CDATA[In order to use Accept.js, you must enter your Client Key. Find this in Authorize.Net at <em>Account &gt; Settings &gt; Security Settings &gt; General Security Settings &gt; Manage Public Client Key</em>.]]></comment>
                 </field>
                 <field id="test" translate="label comment" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Authorize.Net Sandbox Account</label>
+                    <label>Sandbox Account</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>'Yes' only if the API credentials are for a sandbox account. The account must have test mode disabled.</comment>
                 </field>
-                <field id="acceptjs" translate="label comment" type="select" sortOrder="55" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="acceptjs" translate="label comment" type="select" sortOrder="55" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Enable Accept.js</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Recommended. If enabled, card data is sent directly to Authorize.Net, so it doesn't touch your server at all. This is very good for security and PCI compliance. It may cause problems with some fraud services and custom solutions.</comment>
                 </field>
-                <field id="payment_action" translate="label comment" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="payment_action" translate="label comment" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Payment Action</label>
                     <source_model>ParadoxLabs\TokenBase\Model\Source\PaymentAction</source_model>
                     <attribute type="shared">1</attribute>
                     <comment>This controls what happens upon checkout. 'Authorize' means funds will be reserved for several days, until the order is invoiced. 'Capture' means funds will be immediately withdrawn.</comment>
                 </field>
-                <field id="order_status" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="order_status" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>New Order Status</label>
                     <source_model>ParadoxLabs\TokenBase\Model\Source\OrderStatus</source_model>
                     <comment>Normally 'Pending' if 'Authorize Only' above; 'Processing' if not.</comment>
                 </field>
-                <field id="validation_mode" translate="label comment" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="validation_mode" translate="label comment" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Validation Type</label>
                     <source_model>ParadoxLabs\Authnetcim\Model\Source\ValidationType</source_model>
                     <attribute type="shared">1</attribute>
                     <comment>'Live' to verify new cards are real before storing. This will incur an extra txn fee.</comment>
                 </field>
-                <field id="show_branding" translate="label comment" type="select" sortOrder="85" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="show_branding" translate="label comment" type="select" sortOrder="85" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Show Authorize.Net logo</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Show an Authorize.Net logo on the payment form.</comment>
@@ -70,26 +70,26 @@
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
                     <attribute type="shared">1</attribute>
                 </field>
-                <field id="cctypes" translate="label comment" type="multiselect" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="cctypes" translate="label comment" type="multiselect" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Allowed Credit Card Types</label>
                     <source_model>ParadoxLabs\Authnetcim\Model\Config\Cctype</source_model>
                     <attribute type="shared">1</attribute>
                 </field>
-                <field id="useccv" translate="label comment" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="useccv" translate="label comment" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Credit Card Verification</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>'Yes' to require the CCV code when using new cards (recommended).</comment>
                 </field>
-                <field id="allow_unsaved" translate="label comment" type="select" sortOrder="113" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="allow_unsaved" translate="label comment" type="select" sortOrder="113" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Allow cards to not be stored</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, customers can choose whether to save their credit card during checkout.</comment>
                 </field>
-                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Payment from Applicable Countries</label>
                     <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
                 </field>
-                <field id="specificcountry" translate="label" type="multiselect" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Payment from Specific Countries</label>
                     <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
                     <can_be_empty>1</can_be_empty>
@@ -97,42 +97,61 @@
                         <field id="allowspecific">1</field>
                     </depends>
                 </field>
-                <field id="min_order_total" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="min_order_total" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Minimum Order Total</label>
                 </field>
-                <field id="max_order_total" translate="label" type="text" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="max_order_total" translate="label" type="text" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Maximum Order Total</label>
                 </field>
-                <field id="sort_order" translate="label" type="text" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="sort_order" translate="label" type="text" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
+                </field>
+                <field id="heading_webhooks" translate="label" sortOrder="161" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Webhooks</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                    <attribute type="shared">1</attribute>
+                </field>
+                <field id="enable_webhooks" translate="label comment" type="select" sortOrder="162" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Enable Webhooks</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If yes, Authorize.net transaction changes will automatically synchronize to Magento (when possible). This includes fraud approve/deny, captures, and refunds. If you don't do 'hold for review', and process all transactions through Magento, you don't need webhooks. See the user manual for more details and constraints.</comment>
+                </field>
+                <field id="signature_key" translate="label comment" type="obscure" sortOrder="163" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Signature Key</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment>Get this from your Authorize.Net account settings.</comment>
+                </field>
+                <field id="validate_and_init" translate="label comment" type="button" sortOrder="164" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <frontend_model>ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ValidateButton</frontend_model>
+                    <label></label>
                 </field>
                 <field id="heading_advanced" translate="label" sortOrder="170" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Advanced Settings</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
                     <attribute type="shared">1</attribute>
                 </field>
-                <field id="require_ccv" translate="label comment" type="select" sortOrder="180" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="require_ccv" translate="label comment" type="select" sortOrder="180" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Require CCV for all transactions</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, CCV code will be required even for stored cards. This will not affect recurring transactions.</comment>
                 </field>
-                <field id="send_shipping_address" translate="label comment" type="select" sortOrder="190" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="send_shipping_address" translate="label comment" type="select" sortOrder="190" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Send Shipping Address</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, shipping address will be sent with each transaction. Required for some fraud filters.</comment>
                 </field>
-                <field id="send_line_items" translate="label comment" type="select" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="send_line_items" translate="label comment" type="select" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Send Line Items</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, the items will be included with each transaction. May not be desired for some accounting integrations.</comment>
                 </field>
-                <field id="reauthorize_partial_invoice" translate="label comment" type="select" sortOrder="210" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="reauthorize_partial_invoice" translate="label comment" type="select" sortOrder="210" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Reauthorize on Partial Invoice</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, when you create a partial invoice, we will reauthorize any outstanding balance on the order. This helps guarantee funds, but can cause multiple holds on the card until transactions settle.</comment>
                 </field>
-                <field id="savecard_opt_out" translate="label comment" type="select" sortOrder="220" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="savecard_opt_out" translate="label comment" type="select" sortOrder="220" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Auto-select 'save for next time'</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, will be selected by default during checkout.</comment>
@@ -140,13 +159,13 @@
                         <field id="allow_unsaved">1</field>
                     </depends>
                 </field>
-                <field id="verify_ssl" translate="label comment" type="select" sortOrder="230" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="verify_ssl" translate="label comment" type="select" sortOrder="230" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Verify SSL</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Strongly recommended. Do not disable unless you get SSL errors and your host is unable to fix them.</comment>
                 </field>
             </group>
-            <group id="authnetcim_ach" translate="label" type="text" sortOrder="510" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="authnetcim_ach" translate="label" type="text" sortOrder="34" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Authorize.Net CIM - ACH (eCheck)</label>
                 <comment><![CDATA[<div style="float:right;text-align:center;"><img src="https://store.paradoxlabs.com/media/wysiwyg/AuthorizeNetCertified.gif" width="140" height="50" border="0" alt="Authorize.Net Certified Solution" /><br />by <a href="http://support.paradoxlabs.com/" target="_blank">ParadoxLabs, inc.</a></div>]]></comment>
                 <field id="version" translate="label" type="label" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="1">
@@ -164,7 +183,7 @@
                 <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
                 </field>
-                <field id="login" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="login" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Api Login ID</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                 </field>
@@ -178,24 +197,24 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>'Yes' only if the API credentials are for a sandbox account. The account must have test mode disabled.</comment>
                 </field>
-                <field id="payment_action" translate="label comment" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="payment_action" translate="label comment" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Payment Action</label>
                     <source_model>ParadoxLabs\TokenBase\Model\Source\PaymentAction</source_model>
                     <attribute type="shared">1</attribute>
                     <comment>This controls what happens upon checkout. 'Authorize' means funds will be reserved for several days, until the order is invoiced. 'Capture' means funds will be immediately withdrawn.</comment>
                 </field>
-                <field id="order_status" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="order_status" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>New Order Status</label>
                     <source_model>ParadoxLabs\TokenBase\Model\Source\OrderStatus</source_model>
                     <comment>Normally 'Pending' if 'Authorize Only' above; 'Processing' if not.</comment>
                 </field>
-                <field id="validation_mode" translate="label comment" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="validation_mode" translate="label comment" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Validation Type</label>
                     <source_model>ParadoxLabs\Authnetcim\Model\Source\ValidationType</source_model>
                     <attribute type="shared">1</attribute>
                     <comment>'Live' to verify new cards are real before storing. This will incur an extra txn fee.</comment>
                 </field>
-                <field id="show_branding" translate="label comment" type="select" sortOrder="85" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="show_branding" translate="label comment" type="select" sortOrder="85" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Show Authorize.Net logo</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Show an Authorize.Net logo on the payment form.</comment>
@@ -205,16 +224,16 @@
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
                     <attribute type="shared">1</attribute>
                 </field>
-                <field id="allow_unsaved" translate="label comment" type="select" sortOrder="113" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Allow cards to not be stored</label>
+                <field id="allow_unsaved" translate="label comment" type="select" sortOrder="113" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Allow accounts to not be stored</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, customers can choose whether to save their data during checkout.</comment>
                 </field>
-                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Payment from Applicable Countries</label>
                     <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
                 </field>
-                <field id="specificcountry" translate="label" type="multiselect" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Payment from Specific Countries</label>
                     <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
                     <can_be_empty>1</can_be_empty>
@@ -222,37 +241,56 @@
                         <field id="allowspecific">1</field>
                     </depends>
                 </field>
-                <field id="min_order_total" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="min_order_total" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Minimum Order Total</label>
                 </field>
-                <field id="max_order_total" translate="label" type="text" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="max_order_total" translate="label" type="text" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Maximum Order Total</label>
                 </field>
-                <field id="sort_order" translate="label" type="text" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="sort_order" translate="label" type="text" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
+                </field>
+                <field id="heading_webhooks" translate="label" sortOrder="161" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Webhooks</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                    <attribute type="shared">1</attribute>
+                </field>
+                <field id="enable_webhooks" translate="label comment" type="select" sortOrder="162" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Enable Webhooks</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If yes, Authorize.net transaction changes will automatically synchronize to Magento (when possible). This includes fraud approve/deny, captures, and refunds.</comment>
+                </field>
+                <field id="signature_key" translate="label comment" type="obscure" sortOrder="163" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Signature Key</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment>Get this from your Authorize.Net account settings.</comment>
+                </field>
+                <field id="validate_and_init" translate="label comment" type="button" sortOrder="164" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <frontend_model>ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ValidateButton</frontend_model>
+                    <label></label>
                 </field>
                 <field id="heading_advanced" translate="label" sortOrder="170" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Advanced Settings</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
                     <attribute type="shared">1</attribute>
                 </field>
-                <field id="send_shipping_address" translate="label comment" type="select" sortOrder="190" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="send_shipping_address" translate="label comment" type="select" sortOrder="190" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Send Shipping Address</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, shipping address will be sent with each transaction. Required for some fraud filters.</comment>
                 </field>
-                <field id="send_line_items" translate="label comment" type="select" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="send_line_items" translate="label comment" type="select" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Send Line Items</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, the items will be included with each transaction. May not be desired for some accounting integrations.</comment>
                 </field>
-                <field id="reauthorize_partial_invoice" translate="label comment" type="select" sortOrder="210" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="reauthorize_partial_invoice" translate="label comment" type="select" sortOrder="210" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Reauthorize on Partial Invoice</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, when you create a partial invoice, we will reauthorize any outstanding balance on the order. This helps guarantee funds, but can cause multiple holds on the card until transactions settle.</comment>
                 </field>
-                <field id="savecard_opt_out" translate="label comment" type="select" sortOrder="220" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="savecard_opt_out" translate="label comment" type="select" sortOrder="220" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Auto-select 'save for next time'</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, will be selected by default during checkout.</comment>
@@ -260,7 +298,7 @@
                         <field id="allow_unsaved">1</field>
                     </depends>
                 </field>
-                <field id="verify_ssl" translate="label comment" type="select" sortOrder="230" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="verify_ssl" translate="label comment" type="select" sortOrder="230" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Verify SSL</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Strongly recommended. Do not disable unless you get SSL errors and your host is unable to fix them.</comment>
