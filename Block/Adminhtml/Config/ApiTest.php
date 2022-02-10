@@ -111,7 +111,7 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
         $html = parent::_getElementHtml($element);
 
         // If API creds work and Accept.js is enabled, output Accept.js test (must be done client-side in JS).
-        if (strpos($html, '#0a0') !== false
+        if (strpos((string)$html, '#0a0') !== false
             && $this->getMethodInstance()->isAcceptJsEnabled()) {
             $acceptJsTest = $this->getLayout()->createBlock(AcceptjsTest::class, 'acceptjs_test');
             $html .= $acceptJsTest->toHtml();

@@ -133,7 +133,7 @@ class RestClient
 
         $this->checkErrors($clientResult);
 
-        return json_decode($clientResult->getBody(), true) ?? [];
+        return json_decode((string)$clientResult->getBody(), true) ?? [];
     }
 
     /**
@@ -154,7 +154,7 @@ class RestClient
 
         $this->checkErrors($clientResult);
 
-        return json_decode($clientResult->getBody(), true) ?? [];
+        return json_decode((string)$clientResult->getBody(), true) ?? [];
     }
 
     /**
@@ -176,7 +176,7 @@ class RestClient
 
         $this->checkErrors($clientResult);
 
-        return json_decode($clientResult->getBody(), true) ?? [];
+        return json_decode((string)$clientResult->getBody(), true) ?? [];
     }
 
     /**
@@ -195,7 +195,7 @@ class RestClient
         if (substr((string)$responseCode, 0, 1) !== '2'
             || $responseBody === false) {
             if ($responseBody !== false) {
-                $responseJson = json_decode($responseBody, true);
+                $responseJson = json_decode((string)$responseBody, true);
             }
 
             $message = isset($responseJson) && is_array($responseJson)

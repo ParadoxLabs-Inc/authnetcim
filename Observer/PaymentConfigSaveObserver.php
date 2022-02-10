@@ -81,7 +81,7 @@ class PaymentConfigSaveObserver implements \Magento\Framework\Event\ObserverInte
         foreach ($methodCodes as $methodCode) {
             if (isset($groups[$methodCode]['fields']['login']['value'])
                 && $groups[$methodCode]['fields']['login']['value'] !== '******'
-                && in_array('payment/' . $methodCode . '/login', $changedPaths, true)) {
+                && in_array('payment/' . $methodCode . '/login', (array)$changedPaths, true)) {
                 /**
                  * Value changed -- purge any cached authnetcim_profile_id values to be safe and avoid potential errors.
                  * This may also mean that paradoxlabs_stored_card.profile_id references are invalid, but we'll assume

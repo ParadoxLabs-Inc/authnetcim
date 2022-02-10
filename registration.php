@@ -13,8 +13,8 @@
 
 $dir = __DIR__;
 $ds  = DIRECTORY_SEPARATOR;
-if (isset($file) && strpos($file, $ds . 'vendor' . $ds . 'composer' . $ds . '..') === false) {
-    $dir = dirname($file);
+if (isset($file) && strpos((string)$file, $ds . 'vendor' . $ds . 'composer' . $ds . '..') === false) {
+    $dir = dirname((string)$file);
 }
 
 \Magento\Framework\Component\ComponentRegistrar::register(

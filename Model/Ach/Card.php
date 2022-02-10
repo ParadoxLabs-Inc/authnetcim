@@ -31,24 +31,30 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
         if ($payment instanceof \Magento\Payment\Model\InfoInterface) {
             /** @var \Magento\Payment\Model\Info $payment */
 
-            if ($payment->getData('echeck_account_name') != '') {
+            if (!empty($payment->getData('echeck_account_name'))) {
                 $this->setAdditional('echeck_account_name', $payment->getData('echeck_account_name'));
             }
 
-            if ($payment->getData('echeck_bank_name') != '') {
+            if (!empty($payment->getData('echeck_bank_name'))) {
                 $this->setAdditional('echeck_bank_name', $payment->getData('echeck_bank_name'));
             }
 
-            if ($payment->getData('echeck_account_type') != '') {
+            if (!empty($payment->getData('echeck_account_type'))) {
                 $this->setAdditional('echeck_account_type', $payment->getData('echeck_account_type'));
             }
 
-            if ($payment->getData('echeck_routing_no') != '') {
-                $this->setAdditional('echeck_routing_number_last4', substr($payment->getData('echeck_routing_no'), -4));
+            if (!empty($payment->getData('echeck_routing_no'))) {
+                $this->setAdditional(
+                    'echeck_routing_number_last4',
+                    substr((string)$payment->getData('echeck_routing_no'), -4)
+                );
             }
 
-            if ($payment->getData('echeck_account_no') != '') {
-                $this->setAdditional('echeck_account_number_last4', substr($payment->getData('echeck_account_no'), -4));
+            if (!empty($payment->getData('echeck_account_no'))) {
+                $this->setAdditional(
+                    'echeck_account_number_last4',
+                    substr((string)$payment->getData('echeck_account_no'), -4)
+                );
             }
         }
 
@@ -118,14 +124,14 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
         $gateway->setParameter('accountType', $info->getData('echeck_account_type'));
 
         // Potentially masked routing number
-        if (strlen($info->getData('echeck_routing_no')) > 8) {
+        if (strlen((string)$info->getData('echeck_routing_no')) > 8) {
             $gateway->setParameter('routingNumber', $info->getData('echeck_routing_no'));
         } else {
             $gateway->setParameter('routingNumber', 'XXXX' . $this->getAdditional('echeck_routing_number_last4'));
         }
 
         // Potentially masked account number
-        if (strlen($info->getData('echeck_account_no')) > 8) {
+        if (strlen((string)$info->getData('echeck_account_no')) > 8) {
             $gateway->setParameter('accountNumber', $info->getData('echeck_account_no'));
         } else {
             $gateway->setParameter('accountNumber', 'XXXX' . $this->getAdditional('echeck_account_number_last4'));

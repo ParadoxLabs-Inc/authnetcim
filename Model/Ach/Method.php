@@ -81,8 +81,8 @@ class Method extends \ParadoxLabs\Authnetcim\Model\Method
     protected function paymentContainsCard(\Magento\Payment\Model\InfoInterface $payment)
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
-        if (strlen($payment->getData('echeck_routing_no')) == 9
-            && strlen($payment->getData('echeck_account_no')) >= 5) {
+        if (strlen((string)$payment->getData('echeck_routing_no')) == 9
+            && strlen((string)$payment->getData('echeck_account_no')) >= 5) {
             return true;
         }
 

@@ -120,7 +120,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
             $this->gateway()->setParameter('shipToFirstName', $address->getFirstname());
             $this->gateway()->setParameter('shipToLastName', $address->getLastname());
             $this->gateway()->setParameter('shipToCompany', $address->getCompany());
-            $this->gateway()->setParameter('shipToAddress', implode(' ', $address->getStreet()));
+            $this->gateway()->setParameter('shipToAddress', implode(' ', $address->getStreet() ?: []));
             $this->gateway()->setParameter('shipToCity', $address->getCity());
             $this->gateway()->setParameter('shipToState', $region);
             $this->gateway()->setParameter('shipToZip', $address->getPostcode());

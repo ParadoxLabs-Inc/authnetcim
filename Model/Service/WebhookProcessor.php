@@ -273,7 +273,7 @@ class WebhookProcessor
      */
     protected function executeWebhook(\ParadoxLabs\TokenBase\Api\GatewayInterface $gateway): void
     {
-        $webhook       = json_decode($this->request->getContent(), true);
+        $webhook       = json_decode((string)$this->request->getContent(), true);
         $transactionId = $webhook['payload']['id'];
         $eventType     = $webhook['eventType'];
 

@@ -44,7 +44,7 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
         }
 
         if ($this->isAcceptJsEnabled() === true
-            && strlen(str_replace(['X', '-'], '', $payment->getData('cc_number'))) > 4) {
+            && strlen(str_replace(['X', '-'], '', (string)$payment->getData('cc_number'))) > 4) {
             // This gets triggered if Accept.js is enabled but we received raw credit card data anyway.
             // We don't ever want that, so refuse to process it. Whatever happened must be fixed.
             $isValid = false;

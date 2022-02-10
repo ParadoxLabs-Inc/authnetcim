@@ -77,7 +77,7 @@ class Version extends \Magento\Framework\App\Config\Value implements
                 $this->moduleDir->getDir('ParadoxLabs_Authnetcim') . '/composer.json'
             );
 
-            $composer = json_decode($composerFile, 1);
+            $composer = json_decode((string)$composerFile, 1);
 
             if (isset($composer['version'], $composer['time'])) {
                 return $composer['version'] . ' (' . $composer['time'] . ')';

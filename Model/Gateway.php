@@ -873,12 +873,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         $result = $this->runTransaction('createCustomerProfileRequest', $params);
 
-        $text = $this->helper->getArrayValue($result, 'messages/message/text');
-
         if (isset($result['customerProfileId'])) {
             return $result['customerProfileId'];
         }
 
+        $text = (string)$this->helper->getArrayValue($result, 'messages/message/text');
         if (strpos($text, 'duplicate') !== false) {
             return preg_replace('/[^0-9]/', '', $text);
         }
@@ -961,8 +960,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
                 // Handle Accept.js nonce (which would now be expired). Card number won't have changed, but exp might.
                 if ($this->hasParameter('dataValue')) {
+                    $expDate = date('Y-m', strtotime((string)$this->getCard()->getExpires()));
                     $this->setParameter('cardNumber', 'XXXX' . $this->getCard()->getAdditional('cc_last4'));
-                    $this->setParameter('expirationDate', date('Y-m', strtotime($this->getCard()->getExpires())));
+                    $this->setParameter('expirationDate', $expDate);
                 }
 
                 if ($this->getParameter('cardNumber') !== 'XXXX'
@@ -1001,12 +1001,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         $result = $this->runTransaction('createCustomerShippingAddressRequest', $params);
 
-        $text = $this->helper->getArrayValue($result, 'messages/message/text');
-
         if (isset($result['customerAddressId'])) {
             return $result['customerAddressId'];
         }
 
+        $text = (string)$this->helper->getArrayValue($result, 'messages/message/text');
         if (strpos($text, 'duplicate') !== false) {
             /**
              * Handle duplicate address errors. blah.
@@ -1042,7 +1041,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     public function findDuplicateCard()
     {
         $profile = $this->getCustomerProfile();
-        $lastFour = substr($this->getParameter('cardNumber'), -4);
+        $lastFour = substr((string)$this->getParameter('cardNumber'), -4);
 
         if (isset($profile['profile']['paymentProfiles']) && !empty($profile['profile']['paymentProfiles'])) {
             // If there's only one, just stop. It has to be the match.
@@ -1054,7 +1053,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             // Otherwise, compare end of the card number for each until one matches.
             foreach ($profile['profile']['paymentProfiles'] as $card) {
                 if (isset($card['payment']['creditCard'])
-                    && $lastFour === substr($card['payment']['creditCard']['cardNumber'], -4)
+                    && $lastFour === substr((string)$card['payment']['creditCard']['cardNumber'], -4)
                 ) {
                     return $card['customerPaymentProfileId'];
                 }
@@ -1194,7 +1193,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             if ($this->hasParameter('centinelAuthIndicator') && $this->hasParameter('centinelAuthValue')) {
                 $params['cardholderAuthentication'] = [
                     'authenticationIndicator'       => $this->getParameter('centinelAuthIndicator'),
-                    'cardholderAuthenticationValue' => urlencode($this->getParameter('centinelAuthValue')),
+                    'cardholderAuthenticationValue' => urlencode((string)$this->getParameter('centinelAuthValue')),
                 ];
             }
 
@@ -1510,6 +1509,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      */
     protected function getDataFromDirectResponse($directResponse)
     {
+        $directResponse = (string)$directResponse;
         if (strlen($directResponse) > 1) {
             // Strip out quotes, we don't want any.
             $directResponse = str_replace('"', '', $directResponse);
@@ -1839,7 +1839,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         if ($type === 'captureOnlyTransaction'
             && $this->hasParameter('approvalCode')
-            && strlen($this->getParameter('approvalCode')) === 6
+            && strlen((string)$this->getParameter('approvalCode')) === 6
         ) {
             $params['authCode'] = $this->getParameter('approvalCode');
         }
@@ -2174,7 +2174,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         if ($this->hasParameter('approvalCode')
-            && strlen($this->getParameter('approvalCode')) === 6
+            && strlen((string)$this->getParameter('approvalCode')) === 6
             && !in_array($type, ['profileTransRefund', 'profileTransPriorAuthCapture', 'profileTransAuthOnly'], true)
         ) {
             $params['transaction'][$type]['approvalCode'] = $this->getParameter('approvalCode');

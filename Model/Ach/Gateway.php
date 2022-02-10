@@ -52,8 +52,8 @@ class Gateway extends \ParadoxLabs\Authnetcim\Model\Gateway
     public function findDuplicateCard()
     {
         $profile            = $this->getCustomerProfile();
-        $accountLastFour    = substr($this->getParameter('accountNumber'), -4);
-        $routingLastFour    = substr($this->getParameter('routingNumber'), -4);
+        $accountLastFour    = substr((string)$this->getParameter('accountNumber'), -4);
+        $routingLastFour    = substr((string)$this->getParameter('routingNumber'), -4);
 
         if (isset($profile['profile']['paymentProfiles']) && !empty($profile['profile']['paymentProfiles'])) {
             // If there's only one, just stop. It has to be the match.
@@ -64,8 +64,8 @@ class Gateway extends \ParadoxLabs\Authnetcim\Model\Gateway
                 // Otherwise, compare end of routing number and account number for each until one matches.
                 foreach ($profile['profile']['paymentProfiles'] as $card) {
                     if (isset($card['payment']['bankAccount'])
-                        && $accountLastFour == substr($card['payment']['bankAccount']['accountNumber'], -4)
-                        && $routingLastFour == substr($card['payment']['bankAccount']['routingNumber'], -4)) {
+                        && $accountLastFour == substr((string)$card['payment']['bankAccount']['accountNumber'], -4)
+                        && $routingLastFour == substr((string)$card['payment']['bankAccount']['routingNumber'], -4)) {
                         return $card['customerPaymentProfileId'];
                     }
                 }

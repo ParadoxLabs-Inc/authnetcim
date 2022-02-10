@@ -256,7 +256,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
                        ->setPaymentId($card['customerPaymentProfileId']);
 
             if (isset($card['last_use'])) {
-                $storedCard->setLastUse(strtotime($card['last_use']));
+                $storedCard->setLastUse(strtotime((string)$card['last_use']));
             }
 
             if (isset($card['active']) && $card['active'] == false) {
@@ -286,12 +286,12 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
             $storedCard->setData('address', json_encode($addressData));
 
             if (isset($card['payment']['creditCard'])) {
-                list($yr, $mo) = explode('-', $card['payment']['creditCard']['expirationDate'], 2);
+                list($yr, $mo) = explode('-', (string)$card['payment']['creditCard']['expirationDate'], 2);
                 $day = date('t', strtotime($yr . '-' . $mo));
 
                 $paymentData = [
                     'cc_type'      => '',
-                    'cc_last4'     => substr($card['payment']['creditCard']['cardNumber'], -4),
+                    'cc_last4'     => substr((string)$card['payment']['creditCard']['cardNumber'], -4),
                     'cc_exp_year'  => $yr,
                     'cc_exp_month' => $mo,
                 ];

@@ -164,7 +164,7 @@ class AccountUpdater
             foreach ($cards as $card) {
                 $changed = false;
 
-                $last4  = substr($change['newCreditCard']['cardNumber'], -4);
+                $last4  = substr((string)$change['newCreditCard']['cardNumber'], -4);
                 if ($last4 != $card->getAdditional('cc_last4')) {
                     $card->setAdditional('cc_last4', $last4);
 
@@ -172,8 +172,8 @@ class AccountUpdater
                 }
 
                 if ($change['newCreditCard']['expirationDate'] !== 'XXXX') {
-                    $yr = substr($change['newCreditCard']['expirationDate'], 0, 4);
-                    $mo = substr($change['newCreditCard']['expirationDate'], -2);
+                    $yr = substr((string)$change['newCreditCard']['expirationDate'], 0, 4);
+                    $mo = substr((string)$change['newCreditCard']['expirationDate'], -2);
 
                     if ($yr != $card->getAdditional('cc_exp_year')
                         || $mo != $card->getAdditional('cc_exp_month')) {

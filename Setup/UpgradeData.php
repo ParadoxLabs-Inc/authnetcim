@@ -277,7 +277,7 @@ class UpgradeData implements \Magento\Framework\Setup\UpgradeDataInterface
         $config = $db->fetchRow($sql);
         if (!empty($config) && isset($config['value'])) {
             // Config exists. Is Accept in it?
-            if (strpos($config['value'], 'Accept') === false) {
+            if (strpos((string)$config['value'], 'Accept') === false) {
                 // ... Nope, let's add it.
                 $config['value'] .= "\nAccept";
                 $db->update(

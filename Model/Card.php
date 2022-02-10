@@ -286,9 +286,9 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $this->getMethod(),
             sprintf(
                 '_createCustomerPaymentProfile(%s) (profile_id %s, payment_id %s)',
-                var_export($retry, 1),
-                var_export($this->getProfileId(), 1),
-                var_export($this->getPaymentId(), 1)
+                var_export($retry, true),
+                var_export($this->getProfileId(), true),
+                var_export($this->getPaymentId(), true)
             )
         );
 
@@ -328,7 +328,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $gateway->setParameter('billToFirstName', $address->getFirstname());
             $gateway->setParameter('billToLastName', $address->getLastname());
             $gateway->setParameter('billToCompany', $address->getCompany());
-            $gateway->setParameter('billToAddress', implode(', ', $address->getStreet()));
+            $gateway->setParameter('billToAddress', implode(', ', $address->getStreet() ?: []));
             $gateway->setParameter('billToCity', $address->getCity());
             $gateway->setParameter('billToState', $region);
             $gateway->setParameter('billToZip', $address->getPostcode());
@@ -355,7 +355,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $gateway->setParameter('billToFirstName', $address->getFirstname());
             $gateway->setParameter('billToLastName', $address->getLastname());
             $gateway->setParameter('billToCompany', $address->getCompany());
-            $gateway->setParameter('billToAddress', implode(', ', $address->getStreet()));
+            $gateway->setParameter('billToAddress', implode(', ', $address->getStreet() ?: []));
             $gateway->setParameter('billToCity', $address->getCity());
             $gateway->setParameter('billToState', $region);
             $gateway->setParameter('billToZip', $address->getPostcode());
@@ -475,7 +475,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
         $gateway->setParameter('billToFirstName', $address->getFirstname());
         $gateway->setParameter('billToLastName', $address->getLastname());
         $gateway->setParameter('billToCompany', $address->getCompany());
-        $gateway->setParameter('billToAddress', implode(', ', $address->getStreet()));
+        $gateway->setParameter('billToAddress', implode(', ', $address->getStreet() ?: []));
         $gateway->setParameter('billToCity', $address->getCity());
         $gateway->setParameter('billToState', $region);
         $gateway->setParameter('billToZip', $address->getPostcode());
@@ -559,7 +559,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             if ($info instanceof \Magento\Payment\Model\InfoInterface && $info->getId() > 0) {
                 $this->paymentRepository->save($info);
             }
-        } elseif (strlen($info->getData('cc_number')) >= 12) {
+        } elseif (strlen((string)$info->getData('cc_number')) >= 12) {
             $gateway->setParameter('cardNumber', $info->getData('cc_number'));
         } else {
             // If we were not given a full CC number, grab the masked value from Authorize.Net.
@@ -607,7 +607,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
         $type = parent::getType();
 
         // Handle legacy edge cases where stored card may have full type rather than 2-letter type code.
-        if (strlen($type) > 2 && method_exists($this->helper, 'mapCcTypeToMagento')) {
+        if (strlen((string)$type) > 2 && method_exists($this->helper, 'mapCcTypeToMagento')) {
             $properType = $this->helper->mapCcTypeToMagento($type) ?: $type;
 
             if ($properType !== $type) {
