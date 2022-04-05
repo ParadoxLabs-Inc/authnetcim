@@ -38,7 +38,7 @@ class Processor extends \Magento\Framework\App\Action\Action
 
         $this->webhookProcessor = $webhookProcessor;
 
-        // CSRF/form key protection compatibility -- 2.3+ requires it, <2.3 doesn't have it.
+        // CSRF/form key protection compatibility
         if (interface_exists(CsrfAwareActionInterface::class)) {
             $request = $this->getRequest();
             if ($request instanceof Http && $request->isPost() && empty($request->getParam('form_key'))) {
