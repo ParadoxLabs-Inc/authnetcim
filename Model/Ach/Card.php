@@ -88,7 +88,7 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
         $info = $this->getInfoInstance();
 
         if ($info->getData('echeck_account_type') != 'businessChecking') {
-            $gateway->setParameter('echeckType', 'WEB');
+            $gateway->setParameter('echeckType', 'PPD');
         } else {
             $gateway->setParameter('echeckType', 'CCD');
         }
@@ -114,7 +114,7 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
         $info = $this->getInfoInstance();
 
         if ($info->getData('echeck_account_type') != 'businessChecking') {
-            $gateway->setParameter('echeckType', 'WEB');
+            $gateway->setParameter('echeckType', 'PPD');
         } else {
             $gateway->setParameter('echeckType', 'CCD');
         }
