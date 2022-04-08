@@ -17,9 +17,8 @@ use Magento\Customer\Model\Customer;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\Patch\DataPatchInterface;
 use Magento\Framework\Setup\Patch\PatchRevertableInterface;
-use Magento\Framework\Setup\Patch\PatchVersionInterface;
 
-class CustomerProfileIdAttr implements DataPatchInterface, PatchVersionInterface, PatchRevertableInterface
+class CustomerProfileIdAttr implements DataPatchInterface, PatchRevertableInterface
 {
     /**
      * @var \Magento\Eav\Api\AttributeRepositoryInterface
@@ -94,16 +93,6 @@ class CustomerProfileIdAttr implements DataPatchInterface, PatchVersionInterface
     public function getAliases()
     {
         return [];
-    }
-
-    /**
-     * This version associates the patch with Magento setup version.
-     *
-     * @return string
-     */
-    public static function getVersion()
-    {
-        return '4.3.0';
     }
 
     /**
