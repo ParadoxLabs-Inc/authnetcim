@@ -21,6 +21,11 @@ use Magento\Framework\Setup\Patch\PatchRevertableInterface;
 class CustomerProfileIdAttr implements DataPatchInterface, PatchRevertableInterface
 {
     /**
+     * @var \ParadoxLabs\TokenBase\Helper\Operation
+     */
+    private $helper;
+
+    /**
      * @var \Magento\Eav\Api\AttributeRepositoryInterface
      */
     private $attributeRepository;
@@ -39,15 +44,18 @@ class CustomerProfileIdAttr implements DataPatchInterface, PatchRevertableInterf
      * @param ModuleDataSetupInterface $moduleDataSetup
      * @param \Magento\Customer\Setup\CustomerSetupFactory $customerSetupFactory
      * @param \Magento\Eav\Api\AttributeRepositoryInterface $attributeRepository
+     * @param \ParadoxLabs\TokenBase\Helper\Operation $helper
      */
     public function __construct(
         ModuleDataSetupInterface $moduleDataSetup,
         \Magento\Customer\Setup\CustomerSetupFactory $customerSetupFactory,
-        \Magento\Eav\Api\AttributeRepositoryInterface $attributeRepository
+        \Magento\Eav\Api\AttributeRepositoryInterface $attributeRepository,
+        \ParadoxLabs\TokenBase\Helper\Operation $helper
     ) {
         $this->moduleDataSetup = $moduleDataSetup;
         $this->customerSetupFactory = $customerSetupFactory;
         $this->attributeRepository = $attributeRepository;
+        $this->helper = $helper;
     }
 
     /**
@@ -64,10 +72,14 @@ class CustomerProfileIdAttr implements DataPatchInterface, PatchRevertableInterf
 
         $this->moduleDataSetup->startSetup();
 
-        if ($customerSetup->getAttributeId('customer', 'authnetcim_profile_id') === false) {
-            $this->addAttribute($customerSetup);
-        } else {
-            $this->updateAttribute($customerSetup);
+        try {
+            if ($customerSetup->getAttributeId('customer', 'authnetcim_profile_id') === false) {
+                $this->addAttribute($customerSetup);
+            } else {
+                $this->updateAttribute($customerSetup);
+            }
+        } catch (\Exception $exception) {
+            $this->helper->log('authnetcim', $exception->getMessage());
         }
 
         $this->moduleDataSetup->endSetup();
@@ -149,7 +161,7 @@ class CustomerProfileIdAttr implements DataPatchInterface, PatchRevertableInterf
          * is_system must be 0 in order for attribute values to save.
          */
         $attribute = $customerSetup->getAttribute(Customer::ENTITY, 'authnetcim_profile_id');
-        if ($attribute['is_system'] != 0) {
+        if (!isset($attribute['is_system']) || $attribute['is_system'] != 0) {
             $customerSetup->updateAttribute(
                 Customer::ENTITY,
                 $attribute['attribute_id'],
@@ -176,7 +188,7 @@ class CustomerProfileIdAttr implements DataPatchInterface, PatchRevertableInterf
         /**
          * is_visible should be 0 to prevent the attribute showing on forms.
          */
-        if ($attribute['is_visible'] != 0) {
+        if (!isset($attribute['is_visible']) || $attribute['is_visible'] != 0) {
             $customerSetup->updateAttribute(
                 Customer::ENTITY,
                 $attribute['attribute_id'],
@@ -188,7 +200,7 @@ class CustomerProfileIdAttr implements DataPatchInterface, PatchRevertableInterf
         /**
          * ... is_user_defined should be 0 to prevent the attribute showing on forms.
          */
-        if ($attribute['is_user_defined'] != 0) {
+        if (!isset($attribute['is_user_defined']) || $attribute['is_user_defined'] != 0) {
             $customerSetup->updateAttribute(
                 Customer::ENTITY,
                 $attribute['attribute_id'],
