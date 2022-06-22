@@ -23,5 +23,5 @@ class Cctype extends \Magento\Payment\Model\Source\Cctype
      *
      * @var array
      */
-    protected $_allowedTypes = ['VI', 'MC', 'AE', 'DI', 'JCB', 'DN'];
+    protected $_allowedTypes = ['VI', 'MC', 'AE', 'DI', 'JCB', 'DN', 'UN'];
 }
