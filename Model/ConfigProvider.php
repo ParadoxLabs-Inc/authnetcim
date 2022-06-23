@@ -49,12 +49,18 @@ class ConfigProvider extends CcGenericConfigProvider
     protected $paymentConfig;
 
     /**
+     * @var \Magento\Framework\UrlInterface
+     */
+    protected $urlBuilder;
+
+    /**
      * @param CcConfig $ccConfig
      * @param \Magento\Payment\Helper\Data $paymentHelper
      * @param \Magento\Checkout\Model\Session $checkoutSession *Proxy
      * @param \Magento\Customer\Model\Session $customerSession *Proxy
      * @param \Magento\Payment\Model\Config $paymentConfig
      * @param \ParadoxLabs\Authnetcim\Helper\Data $dataHelper
+     * @param \Magento\Framework\UrlInterface $urlBuilder
      * @param array $methodCodes
      */
     public function __construct(
@@ -64,6 +70,7 @@ class ConfigProvider extends CcGenericConfigProvider
         \Magento\Customer\Model\Session $customerSession,
         \Magento\Payment\Model\Config $paymentConfig,
         \ParadoxLabs\Authnetcim\Helper\Data $dataHelper,
+        \Magento\Framework\UrlInterface $urlBuilder,
         array $methodCodes = []
     ) {
         $this->paymentHelper    = $paymentHelper;
@@ -71,6 +78,7 @@ class ConfigProvider extends CcGenericConfigProvider
         $this->customerSession  = $customerSession;
         $this->dataHelper       = $dataHelper;
         $this->paymentConfig    = $paymentConfig;
+        $this->urlBuilder       = $urlBuilder;
 
         parent::__construct($ccConfig, $paymentHelper, [static::CODE]);
     }
@@ -148,6 +156,7 @@ class ConfigProvider extends CcGenericConfigProvider
                     'clientKey'               => $this->getClientKey(),
                     'sandbox'                 => $this->getSandbox(),
                     'canStoreBin'             => $this->getCanStoreBin(),
+                    'paramUrl'                => $this->urlBuilder->getUrl('authnetcim/hosted/getParams'),
                 ],
             ],
         ]);

@@ -11,5 +11,15 @@
                 <value id="authorizenet_acceptjs" type="host">*.authorize.net</value>
             </values>
         </policy>
+        <policy id="form-action">
+            <values>
+                <value id="authorizenet_hosted" type="host">*.authorize.net</value>
+            </values>
+        </policy>
+        <policy id="frame-src">
+            <values>
+                <value id="authorizenet_hosted" type="host">*.authorize.net</value>
+            </values>
+        </policy>
     </policies>
 </csp_whitelist>

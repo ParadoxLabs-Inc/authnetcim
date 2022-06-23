@@ -10,10 +10,16 @@ define(
         rendererList
     ) {
         'use strict';
+
+        var formComponent = 'ParadoxLabs_Authnetcim/js/view/payment/method-renderer/authnetcim-hosted';
+        if (window.checkoutConfig.payment.authnetcim.clientKey.length > 0) {
+            formComponent = 'ParadoxLabs_Authnetcim/js/view/payment/method-renderer/authnetcim';
+        }
+
         rendererList.push(
             {
                 type: 'authnetcim',
-                component: 'ParadoxLabs_Authnetcim/js/view/payment/method-renderer/authnetcim'
+                component: formComponent
             }
         );
         /** Add view logic here if needed */

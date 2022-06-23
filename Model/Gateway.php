@@ -112,6 +112,15 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'email'                     => ['maxLength' => 255],
         'emailCustomer'             => ['enum' => ['true', 'false']],
         'expirationDate'            => ['maxLength' => 7],
+        'hostedProfileSaveButtonText'           => ['maxLength' => 32, 'noSymbols' => true],
+        'hostedProfilePageBorderVisible'        => ['enum' => ['true', 'false']],
+        'hostedProfileIFrameCommunicatorUrl'    => [],
+        'hostedProfilePaymentOptions'           => ['enum' => ['showAll', 'showCreditCard', 'showBankAccount']],
+        'hostedProfileValidationMode'           => ['enum' => ['liveMode', 'testMode']],
+        'hostedProfileBillingAddressRequired'   => ['enum' => ['true', 'false']],
+        'hostedProfileCardCodeRequired'         => ['enum' => ['true', 'false']],
+        'hostedProfileBillingAddressOptions'    => ['enum' => ['showBillingAddress', 'showNone']],
+        'hostedProfileManageOptions'            => ['enum' => ['showAll', 'showPayment', 'showShipping']],
         'includeIssuerInfo'         => ['enum' => ['true', 'false']],
         'invoiceNumber'             => ['maxLength' => 20, 'noSymbols' => true],
         'isFirstRecurringPayment'   => ['enum' => ['true', 'false']],
@@ -1345,6 +1354,57 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         ];
 
         return $this->runTransaction('getCustomerShippingAddressRequest', $params);
+    }
+
+    /**
+     * Get the token for an Accept Customer hosted profile form page
+     *
+     * @return array
+     * @throws \Magento\Payment\Gateway\Command\CommandException
+     */
+    public function getHostedProfilePage(): array
+    {
+        $params = [
+            'customerProfileId' => $this->getParameter('customerProfileId'),
+            'hostedProfileSettings' => [
+                'setting' => [
+                    [
+                        'settingName' => 'hostedProfileSaveButtonText',
+                        'settingValue' => $this->getParameter('hostedProfileSaveButtonText', __('Continue')),
+                    ],
+                    [
+                        'settingName' => 'hostedProfilePageBorderVisible',
+                        'settingValue' => $this->getParameter('hostedProfilePageBorderVisible', 'false'),
+                    ],
+                    [
+                        'settingName' => 'hostedProfileIFrameCommunicatorUrl',
+                        'settingValue' => $this->getParameter('hostedProfileIFrameCommunicatorUrl'),
+                    ],
+                    [
+                        'settingName' => 'hostedProfilePaymentOptions',
+                        'settingValue' => $this->getParameter('hostedProfilePaymentOptions', 'showCreditCard'),
+                    ],
+                    [
+                        'settingName' => 'hostedProfileValidationMode',
+                        'settingValue' => $this->getParameter('hostedProfileValidationMode', 'testMode'),
+                    ],
+                    [
+                        'settingName' => 'hostedProfileBillingAddressRequired',
+                        'settingValue' => $this->getParameter('hostedProfileBillingAddressRequired', 'false'),
+                    ],
+                    [
+                        'settingName' => 'hostedProfileCardCodeRequired',
+                        'settingValue' => $this->getParameter('hostedProfileCardCodeRequired', 'false'),
+                    ],
+                    [
+                        'settingName' => 'hostedProfileBillingAddressOptions',
+                        'settingValue' => $this->getParameter('hostedProfileBillingAddressOptions', 'showNone'),
+                    ],
+                ],
+            ],
+        ];
+
+        return $this->runTransaction('getHostedProfilePageRequest', $params);
     }
 
     /**
