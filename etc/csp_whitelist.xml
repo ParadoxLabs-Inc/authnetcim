@@ -21,5 +21,10 @@
                 <value id="authorizenet_hosted" type="host">*.authorize.net</value>
             </values>
         </policy>
+        <policy id="frame-ancestors">
+            <values>
+                <value id="authorizenet_hosted" type="host">*.authorize.net</value>
+            </values>
+        </policy>
     </policies>
 </csp_whitelist>
