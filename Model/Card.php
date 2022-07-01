@@ -156,6 +156,14 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             }
         }
 
+        // If this is a new card, set its active state to the given value (if any)
+        $payment = $this->getInfoInstance();
+        if ($payment instanceof \Magento\Payment\Model\InfoInterface
+            && $payment->getAdditionalInformation('save') !== null
+            && $this->getOrigData('last_use') === null) {
+            $this->setActive((bool)$payment->getAdditionalInformation('save') ? 1 : 0);
+        }
+
         parent::beforeSave();
 
         return $this;

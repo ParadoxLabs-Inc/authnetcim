@@ -44,8 +44,8 @@
                         <option label="Accept.js (PCI SAQ A-EP; deprecated)">1</option>
                     </options>
                 </field>
-                <field id="heading_hosted" translate="label" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Hosted iframe Payment Form</label>
+                <field id="heading_hosted" translate="label" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Hosted IFrame Payment Form</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
                     <comment>test text</comment>
                     <attribute type="shared">1</attribute>
@@ -61,6 +61,13 @@
                         <field id="acceptjs">0</field>
                     </depends>
                 </field>
+                <field id="accent_color" translate="label comment" type="text" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Accent Color</label>
+                    <comment><![CDATA[Enter a hex color for buttons and borders on the payment form.]]></comment>
+                    <depends>
+                        <field id="acceptjs">0</field>
+                    </depends>
+                </field>
                 <field id="heading_acceptjs" translate="label" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Accept.js Payment Form</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
@@ -72,6 +79,23 @@
                 <field id="client_key" translate="label comment" type="text" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Client Key</label>
                     <comment><![CDATA[Required. Find this in Authorize.net at <em>Account &gt; Settings &gt; Security Settings &gt; General Security Settings &gt; Manage Public Client Key</em>.]]></comment>
+                    <depends>
+                        <field id="acceptjs">1</field>
+                    </depends>
+                </field>
+                <field id="validation_mode" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Validation Type</label>
+                    <source_model>ParadoxLabs\Authnetcim\Model\Source\ValidationType</source_model>
+                    <attribute type="shared">1</attribute>
+                    <comment>'Live' to verify new cards are real before storing. This will incur an extra txn fee.</comment>
+                    <depends>
+                        <field id="acceptjs">1</field>
+                    </depends>
+                </field>
+                <field id="cctypes" translate="label comment" type="multiselect" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Allowed Credit Card Types</label>
+                    <source_model>ParadoxLabs\Authnetcim\Model\Config\Cctype</source_model>
+                    <attribute type="shared">1</attribute>
                     <depends>
                         <field id="acceptjs">1</field>
                     </depends>
@@ -96,17 +120,6 @@
                     <label>New Order Status</label>
                     <source_model>ParadoxLabs\TokenBase\Model\Source\OrderStatus</source_model>
                     <comment>Normally 'Pending' if 'Authorize Only' above; 'Processing' if not.</comment>
-                </field>
-                <field id="validation_mode" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
-                    <label>Validation Type</label>
-                    <source_model>ParadoxLabs\Authnetcim\Model\Source\ValidationType</source_model>
-                    <attribute type="shared">1</attribute>
-                    <comment>'Live' to verify new cards are real before storing. This will incur an extra txn fee.</comment>
-                </field>
-                <field id="cctypes" translate="label comment" type="multiselect" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
-                    <label>Allowed Credit Card Types</label>
-                    <source_model>ParadoxLabs\Authnetcim\Model\Config\Cctype</source_model>
-                    <attribute type="shared">1</attribute>
                 </field>
                 <field id="useccv" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Credit Card Verification</label>
@@ -144,15 +157,24 @@
                     <label>Webhooks</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
                     <attribute type="shared">1</attribute>
+                    <depends>
+                        <field id="acceptjs">0</field>
+                    </depends>
                 </field>
                 <field id="enable_webhooks" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Enable Webhooks</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, Authorize.net transaction changes will automatically synchronize to Magento (when possible). This includes fraud approve/deny, captures, and refunds. If you don't do 'hold for review', and process all transactions through Magento, you don't need webhooks. See the user manual for more details and constraints.</comment>
+                    <depends>
+                        <field id="acceptjs">0</field>
+                    </depends>
                 </field>
                 <field id="validate_and_init" translate="label comment" type="button" showInDefault="1" showInWebsite="1" showInStore="0">
                     <frontend_model>ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ValidateButton</frontend_model>
                     <label></label>
+                    <depends>
+                        <field id="acceptjs">0</field>
+                    </depends>
                 </field>
                 <field id="heading_advanced" translate="label" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Advanced Settings</label>
@@ -163,16 +185,6 @@
                     <label>Require CCV for all transactions</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, CCV code will be required even for stored cards. This will not affect recurring transactions.</comment>
-                </field>
-                <field id="send_shipping_address" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
-                    <label>Send Shipping Address</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>If yes, shipping address will be sent with each transaction. Required for some fraud filters.</comment>
-                </field>
-                <field id="send_line_items" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
-                    <label>Send Line Items</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>If yes, the items will be included with each transaction. May not be desired for some accounting integrations.</comment>
                 </field>
                 <field id="reauthorize_partial_invoice" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Reauthorize on Partial Invoice</label>

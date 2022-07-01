@@ -75,6 +75,7 @@ class Data extends \ParadoxLabs\TokenBase\Helper\Data
         'JCB'              => 'JCB',
         'MasterCard'       => 'MC',
         'Visa'             => 'VI',
+        'UnionPay'         => 'UN',
     ];
 
     /**

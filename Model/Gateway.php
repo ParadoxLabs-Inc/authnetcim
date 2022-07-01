@@ -114,6 +114,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'expirationDate'            => ['maxLength' => 7],
         'hostedProfileSaveButtonText'           => ['maxLength' => 32, 'noSymbols' => true],
         'hostedProfilePageBorderVisible'        => ['enum' => ['true', 'false']],
+        'hostedProfileHeadingBgColor'           => ['maxLength' => 7, 'charMask' => 'a-zA-Z0-9#'],
         'hostedProfileIFrameCommunicatorUrl'    => [],
         'hostedProfilePaymentOptions'           => ['enum' => ['showAll', 'showCreditCard', 'showBankAccount']],
         'hostedProfileValidationMode'           => ['enum' => ['liveMode', 'testMode']],
@@ -1375,6 +1376,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     [
                         'settingName' => 'hostedProfilePageBorderVisible',
                         'settingValue' => $this->getParameter('hostedProfilePageBorderVisible', 'false'),
+                    ],
+                    [
+                        'settingName' => 'hostedProfileHeadingBgColor',
+                        'settingValue' => $this->getParameter('hostedProfileHeadingBgColor', '#1979C3'),
                     ],
                     [
                         'settingName' => 'hostedProfileIFrameCommunicatorUrl',

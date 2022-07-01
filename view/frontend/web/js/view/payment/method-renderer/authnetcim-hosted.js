@@ -29,7 +29,8 @@ define(
                 selectedCard: config ? config.selectedCard : '',
                 storedCards: config ? config.storedCards : {},
                 logoImage: config ? config.logoImage : false,
-                iframeInitialized: false
+                iframeInitialized: false,
+                processingSave: false
             },
 
             initVars: function() {
@@ -108,6 +109,13 @@ define(
                 }
             },
 
+            reloadExpiredIFrame: function() {
+                if (this.iframeInitialized === true) {
+                    // If form has expired (15 minutes), and is still being displayed, force reload it.
+                    this.initIframe();
+                }
+            },
+
             initIframe: function() {
                 this.bindCommunicator();
 
@@ -142,12 +150,12 @@ define(
                 document.body.appendChild(form);
                 form.submit();
 
+                setTimeout(this.reloadExpiredIFrame.bind(this), 15*60*1000);
+
                 $('#' + this.getCode() + '_iframe').trigger('processStop');
             },
 
             handleAjaxError: function(jqXHR, status, error) {
-                $('#' + this.getCode() + '_iframe').trigger('processStop');
-
                 var message = $.mage.__('A server error occurred. Please try again.');
 
                 try {
@@ -156,6 +164,8 @@ define(
                         message = responseJson.message;
                     }
                 } catch (error) {}
+
+                $('#' + this.getCode() + '_iframe').trigger('processStop');
 
                 try {
                     alert({
@@ -182,6 +192,7 @@ define(
                 }
 
                 if (event.origin !== location.origin || !event.data || !event.data.action) {
+                    console.error('Ignored untrusted message from ' + event.origin);
                     return;
                 }
 
@@ -189,38 +200,46 @@ define(
                     case 'cancel':
                         this.handleCancel(event.data);
                         break;
-                    case 'transactResponse':
-                        this.handleResponse(JSON.parse(event.data.response));
+                    case 'successfulSave':
+                        this.handleSave(event.data);
                         break;
                     case 'resizeWindow':
                         var height = Math.ceil(parseFloat(event.data.height));
                         $('#' + this.getCode() + '_iframe').height(height + 'px');
                         break;
                 }
-
-                // TODO: Error handling?
-                // alert({
-                //     title: $.mage.__('Error'),
-                //     content: message.error
-                // });
             },
 
             handleCancel: function(response) {
-                // TODO
-                console.log('Received cancel', response);
+                this.initIframe();
             },
 
-            handleResponse: function(response) {
-                // TODO
-                console.log('Received response', response);
+            handleSave: function(event) {
+                if (this.processingSave) {
+                    console.log('Ignored duplicate handleSave');
+                    return;
+                }
 
-                // document.getElementById('paradoxlabs_authnet_status').value = response.responseCode;
-                // document.getElementById('paradoxlabs_authnet_transaction_id').value = response.transId;
-                // document.getElementById('paradoxlabs_authnet_submit').submit();
+                this.processingSave = true;
+                $('#' + this.getCode() + '_iframe').trigger('processStart');
 
-                // this.storedCards.push(message.card);
-                // this.selectedCard(message.card.id);
-                // this.iframeInitialized = false;
+                $.post({
+                    url: config.newCardUrl,
+                    dataType: 'json',
+                    data: this.getFormParams(),
+                    global: false,
+                    success: this.addCard.bind(this),
+                    error: this.handleAjaxError.bind(this)
+                });
+            },
+
+            addCard: function(data) {
+                $('#' + this.getCode() + '_iframe').trigger('processStop');
+
+                this.storedCards.push(data.card);
+                this.selectedCard(data.card.id);
+                this.iframeInitialized = false;
+                this.processingSave = false;
             },
 
             getAddressLine: function(address) {
@@ -267,6 +286,7 @@ define(
                 return {
                     'billing': billingAddress,
                     'source': 'checkout',
+                    'method': this.getCode(),
                     'guest_email': quote.guestEmail !== undefined ? quote.guestEmail : null,
                     'form_key': this.getFormKey()
                 }

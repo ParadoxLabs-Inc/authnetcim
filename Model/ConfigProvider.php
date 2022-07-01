@@ -157,6 +157,7 @@ class ConfigProvider extends CcGenericConfigProvider
                     'sandbox'                 => $this->getSandbox(),
                     'canStoreBin'             => $this->getCanStoreBin(),
                     'paramUrl'                => $this->urlBuilder->getUrl('authnetcim/hosted/getParams'),
+                    'newCardUrl'              => $this->urlBuilder->getUrl('authnetcim/hosted/getNewCard'),
                 ],
             ],
         ]);
