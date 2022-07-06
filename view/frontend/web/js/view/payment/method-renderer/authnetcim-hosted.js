@@ -52,8 +52,8 @@ define(
 
                 quote.billingAddress.subscribe(this.syncBillingAddress.bind(this));
                 quote.paymentMethod.subscribe(this.syncBillingAddress.bind(this));
-                this.billingAddressLine.subscribe(this.initIframe.bind(this));
-                this.selectedCard.subscribe(this.checkReinitIframe.bind(this));
+                this.billingAddressLine.subscribe(this.initHostedForm.bind(this));
+                this.selectedCard.subscribe(this.checkReinitHostedForm.bind(this));
 
                 this.showIframe = ko.computed(function() {
                     return (this.selectedCard() === null || this.selectedCard() === undefined)
@@ -99,24 +99,24 @@ define(
                 this.billingAddressLine(this.getAddressLine(quote.billingAddress()));
             },
 
-            checkReinitIframe: function() {
+            checkReinitHostedForm: function() {
                 if (this.iframeInitialized === false
                     && (this.selectedCard() === null || this.selectedCard() === undefined)
                     && this.storedCards().length > 0) {
                     // The initialized flag is to debounce and ensure we don't reinit unless absolutely necessary.
                     this.iframeInitialized = true;
-                    this.initIframe();
+                    this.initHostedForm();
                 }
             },
 
-            reloadExpiredIFrame: function() {
+            reloadExpiredHostedForm: function() {
                 if (this.iframeInitialized === true) {
                     // If form has expired (15 minutes), and is still being displayed, force reload it.
-                    this.initIframe();
+                    this.initHostedForm();
                 }
             },
 
-            initIframe: function() {
+            initHostedForm: function() {
                 this.bindCommunicator();
 
                 // Clear and spinner the CC form while we load new params
@@ -150,7 +150,7 @@ define(
                 document.body.appendChild(form);
                 form.submit();
 
-                setTimeout(this.reloadExpiredIFrame.bind(this), 15*60*1000);
+                setTimeout(this.reloadExpiredHostedForm.bind(this), 15*60*1000);
 
                 $('#' + this.getCode() + '_iframe').trigger('processStop');
             },
@@ -166,6 +166,7 @@ define(
                 } catch (error) {}
 
                 $('#' + this.getCode() + '_iframe').trigger('processStop');
+                this.processingSave = false;
 
                 try {
                     alert({
@@ -211,7 +212,7 @@ define(
             },
 
             handleCancel: function(response) {
-                this.initIframe();
+                this.initHostedForm();
             },
 
             handleSave: function(event) {
@@ -228,12 +229,12 @@ define(
                     dataType: 'json',
                     data: this.getFormParams(),
                     global: false,
-                    success: this.addCard.bind(this),
+                    success: this.addAndSelectCard.bind(this),
                     error: this.handleAjaxError.bind(this)
                 });
             },
 
-            addCard: function(data) {
+            addAndSelectCard: function(data) {
                 $('#' + this.getCode() + '_iframe').trigger('processStop');
 
                 this.storedCards.push(data.card);

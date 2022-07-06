@@ -24,8 +24,4 @@
             </argument>
         </arguments>
     </type>
-
-    <type name="Magento\Framework\App\Response\HeaderProvider\XFrameOptions">
-        <plugin name="authnetcim_allow_communicator_frame" type="ParadoxLabs\Authnetcim\Plugin\Magento\Framework\App\Response\HeaderProvider\XFrameOptions" />
-    </type>
 </config>

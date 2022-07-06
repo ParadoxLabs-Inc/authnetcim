@@ -11,9 +11,9 @@
  * @license     http://store.paradoxlabs.com/license.html
  */
 
-namespace ParadoxLabs\Authnetcim\Controller\Hosted;
+namespace ParadoxLabs\Authnetcim\Controller\Adminhtml\Hosted;
 
-use Magento\Framework\App\Action\Action;
+use Magento\Backend\App\Action;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\CsrfAwareActionInterface;
 use Magento\Framework\Controller\Result\Redirect;
@@ -49,19 +49,19 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
     /**
      * GetParams constructor.
      *
-     * @param \Magento\Framework\App\Action\Context $context
+     * @param \Magento\Backend\App\Action\Context $context
      * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey
      * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \Magento\Checkout\Model\Session $checkoutSession
+     * @param \Magento\Backend\Model\Session\Quote $checkoutSession
      * @param \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
      */
     public function __construct(
-        \Magento\Framework\App\Action\Context $context,
+        \Magento\Backend\App\Action\Context $context,
         \Magento\Framework\Data\Form\FormKey\Validator $formKey,
         \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Checkout\Model\Session $checkoutSession, // TODO: Abstract out
+        \Magento\Backend\Model\Session\Quote $checkoutSession, // TODO: Abstract out
         \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
     ) {
         parent::__construct($context);
