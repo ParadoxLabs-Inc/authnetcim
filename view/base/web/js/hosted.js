@@ -166,7 +166,7 @@ define([
         },
 
         handleCancel: function(response) {
-            this.initIframe();
+            this.initHostedForm();
         },
 
         handleSave: function(event) {

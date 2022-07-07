@@ -37,7 +37,7 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
     protected $storeManager;
 
     /**
-     * @var \Magento\Checkout\Model\Session
+     * @var \Magento\Backend\Model\Session\Quote
      */
     protected $checkoutSession;
 
@@ -68,7 +68,7 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
      * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey
      * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \Magento\Checkout\Model\Session $checkoutSession
+     * @param \Magento\Backend\Model\Session\Quote $checkoutSession
      * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
      * @param \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory
      * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
@@ -79,7 +79,7 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
         \Magento\Framework\Data\Form\FormKey\Validator $formKey,
         \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Checkout\Model\Session $checkoutSession, // TODO: Abstract out
+        \Magento\Backend\Model\Session\Quote $checkoutSession, // TODO: Abstract out
         \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
         \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory,
         \ParadoxLabs\Authnetcim\Helper\Data $helper,
@@ -247,7 +247,9 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
 
         // Save card to quote
         $payment = $this->checkoutSession->getQuote()->getPayment();
-        $payment->setData('tokenbase_id', $card->getId());
+        $method  = $payment->getMethodInstance();
+        $method->assignData(new \Magento\Framework\DataObject(['card_id' => $card->getHash()]));
+
         $this->paymentResource->save($payment);
 
         return $card;

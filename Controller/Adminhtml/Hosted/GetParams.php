@@ -37,7 +37,7 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
     protected $storeManager;
 
     /**
-     * @var \Magento\Checkout\Model\Session
+     * @var \Magento\Backend\Model\Session\Quote
      */
     protected $checkoutSession;
 
@@ -45,6 +45,11 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
      * @var \Magento\Quote\Model\ResourceModel\Quote\Payment
      */
     protected $paymentResource;
+
+    /**
+     * @var \Magento\Framework\Url
+     */
+    protected $frontendUrl;
 
     /**
      * GetParams constructor.
@@ -62,7 +67,8 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
         \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Backend\Model\Session\Quote $checkoutSession, // TODO: Abstract out
-        \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
+        \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource,
+        \Magento\Framework\Url $frontendUrl
     ) {
         parent::__construct($context);
 
@@ -71,6 +77,7 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
         $this->storeManager = $storeManager;
         $this->checkoutSession = $checkoutSession;
         $this->paymentResource = $paymentResource;
+        $this->frontendUrl = $frontendUrl;
     }
 
     /**
@@ -163,7 +170,7 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
         $profileId = $this->getCustomerProfileId($gateway);
 
         // Get CC form token
-        $communicatorUrl = $this->_url->getUrl('authnetcim/hosted/communicator');
+        $communicatorUrl = $this->frontendUrl->getUrl('authnetcim/hosted/communicator');
         $gateway->setParameter('hostedProfileIFrameCommunicatorUrl', $communicatorUrl);
         $gateway->setParameter('hostedProfileHeadingBgColor', $method->getConfigData('accent_color'));
         $gateway->setParameter('customerProfileId', $profileId);

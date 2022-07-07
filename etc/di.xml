@@ -356,8 +356,4 @@
             <argument name="addressHelper" xsi:type="object">ParadoxLabs\TokenBase\Helper\Address\Proxy</argument>
         </arguments>
     </type>
-
-    <type name="Magento\Framework\App\Response\HeaderProvider\XFrameOptions">
-        <plugin name="authnetcim_allow_communicator_frame" type="ParadoxLabs\Authnetcim\Plugin\Magento\Framework\App\Response\HeaderProvider\XFrameOptions" />
-    </type>
 </config>
