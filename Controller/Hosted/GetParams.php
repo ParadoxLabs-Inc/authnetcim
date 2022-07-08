@@ -27,50 +27,26 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
     protected $formKey;
 
     /**
-     * @var \ParadoxLabs\TokenBase\Model\Method\Factory
+     * @var \ParadoxLabs\Authnetcim\Model\Service\Hosted\FrontendRequest
      */
-    protected $methodFactory;
-
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
-    protected $storeManager;
-
-    /**
-     * @var \Magento\Checkout\Model\Session
-     */
-    protected $checkoutSession;
-
-    /**
-     * @var \Magento\Quote\Model\ResourceModel\Quote\Payment
-     */
-    protected $paymentResource;
+    protected $hostedForm;
 
     /**
      * GetParams constructor.
      *
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey
-     * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \Magento\Checkout\Model\Session $checkoutSession
-     * @param \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
+     * @param \ParadoxLabs\Authnetcim\Model\Service\Hosted\FrontendRequest $hostedForm
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Magento\Framework\Data\Form\FormKey\Validator $formKey,
-        \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Checkout\Model\Session $checkoutSession, // TODO: Abstract out
-        \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
+        \ParadoxLabs\Authnetcim\Model\Service\Hosted\FrontendRequest $hostedForm
     ) {
         parent::__construct($context);
 
         $this->formKey = $formKey;
-        $this->methodFactory = $methodFactory;
-        $this->storeManager = $storeManager;
-        $this->checkoutSession = $checkoutSession;
-        $this->paymentResource = $paymentResource;
+        $this->hostedForm = $hostedForm;
     }
 
     /**
@@ -85,9 +61,9 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
 
         try {
             $payload = [
-                'iframeAction' => 'https://test.authorize.net/customer/addPayment',
+                'iframeAction' => 'https://test.authorize.net/customer/addPayment', // TODO: Sandbox/prod
                 'iframeParams' => [
-                    'token' => $this->getToken(),
+                    'token' => $this->hostedForm->getToken('authnetcim'), // TODO: ACH
                 ],
             ];
 
@@ -139,66 +115,5 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
     public function validateForCsrf(\Magento\Framework\App\RequestInterface $request): ?bool
     {
         return $this->formKey->validate($request);
-    }
-
-    /**
-     * Get hosted profile page request token
-     *
-     * @return string
-     */
-    public function getToken(): string
-    {
-        $methodCode = \ParadoxLabs\Authnetcim\Model\ConfigProvider::CODE;
-        if ($this->_request->getParam('method') === \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider::CODE) {
-            $methodCode = \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider::CODE;
-        }
-
-        /** @var \ParadoxLabs\Authnetcim\Model\Method $method */
-        $method = $this->methodFactory->getMethodInstance($methodCode);
-        $method->setStore($this->storeManager->getStore()->getId());
-        /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
-        $gateway = $method->gateway();
-
-        // Get CIM profile ID
-        $profileId = $this->getCustomerProfileId($gateway);
-
-        // Get CC form token
-        $communicatorUrl = $this->_url->getUrl('authnetcim/hosted/communicator');
-        $gateway->setParameter('hostedProfileIFrameCommunicatorUrl', $communicatorUrl);
-        $gateway->setParameter('hostedProfileHeadingBgColor', $method->getConfigData('accent_color'));
-        $gateway->setParameter('customerProfileId', $profileId);
-
-        $response = $gateway->getHostedProfilePage();
-
-        if (!empty($response['messages']['message']['text'])
-            && $response['messages']['message']['text'] !== 'Successful.') {
-            throw new \Magento\Framework\Exception\LocalizedException(__($response['messages']['message']['text']));
-        }
-
-        return $response['token'] ?? '';
-    }
-
-    /**
-     * @param \ParadoxLabs\Authnetcim\Model\Gateway $gateway
-     * @return array|mixed|string|null
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
-     * @throws \Magento\Payment\Gateway\Command\CommandException
-     */
-    public function getCustomerProfileId(\ParadoxLabs\Authnetcim\Model\Gateway $gateway)
-    {
-        $quote   = $this->checkoutSession->getQuote();
-        $payment = $quote->getPayment();
-
-        $gateway->setParameter('email', $quote->getCustomerEmail());
-        $gateway->setParameter('merchantCustomerId', (int)$quote->getCustomerId());
-        $gateway->setParameter('description', 'Magento Checkout ' . date('c'));
-
-        $profileId = $gateway->createCustomerProfile();
-
-        $payment->setAdditionalInformation('profile_id', $profileId);
-        $this->paymentResource->save($payment);
-
-        return $profileId;
     }
 }

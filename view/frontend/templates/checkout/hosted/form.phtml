@@ -8,6 +8,7 @@ $storedCards    = $block->getStoredCards();
 ?>
 <fieldset class="fieldset payment items ccard <?= $code ?>" id="payment_form_<?= $code ?>" style="display:none;">
     <?= $block->getBlockHtml('formkey') ?>
+    <input type="hidden" name="source" value="checkout" />
 
     <?php if ($image): ?>
         <div class="sorter">

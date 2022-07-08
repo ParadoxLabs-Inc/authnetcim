@@ -18,14 +18,7 @@
     <?= $block->getBlockHtml('formkey'); ?>
     <input type="hidden" name="id" value="<?= $block->getCard()->getId() ? $block->escapeHtmlAttr($block->getCard()->getHash()) : ''; ?>" />
     <input type="hidden" name="method" value="<?= $code; ?>" />
-    <?php if ($block->getMethod()->isAcceptJsEnabled() === true): ?>
-        <input type="hidden" name="payment[acceptjs_key]" id="<?= $code ?>-acceptjs-key" value="" />
-        <input type="hidden" name="payment[acceptjs_value]" id="<?= $code ?>-acceptjs-value" value="" />
-        <input type="hidden" name="payment[cc_last4]" id="<?= $code ?>-cc-last4" value="" />
-        <?php if ($block->getMethod()->getConfigData('can_store_bin') == 1): ?>
-            <input type="hidden" name="payment[cc_bin]" id="<?= $code ?>-cc-bin" value="" />
-        <?php endif; ?>
-    <?php endif; ?>
+    <input type="hidden" name="source" value="paymentinfo" />
     <fieldset class="fieldset">
         <legend class="legend"><span><?= $block->escapeHtml(__('Cardholder Information')) ?></span></legend><br>
 
@@ -96,97 +89,48 @@
             </div>
         </div>
     </fieldset>
-    <fieldset class="fieldset payment items ccard <?= $code ?>">
-        <legend class="legend"><span><?= $block->escapeHtml(__('Credit Card Information')) ?></span></legend><br>
-
-        <div class="field type required">
-            <div class="control">
-                <?php $_ccType = $block->getCard()->getType() ?>
-                <ul class="credit-card-types">
-                    <?php foreach ($block->getCcBlock()->getCcAvailableTypes() as $_typeCode => $_typeName): ?>
-                        <li class="item<?php if ($_typeCode == $_ccType): ?> _active<?php endif; ?>" data-type="<?= $block->escapeHtmlAttr($_typeCode); ?>">
-                            <img src="<?= $block->getViewFileUrl('Magento_Payment::images/cc/' . strtolower((string)$_typeCode) . '.png'); ?>" alt="<?= $block->escapeHtmlAttr($_typeName); ?>" />
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-                <input type="hidden" name="payment[cc_type]" id="<?= $code ?>-cc-type" value="<?= $block->escapeHtmlAttr($_ccType); ?>" />
-            </div>
-        </div>
-        <div class="field number required">
-            <label for="<?= $code ?>-cc-number" class="label"><span><?= $block->escapeHtml(__('CC Number')) ?></span></label>
-            <div class="control">
-                <input type="text" id="<?= $code ?>-cc-number" name="payment[cc_number]" title="<?= $block->escapeHtmlAttr(__('Credit Card Number')) ?>" class="input-text" value="<?= $block->escapeHtmlAttr($block->getCard()->getLabel(false)); ?>" data-validate='{"required-number":true, "validate-cc-number":"#<?= $code ?>-cc-type", "validate-cc-type":"#<?= $code ?>-cc-type"}' autocomplete="cc-number" />
-            </div>
-        </div>
-        <div class="field date required" id="<?= $code ?>-cc-type_exp_div">
-            <label for="<?= $code ?>-cc-exp-month" class="label"><span><?= $block->escapeHtml(__('Expiration')) ?></span></label>
-            <div class="control">
-                <div class="fields group group-2">
-                    <div class="field no-label month">
-                        <div class="control">
-                            <select id="<?= $code ?>-cc-exp-month" name="payment[cc_exp_month]" class="select month" data-validate='{required:true, "validate-cc-exp":"#<?= $code ?>-cc-exp-year"}' autocomplete="cc-exp-month">
-                                <?php $_ccExpMonth = $block->getCard()->getAdditional('cc_exp_month'); ?>
-                                <?php foreach ($block->getCcBlock()->getCcMonths() as $k => $v): ?>
-                                    <option value="<?= $k ? $block->escapeHtmlAttr($k) : '' ?>"<?php if ($k == $_ccExpMonth): ?> selected="selected"<?php endif ?>><?= $block->escapeHtml($v) ?></option>
-                                <?php endforeach ?>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="field no-label year">
-                        <div class="control">
-                            <?php $_ccExpYear = $block->getCard()->getAdditional('cc_exp_year'); ?>
-                            <select id="<?= $code ?>-cc-exp-year" name="payment[cc_exp_year]" class="select year" data-validate='{required:true}' autocomplete="cc-exp-year">
-                                <?php foreach ($block->getCcBlock()->getCcYears() as $k => $v): ?>
-                                    <option value="<?= $k ? $block->escapeHtmlAttr($k) : '' ?>"<?php if ($k == $_ccExpYear): ?> selected="selected"<?php endif ?>><?= $block->escapeHtml($v) ?></option>
-                                <?php endforeach ?>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php if ($block->getMethod()->getConfigData('useccv')): ?>
-            <div class="field cvv required" id="<?= $code ?>-cc-type_cvv_div">
-                <label for="<?= $code ?>-cc-cid" class="label"><span><?= $block->escapeHtml(__('CCV')) ?></span></label>
-                <div class="control _with-tooltip">
-                    <input type="text" title="<?= $block->escapeHtmlAttr(__('Card Verification Number')) ?>" class="input-text cvv" id="<?= $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true, "validate-cc-cvn":"#<?= $code ?>-cc-type"}' autocomplete="cc-csc" maxlength="4" />
-                    <?php $_content = '<img src=\"' . $block->escapeUrl($block->getViewFileUrl('Magento_Checkout::cvv.png')) . '\" alt=\"' . $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) . '\" title=\"' . $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) . '\" />'; ?>
-                    <div class="note">
-                        <a href="#" class="action cvv" title="<?= $block->escapeHtmlAttr(__('What is this?')) ?>" data-mage-init='{"tooltip": {"content": "<?= $_content ?>"}}'><span><?= $block->escapeHtml(__('What is this?')) ?></span></a>
-                    </div>
-                </div>
-            </div>
-        <?php endif; ?>
-    </fieldset>
-    <div class="actions-toolbar">
+    <div class="actions-toolbar address">
         <div class="primary">
-            <button type="submit" class="action save primary" data-action="save-address" title="<?= $block->escapeHtmlAttr(__('Save')) ?>">
-                <span><?= $block->escapeHtml(__('Save')) ?></span>
+            <button type="button" class="action primary" id="submit-address">
+                <span><?= $block->escapeHtml(__('Confirm Address')) ?></span>
             </button>
         </div>
-        <div class="secondary">
-            <a class="action back" href="<?= $block->escapeUrl($block->getBackUrl()) ?>"><span><?= $block->escapeHtml(__('Cancel')) ?></span></a>
-        </div>
     </div>
+    <fieldset class="fieldset address">
+        <legend class="legend"><span><?= $block->escapeHtml(__('Payment Information')) ?></span></legend><br>
+
+        <div class="field">
+            <p><?= $block->escapeHtml(__('Please confirm your address to enter payment info.')) ?></p>
+        </div>
+    </fieldset>
+    <fieldset class="fieldset payment" style="display:none">
+        <legend class="legend"><span><?= $block->escapeHtml(__('Cardholder Information')) ?></span></legend><br>
+
+        <div class="field" id="<?= $code ?>-address">
+            <address></address>
+            <button type="button" class="action" id="edit-address">
+                <span><?= $block->escapeHtml(__('Edit')) ?></span>
+            </button>
+        </div>
+    </fieldset>
+    <fieldset class="fieldset payment <?= $code ?>" style="display:none">
+        <div class="field required">
+            <div class="control">
+                <iframe src="about:blank" frameborder="0" id="<?= $code ?>_iframe" name="<?= $code ?>_iframe" style="width:100%;min-width:300px;max-width:550px;height:600px;"></iframe>
+            </div>
+        </div>
+    </fieldset>
 </form>
 <script type="text/x-magento-init">
     {
         "#form-validate": {
             "validation": {},
-            "tokenbaseCardFormatter": {
-                "ccTypeSelector": "#<?= $code ?>-cc-type",
-                "ccTypeContainer": ".credit-card-types"
+            "authnetcimHostedPaymentInfo": {
+                "target": "<?= $code ?>_iframe",
+                "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getParams')) ?>",
+                "newCardUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getNewCard')) ?>",
+                "successUrl": "<?= $block->escapeJs($block->getUrl('*/*', ['method' => $code])) ?>"
             }
-            <?php if ($block->getMethod()->isAcceptJsEnabled() === true): ?>,
-            "authnetcimAcceptjs": {
-                "apiLoginId": "<?= $block->escapeHtmlAttr($block->getMethod()->getConfigData('login')); ?>",
-                "clientKey": "<?= $block->escapeHtmlAttr($block->getMethod()->getConfigData('client_key')); ?>",
-                "method": "<?= $code; ?>",
-                "formSelector": "#form-validate",
-                "submitSelector": "#form-validate button[type=submit]",
-                "sandbox": <?= $block->getMethod()->getConfigData('test') ? 'true' : 'false'; ?>
-            }
-            <?php endif; ?>
         },
         "#country": {
             "regionUpdater": {
