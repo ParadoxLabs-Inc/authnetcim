@@ -36,7 +36,7 @@ $storedCards    = $block->getStoredCards();
                         <?php $card = $card->getTypeInstance(); ?>
                         <option value="<?= $block->escapeHtmlAttr($card->getHash()) ?>"
                                 data-cc_bin="<?= $block->escapeHtmlAttr($card->getAdditional('cc_bin')) ?>"
-                                data-cc_last_4="<?= $block->escapeHtmlAttr($card->getAdditional('cc_last_4')) ?>"
+                                data-cc_last4="<?= $block->escapeHtmlAttr($card->getAdditional('cc_last4')) ?>"
                                 data-new="false"
                                 data-type="<?= $block->escapeHtmlAttr($card->getType()) ?>"
                                 <?php if ($card->getId() == $block->getInfoData('tokenbase_id') || count($storedCards) == 1): ?>selected="selected"<?php endif; ?>>

@@ -118,7 +118,7 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
                     'new' => true,
                     'type' => $card->getType(),
                     'cc_bin' => $card->getAdditional('cc_bin'),
-                    'cc_last_4' => $card->getAdditional('cc_last_4'),
+                    'cc_last4' => $card->getAdditional('cc_last4'),
                 ],
             ];
 
@@ -210,7 +210,6 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
         } else {
             $paymentProfiles = [];
             foreach ($response['profile']['paymentProfiles'] as $paymentProfile) {
-                print_r($paymentProfile);
                 $paymentProfiles[ $paymentProfile['customerPaymentProfileId'] ] = $paymentProfile;
             }
 

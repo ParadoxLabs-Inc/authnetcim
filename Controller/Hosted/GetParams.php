@@ -60,11 +60,16 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
         $result = $this->resultFactory->create(ResultFactory::TYPE_JSON);
 
         try {
+            $params = $this->hostedForm->getParams();
+            $action = 'https://test.authorize.net/customer/addPayment'; // TODO: Sandbox/prod
+
+            if (isset($params['paymentProfileId'])) {
+                $action = 'https://test.authorize.net/customer/editPayment';
+            }
+
             $payload = [
-                'iframeAction' => 'https://test.authorize.net/customer/addPayment', // TODO: Sandbox/prod
-                'iframeParams' => [
-                    'token' => $this->hostedForm->getToken('authnetcim'), // TODO: ACH
-                ],
+                'iframeAction' => $action,
+                'iframeParams' => $params,
             ];
 
             $result->setData($payload);

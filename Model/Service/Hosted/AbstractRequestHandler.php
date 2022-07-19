@@ -48,13 +48,14 @@ abstract class AbstractRequestHandler
     }
 
     /**
-     * @param string $methodCode
      * @return \ParadoxLabs\Authnetcim\Model\Method
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function getMethod(string $methodCode): \ParadoxLabs\Authnetcim\Model\Method
+    public function getMethod(): \ParadoxLabs\Authnetcim\Model\Method
     {
         if ($this->method === null) {
+            $methodCode = $this->getMethodCode();
+
             /** @var \ParadoxLabs\Authnetcim\Model\Method $method */
             $this->method = $this->methodFactory->getMethodInstance($methodCode);
             $this->method->setStore($this->getStoreId());
@@ -64,15 +65,31 @@ abstract class AbstractRequestHandler
     }
 
     /**
+     * @return array
+     */
+    public function getParams(): array
+    {
+        $params = [
+            'token' => $this->getToken(), // TODO: ACH
+        ];
+
+        $paymentId = $this->getCustomerPaymentId();
+        if ($paymentId) {
+            $params['paymentProfileId'] = $paymentId;
+        }
+
+        return $params;
+    }
+
+    /**
      * Get hosted profile page request token
      *
-     * @return string
      * @throws \Magento\Framework\Exception\InputException
      * @throws \Magento\Framework\Exception\StateException
      */
-    public function getToken(string $methodCode): string
+    public function getToken(): string
     {
-        $method = $this->getMethod($methodCode);
+        $method = $this->getMethod();
 
         /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
         $gateway = $method->gateway();
@@ -99,12 +116,28 @@ abstract class AbstractRequestHandler
 
     /**
      * @param \ParadoxLabs\Authnetcim\Model\Gateway $gateway
-     * @return array|mixed|string|null
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
-     * @throws \Magento\Payment\Gateway\Command\CommandException
+     * @return string
      */
     abstract public function getCustomerProfileId(\ParadoxLabs\Authnetcim\Model\Gateway $gateway): string;
+
+    /**
+     * @return string|null
+     */
+    abstract public function getCustomerPaymentId(): ?string;
+
+    /**
+     * Get customer email for the payment request.
+     *
+     * @return string|null
+     */
+    abstract public function getEmail();
+
+    /**
+     * Get customer ID for the payment request.
+     *
+     * @return int|null
+     */
+    abstract public function getCustomerId();
 
     /**
      * Get the current store ID, for config scoping.
@@ -112,4 +145,11 @@ abstract class AbstractRequestHandler
      * @return string
      */
     abstract protected function getStoreId();
+
+    /**
+     * Get the active payment method code.
+     *
+     * @return string
+     */
+    abstract protected function getMethodCode(): string;
 }

@@ -31,6 +31,8 @@ define([
         _create: function() {
             this.element.on('change', this.options.cardSelector, this.handleCardSelectChange.bind(this));
 
+            this.bindCommunicator();
+
             this.handleCardSelectChange();
         },
 
@@ -53,8 +55,6 @@ define([
         },
 
         initHostedForm: function() {
-            this.bindCommunicator();
-
             // Clear and spinner the CC form while we load new params
             this.element.find('#' + this.options.target).prop('src', 'about:blank')
                 .trigger('processStart');
@@ -198,7 +198,7 @@ define([
                   .data('new', card.new)
                   .data('type', card.cc_type)
                   .data('cc_bin', card.cc_bin)
-                  .data('cc_last_4', card.cc_last_4);
+                  .data('cc_last4', card.cc_last4);
 
             this.element.find(this.options.cardSelector).append(option).val(card.id).trigger('change');
 

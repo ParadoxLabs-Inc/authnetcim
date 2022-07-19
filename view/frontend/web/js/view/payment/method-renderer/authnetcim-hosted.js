@@ -50,6 +50,8 @@ define(
                         'billingAddressLine'
                     ]);
 
+                this.bindCommunicator();
+
                 quote.billingAddress.subscribe(this.syncBillingAddress.bind(this));
                 quote.paymentMethod.subscribe(this.syncBillingAddress.bind(this));
                 this.billingAddressLine.subscribe(this.initHostedForm.bind(this));
@@ -117,8 +119,6 @@ define(
             },
 
             initHostedForm: function() {
-                this.bindCommunicator();
-
                 // Clear and spinner the CC form while we load new params
                 $('#' + this.getCode() + '_iframe').prop('src', 'about:blank')
                     .trigger('processStart');

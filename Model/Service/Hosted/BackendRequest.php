@@ -34,9 +34,9 @@ class BackendRequest extends AbstractRequestHandler
     protected $request;
 
     /**
-     * @var \ParadoxLabs\TokenBase\Api\CustomerCardRepositoryInterface
+     * @var \ParadoxLabs\TokenBase\Api\CardRepositoryInterface
      */
-    protected $customerCardRepository;
+    protected $cardRepository;
 
     /**
      * @var \ParadoxLabs\TokenBase\Helper\Data
@@ -56,7 +56,7 @@ class BackendRequest extends AbstractRequestHandler
      * @param \Magento\Backend\Model\Session\Quote $backendSession
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\App\RequestInterface $request
-     * @param \ParadoxLabs\TokenBase\Api\CustomerCardRepositoryInterface $customerCardRepository
+     * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
      * @param \ParadoxLabs\TokenBase\Helper\Data $tokenbaseHelper
      * @param \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
      */
@@ -66,7 +66,7 @@ class BackendRequest extends AbstractRequestHandler
         \Magento\Backend\Model\Session\Quote $backendSession,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\App\RequestInterface $request,
-        \ParadoxLabs\TokenBase\Api\CustomerCardRepositoryInterface $customerCardRepository,
+        \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
         \ParadoxLabs\TokenBase\Helper\Data $tokenbaseHelper,
         \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
     ) {
@@ -75,7 +75,7 @@ class BackendRequest extends AbstractRequestHandler
         $this->backendSession = $backendSession;
         $this->storeManager = $storeManager;
         $this->request = $request;
-        $this->customerCardRepository = $customerCardRepository;
+        $this->cardRepository = $cardRepository;
         $this->tokenbaseHelper = $tokenbaseHelper;
         $this->paymentResource = $paymentResource;
     }
@@ -94,10 +94,15 @@ class BackendRequest extends AbstractRequestHandler
             $cardId = $this->request->getParam('card_id');
 
             if (!empty($cardId)) {
-                // TODO: Can't use customercardrepository because it requires enabled public api
-                $card = $this->customerCardRepository->getByHash($this->getCustomerId(), $cardId);
+                $card = $this->cardRepository->getByHash($cardId);
+
+                if ($card->hasOwner((int)$this->getCustomerId()) === false) {
+                    throw new \Magento\Framework\Exception\LocalizedException(__('Could not load payment profile'));
+                }
 
                 return (string)$card->getProfileId();
+            } elseif ($this->backendSession->getData('authnetcim_profile_id_' . $this->getCustomerId())) {
+                return $this->backendSession->getData('authnetcim_profile_id_' . $this->getCustomerId());
             }
         }
 
@@ -112,9 +117,34 @@ class BackendRequest extends AbstractRequestHandler
             $payment = $quote->getPayment();
             $payment->setAdditionalInformation('profile_id', $profileId);
             $this->paymentResource->save($payment);
+        } else {
+            $this->backendSession->setData('authnetcim_profile_id_' . $this->getCustomerId(), $profileId);
         }
 
         return (string)$profileId;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getCustomerPaymentId(): ?string
+    {
+        if ($this->request->getParam('source') === 'paymentinfo') {
+            // If we were given a card ID, get the profile ID from that instead of creating new
+            $cardId = $this->request->getParam('card_id');
+
+            if (!empty($cardId)) {
+                $card = $this->cardRepository->getByHash($cardId);
+
+                if ($card->hasOwner((int)$this->getCustomerId()) === false) {
+                    throw new \Magento\Framework\Exception\LocalizedException(__('Could not load payment profile'));
+                }
+
+                return (string)$card->getPaymentId();
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -122,7 +152,7 @@ class BackendRequest extends AbstractRequestHandler
      *
      * @return string|null
      */
-    protected function getEmail()
+    public function getEmail()
     {
         try {
             if ($this->request->getParam('source') === 'paymentinfo') {
@@ -140,7 +170,7 @@ class BackendRequest extends AbstractRequestHandler
      *
      * @return int|null
      */
-    protected function getCustomerId()
+    public function getCustomerId()
     {
         return $this->tokenbaseHelper->getCurrentCustomer()->getId();
     }
@@ -161,5 +191,14 @@ class BackendRequest extends AbstractRequestHandler
         } catch (\Exception $exception) {
             return $this->storeManager->getStore()->getId();
         }
+    }
+
+    /**
+     * @return string
+     */
+    protected function getMethodCode(): string
+    {
+        // TODO: Constrain to allowed methods
+        return $this->request->getParam('method');
     }
 }

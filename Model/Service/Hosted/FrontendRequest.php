@@ -39,9 +39,9 @@ class FrontendRequest extends AbstractRequestHandler
     protected $request;
 
     /**
-     * @var \ParadoxLabs\TokenBase\Api\CustomerCardRepositoryInterface
+     * @var \ParadoxLabs\TokenBase\Api\CardRepositoryInterface
      */
-    protected $customerCardRepository;
+    protected $cardRepository;
 
     /**
      * @var \Magento\Quote\Model\ResourceModel\Quote\Payment
@@ -57,7 +57,7 @@ class FrontendRequest extends AbstractRequestHandler
      * @param \Magento\Customer\Model\Session $customerSession
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\App\RequestInterface $request
-     * @param \ParadoxLabs\TokenBase\Api\CustomerCardRepositoryInterface $customerCardRepository
+     * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
      * @param \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
      */
     public function __construct(
@@ -67,7 +67,7 @@ class FrontendRequest extends AbstractRequestHandler
         \Magento\Customer\Model\Session $customerSession,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\App\RequestInterface $request,
-        \ParadoxLabs\TokenBase\Api\CustomerCardRepositoryInterface $customerCardRepository,
+        \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
         \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
     ) {
         parent::__construct($urlBuilder, $methodFactory);
@@ -76,7 +76,7 @@ class FrontendRequest extends AbstractRequestHandler
         $this->customerSession = $customerSession;
         $this->storeManager = $storeManager;
         $this->request = $request;
-        $this->customerCardRepository = $customerCardRepository;
+        $this->cardRepository = $cardRepository;
         $this->paymentResource = $paymentResource;
     }
 
@@ -91,13 +91,18 @@ class FrontendRequest extends AbstractRequestHandler
     {
         if ($this->request->getParam('source') === 'paymentinfo') {
             // If we were given a card ID, get the profile ID from that instead of creating new
-            $cardId = $this->request->getParam('card_id');
+            $cardId = $this->request->getParam('card_id') ?? $this->request->getParam('id');
 
             if (!empty($cardId)) {
-                // TODO: Can't use customercardrepository because it requires enabled public api
-                $card = $this->customerCardRepository->getByHash($this->getCustomerId(), $cardId);
+                $card = $this->cardRepository->getByHash($cardId);
+
+                if ($card->hasOwner((int)$this->getCustomerId()) === false) {
+                    throw new \Magento\Framework\Exception\LocalizedException(__('Could not load payment profile'));
+                }
 
                 return (string)$card->getProfileId();
+            } elseif ($this->customerSession->getData('authnetcim_profile_id')) {
+                return $this->customerSession->getData('authnetcim_profile_id');
             }
         }
 
@@ -112,9 +117,34 @@ class FrontendRequest extends AbstractRequestHandler
             $payment = $quote->getPayment();
             $payment->setAdditionalInformation('profile_id', $profileId);
             $this->paymentResource->save($payment);
+        } else {
+            $this->customerSession->setData('authnetcim_profile_id', $profileId);
         }
 
         return (string)$profileId;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getCustomerPaymentId(): ?string
+    {
+        if ($this->request->getParam('source') === 'paymentinfo') {
+            // If we were given a card ID, get the profile ID from that instead of creating new
+            $cardId = $this->request->getParam('card_id') ?? $this->request->getParam('id');
+
+            if (!empty($cardId)) {
+                $card = $this->cardRepository->getByHash($cardId);
+
+                if ($card->hasOwner((int)$this->getCustomerId()) === false) {
+                    throw new \Magento\Framework\Exception\LocalizedException(__('Could not load payment profile'));
+                }
+
+                return (string)$card->getPaymentId();
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -122,7 +152,7 @@ class FrontendRequest extends AbstractRequestHandler
      *
      * @return string|null
      */
-    protected function getEmail()
+    public function getEmail()
     {
         try {
             if ($this->request->getParam('source') === 'paymentinfo') {
@@ -145,7 +175,7 @@ class FrontendRequest extends AbstractRequestHandler
      *
      * @return int|null
      */
-    protected function getCustomerId()
+    public function getCustomerId()
     {
         if ($this->checkoutSession->getQuoteId()) {
             return $this->checkoutSession->getQuote()->getCustomerId();
@@ -162,5 +192,14 @@ class FrontendRequest extends AbstractRequestHandler
     protected function getStoreId()
     {
         return $this->storeManager->getStore()->getId();
+    }
+
+    /**
+     * @return string
+     */
+    protected function getMethodCode(): string
+    {
+        // TODO: Constrain to allowed methods
+        return 'authnetcim';//$this->request->getParam('method');
     }
 }

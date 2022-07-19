@@ -14,12 +14,11 @@
     </h2>
 </div>
 
-<form action="<?= $block->escapeUrl($block->getAction()); ?>" method="post" id="form-validate" class="checkout-payment-method" data-hasrequired="<?= $block->escapeHtmlAttr(__('* Required Fields')) ?>">
+<form action="<?= $block->escapeUrl($block->getAction() . '?method=' . $code); ?>" method="post" id="form-validate" class="checkout-payment-method" data-hasrequired="<?= $block->escapeHtmlAttr(__('* Required Fields')) ?>">
     <?= $block->getBlockHtml('formkey'); ?>
     <input type="hidden" name="id" value="<?= $block->getCard()->getId() ? $block->escapeHtmlAttr($block->getCard()->getHash()) : ''; ?>" />
-    <input type="hidden" name="method" value="<?= $code; ?>" />
     <input type="hidden" name="source" value="paymentinfo" />
-    <fieldset class="fieldset">
+    <fieldset class="fieldset address">
         <legend class="legend"><span><?= $block->escapeHtml(__('Cardholder Information')) ?></span></legend><br>
 
         <?= $block->getNameBlockHtml() ?>
@@ -37,7 +36,7 @@
             </div>
         </div>
     </fieldset>
-    <fieldset class="fieldset">
+    <fieldset class="fieldset address">
         <legend class="legend"><span><?= $block->escapeHtml(__('Cardholder Address')) ?></span></legend><br>
 
         <?php $_streetValidationClass = $block->escapeHtmlAttr($this->helper(\Magento\Customer\Helper\Address::class)->getAttributeValidationClass('street')); ?>
@@ -128,13 +127,13 @@
             "authnetcimHostedPaymentInfo": {
                 "target": "<?= $code ?>_iframe",
                 "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getParams')) ?>",
-                "newCardUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getNewCard')) ?>",
+                "updateCardUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/updateCard')) ?>",
                 "successUrl": "<?= $block->escapeJs($block->getUrl('*/*', ['method' => $code])) ?>"
             }
         },
         "#country": {
             "regionUpdater": {
-                "optionalRegionAllowed": <?php echo($block->getConfig('general/region/display_all') ? 'true' : 'false'); ?>,
+                "optionalRegionAllowed": <?= $block->getConfig('general/region/display_all') ? 'true' : 'false' ?>,
                 "regionListId": "#region-id",
                 "regionInputId": "#region",
                 "postcodeId": "#zip",

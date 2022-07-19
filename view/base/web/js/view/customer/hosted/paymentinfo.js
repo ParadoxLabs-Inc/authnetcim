@@ -22,6 +22,7 @@ define([
         options: {
             target: null,
             paramUrl: null,
+            updateCardUrl: null,
             successUrl: null,
             fieldPrefix: '#'
         },
@@ -29,6 +30,8 @@ define([
         _create: function() {
             this.element.find('#submit-address').on('click', this.saveAddress.bind(this));
             this.element.find('#edit-address').on('click', this.editAddress.bind(this));
+
+            this.bindCommunicator();
         },
 
         editAddress: function() {
@@ -40,15 +43,6 @@ define([
             if (this.element.valid() === false) {
                 return;
             }
-
-            // TODO: Save address to server/CIM
-            $.post({
-                url: this.element.attr('action'),
-                data: this.element.serialize() + '&is_ajax=1',
-                global: false,
-                success: console.log, // TODO
-                error: this.handleAjaxError.bind(this)
-            });
 
             this.renderAddress();
 
@@ -92,7 +86,7 @@ define([
         },
 
         initHostedForm: function() {
-            this.bindCommunicator();
+            this.processingSave = false;
 
             // Clear and spinner the CC form while we load new params
             this.element.find('#' + this.options.target).prop('src', 'about:blank')
@@ -125,10 +119,14 @@ define([
             document.body.appendChild(form);
             form.submit();
 
+            // Reload after 15 min expiration
+            setTimeout(this.initHostedForm.bind(this), 15*60*1000);
+
             this.element.find('#' + this.options.target).trigger('processStop');
         },
 
         handleAjaxError: function(jqXHR, status, error) {
+            this.processingSave = false;
             this.element.find('#' + this.options.target).trigger('processStop');
 
             var message = $.mage.__('A server error occurred. Please try again.');
@@ -196,10 +194,12 @@ define([
             this.processingSave = true;
             this.element.find('#' + this.options.target).trigger('processStart');
 
+            // TODO: Save address to card
+            // TODO: Support updates to existing card
             $.post({
-                url: this.options.newCardUrl,
+                url: this.options.updateCardUrl,
                 dataType: 'json',
-                data: this.getFormParams(),
+                data: this.element.serialize(),
                 global: false,
                 success: this.updateCard.bind(this),
                 error: this.handleAjaxError.bind(this)
@@ -207,14 +207,20 @@ define([
         },
 
         updateCard: function(response) {
+            this.processingSave = false;
+
             if (this.options.successUrl !== null) {
+                this.element.find('input[name="id"]').val(response.card.id);
+
                 // If we have a success URL, redirect there (frontend behavior)
-                window.location.href = this.options.successUrl;
-                this.element.trigger('processStart');
+                // window.location.href = this.options.successUrl;
+                // TODO: Remove that
+                // Submit to save address
+                this.element.trigger('submit');
             } else {
                 // Trigger form submission to reload the section (admin behavior)
                 this.element.find('input[name=card_id]').attr('name', '');
-                this.element.submit();
+                this.element.trigger('submit');
             }
         }
     });
