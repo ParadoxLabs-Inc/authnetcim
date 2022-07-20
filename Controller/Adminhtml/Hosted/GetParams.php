@@ -32,6 +32,16 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
     protected $hostedForm;
 
     /**
+     * @var \Magento\Framework\Registry
+     */
+    protected $registry;
+
+    /**
+     * @var \Magento\Customer\Api\CustomerRepositoryInterface
+     */
+    protected $customerRepository;
+
+    /**
      * GetParams constructor.
      *
      * @param \Magento\Backend\App\Action\Context $context
@@ -41,12 +51,16 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
         \Magento\Framework\Data\Form\FormKey\Validator $formKey,
-        \ParadoxLabs\Authnetcim\Model\Service\Hosted\BackendRequest $hostedForm
+        \ParadoxLabs\Authnetcim\Model\Service\Hosted\BackendRequest $hostedForm,
+        \Magento\Framework\Registry $registry,
+        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
     ) {
         parent::__construct($context);
 
         $this->formKey = $formKey;
         $this->hostedForm = $hostedForm;
+        $this->registry = $registry;
+        $this->customerRepository = $customerRepository;
     }
 
     /**
@@ -56,15 +70,22 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
      */
     public function execute()
     {
+        $this->getCustomer();
+
         /** @var \Magento\Framework\Controller\Result\Json $result */
         $result = $this->resultFactory->create(ResultFactory::TYPE_JSON);
 
         try {
+            $params = $this->hostedForm->getParams();
+            $action = 'https://test.authorize.net/customer/addPayment'; // TODO: Sandbox/prod
+
+            if (isset($params['paymentProfileId'])) {
+                $action = 'https://test.authorize.net/customer/editPayment';
+            }
+
             $payload = [
-                'iframeAction' => 'https://test.authorize.net/customer/addPayment', // TODO: Prod
-                'iframeParams' => [
-                    'token' => $this->hostedForm->getToken('authnetcim'), // TODO: ACH
-                ],
+                'iframeAction' => $action,
+                'iframeParams' => $params,
             ];
 
             $result->setData($payload);
@@ -115,5 +136,24 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
     public function validateForCsrf(\Magento\Framework\App\RequestInterface $request): ?bool
     {
         return $this->formKey->validate($request);
+    }
+
+    /**
+     * Get current customer model.
+     *
+     * @return \Magento\Customer\Api\Data\CustomerInterface
+     */
+    protected function getCustomer()
+    {
+        if ($this->registry->registry('current_customer')) {
+            return $this->registry->registry('current_customer');
+        }
+
+        $customerId = (int)$this->getRequest()->getParam('id');
+        $customer   = $this->customerRepository->getById($customerId);
+
+        $this->registry->register('current_customer', $customer);
+
+        return $customer;
     }
 }

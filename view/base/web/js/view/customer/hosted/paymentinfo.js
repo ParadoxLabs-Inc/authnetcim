@@ -86,6 +86,10 @@ define([
         },
 
         initHostedForm: function() {
+            if (this.element.find('#' + this.options.target).is(':visible') === false) {
+                return;
+            }
+
             this.processingSave = false;
 
             // Clear and spinner the CC form while we load new params
@@ -150,10 +154,16 @@ define([
         },
 
         bindCommunicator: function() {
+            window.removeEventListener(
+                'message',
+                this.handleCommunication.bind(this),
+                true
+            );
+
             window.addEventListener(
                 'message',
                 this.handleCommunication.bind(this),
-                false
+                true
             );
         },
 
@@ -186,7 +196,7 @@ define([
         },
 
         handleSave: function(event) {
-            if (this.processingSave) {
+            if (this.processingSave || this.element.find('#' + this.options.target).is(':visible') === false) {
                 console.log('Ignored duplicate handleSave');
                 return;
             }
@@ -209,19 +219,9 @@ define([
         updateCard: function(response) {
             this.processingSave = false;
 
-            if (this.options.successUrl !== null) {
-                this.element.find('input[name="id"]').val(response.card.id);
-
-                // If we have a success URL, redirect there (frontend behavior)
-                // window.location.href = this.options.successUrl;
-                // TODO: Remove that
-                // Submit to save address
-                this.element.trigger('submit');
-            } else {
-                // Trigger form submission to reload the section (admin behavior)
-                this.element.find('input[name=card_id]').attr('name', '');
-                this.element.trigger('submit');
-            }
+            this.element.find('input[name="id"], input[name="card_id"]').val(response.card.id);
+            this.element.find('#' + this.options.target).trigger('processStop');
+            this.element.trigger('submit');
         }
     });
 

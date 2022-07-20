@@ -62,6 +62,11 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
     protected $paymentResource;
 
     /**
+     * @var \ParadoxLabs\Authnetcim\Model\Service\Hosted\BackendRequest
+     */
+    protected $hostedForm;
+
+    /**
      * GetNewCard constructor.
      *
      * @param \Magento\Backend\App\Action\Context $context
@@ -83,7 +88,8 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
         \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
         \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory,
         \ParadoxLabs\Authnetcim\Helper\Data $helper,
-        \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
+        \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource,
+        \ParadoxLabs\Authnetcim\Model\Service\Hosted\BackendRequest $hostedForm
     ) {
         parent::__construct($context);
 
@@ -95,6 +101,7 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
         $this->cardFactory = $cardFactory;
         $this->helper = $helper;
         $this->paymentResource = $paymentResource;
+        $this->hostedForm = $hostedForm;
     }
 
     /**
@@ -108,7 +115,7 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
         $result = $this->resultFactory->create(ResultFactory::TYPE_JSON);
 
         try {
-            $card    = $this->getNewCard();
+            $card    = $this->getCard();
             $message = [
                 'success' => true,
                 'card' => [
@@ -177,10 +184,10 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
      *
      * @return \ParadoxLabs\TokenBase\Api\Data\CardInterface
      */
-    public function getNewCard()
+    public function getCard()
     {
         $methodCode = \ParadoxLabs\Authnetcim\Model\ConfigProvider::CODE;
-        if ($this->_request->getParam('method') === \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider::CODE) {
+        if ($this->getRequest()->getParam('method') === \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider::CODE) {
             $methodCode = \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider::CODE;
         }
 
@@ -191,7 +198,7 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
         $gateway = $method->gateway();
 
         // Get CIM profile ID
-        $profileId = $this->getCustomerProfileId($gateway);
+        $profileId = $this->hostedForm->getCustomerProfileId($gateway);
 
         // Get CIM profile cards
         $gateway->setParameter('customerProfileId', $profileId);
@@ -219,8 +226,8 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
 
         $card = $this->cardFactory->create();
         $card->setMethod($methodCode);
-        $card->setCustomerId($response['profile']['merchantCustomerId']);
-        $card->setCustomerEmail($response['profile']['email']);
+        $card->setCustomerId($this->hostedForm->getCustomerId());
+        $card->setCustomerEmail($this->hostedForm->getEmail());
         $card->setActive(true);
         $card->setProfileId($profileId);
         $card->setPaymentId($newestCard['customerPaymentProfileId']);
@@ -244,34 +251,15 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
 
         $this->cardRepository->save($card);
 
-        // Save card to quote
-        $payment = $this->checkoutSession->getQuote()->getPayment();
-        $method  = $payment->getMethodInstance();
-        $method->assignData(new \Magento\Framework\DataObject(['card_id' => $card->getHash()]));
+        if ($this->getRequest()->getParam('source') !== 'paymentinfo') {
+            // Save card to quote
+            $payment = $this->checkoutSession->getQuote()->getPayment();
+            $method  = $payment->getMethodInstance();
+            $method->assignData(new \Magento\Framework\DataObject(['card_id' => $card->getHash()]));
 
-        $this->paymentResource->save($payment);
-
-        return $card;
-    }
-
-    /**
-     * @param \ParadoxLabs\Authnetcim\Model\Gateway $gateway
-     * @return array|mixed|string|null
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
-     * @throws \Magento\Payment\Gateway\Command\CommandException
-     */
-    public function getCustomerProfileId(\ParadoxLabs\Authnetcim\Model\Gateway $gateway)
-    {
-        $quote   = $this->checkoutSession->getQuote();
-        $payment = $quote->getPayment();
-
-        if ($payment->getAdditionalInformation('profile_id') !== null) {
-            $profileId = $payment->getAdditionalInformation('profile_id');
-        } else {
-            throw new \Magento\Framework\Exception\StateException(__('Could not load payment profile'));
+            $this->paymentResource->save($payment);
         }
 
-        return $profileId;
+        return $card;
     }
 }

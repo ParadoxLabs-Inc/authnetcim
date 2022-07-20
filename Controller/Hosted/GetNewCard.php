@@ -242,12 +242,14 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
 
         $this->cardRepository->save($card);
 
-        // Save card to quote
-        $payment = $this->checkoutSession->getQuote()->getPayment();
-        $method  = $payment->getMethodInstance();
-        $method->assignData(new \Magento\Framework\DataObject(['card_id' => $card->getHash()]));
+        if ($this->request->getParam('source') !== 'paymentinfo') {
+            // Save card to quote
+            $payment = $this->checkoutSession->getQuote()->getPayment();
+            $method  = $payment->getMethodInstance();
+            $method->assignData(new \Magento\Framework\DataObject(['card_id' => $card->getHash()]));
 
-        $this->paymentResource->save($payment);
+            $this->paymentResource->save($payment);
+        }
 
         return $card;
     }
