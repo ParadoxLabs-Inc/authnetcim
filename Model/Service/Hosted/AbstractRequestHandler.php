@@ -18,6 +18,11 @@ namespace ParadoxLabs\Authnetcim\Model\Service\Hosted;
  */
 abstract class AbstractRequestHandler
 {
+    public const HOSTED_ENDPOINTS = [
+        'live'    => 'https://accept.authorize.net/',
+        'sandbox' => 'https://test.authorize.net/',
+    ];
+
     /**
      * @var \Magento\Framework\UrlInterface
      */
@@ -69,16 +74,36 @@ abstract class AbstractRequestHandler
      */
     public function getParams(): array
     {
+        $action = 'customer/addPayment';
         $params = [
             'token' => $this->getToken(), // TODO: ACH
         ];
 
         $paymentId = $this->getCustomerPaymentId();
         if ($paymentId) {
+            $action = 'customer/editPayment';
             $params['paymentProfileId'] = $paymentId;
         }
 
-        return $params;
+        return [
+            'iframeAction' => $this->getEndpoint() . $action,
+            'iframeParams' => $params,
+        ];
+    }
+
+    /**
+     * Get Authorize.Net Accept Hosted API endpoint URL for the current configuration.
+     *
+     * @return string
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    protected function getEndpoint(): string
+    {
+        if ((bool)$this->getMethod()->getConfigData('test') === true) {
+            return static::HOSTED_ENDPOINTS['sandbox'];
+        }
+
+        return static::HOSTED_ENDPOINTS['live'];
     }
 
     /**

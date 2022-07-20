@@ -55,6 +55,10 @@ define([
         },
 
         initHostedForm: function() {
+            if (this.element.find('#' + this.options.target).is(':visible') === false) {
+                return;
+            }
+
             // Clear and spinner the CC form while we load new params
             this.element.find('#' + this.options.target).prop('src', 'about:blank')
                 .trigger('processStart');
@@ -170,8 +174,7 @@ define([
         },
 
         handleSave: function(event) {
-            if (this.processingSave) {
-                console.log('Ignored duplicate handleSave');
+            if (this.processingSave || this.element.find('#' + this.options.target).is(':visible') === false) {
                 return;
             }
 

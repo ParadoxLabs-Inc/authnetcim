@@ -28,6 +28,11 @@ class Cc extends \ParadoxLabs\TokenBase\Block\Form\Cc
      */
     protected $brandingImage = 'ParadoxLabs_Authnetcim::images/logo.png';
 
+    /**
+     * Swap form template for Accept Hosted vs Accept.js
+     *
+     * @return string
+     */
     protected function _toHtml()
     {
         $method = $this->getTokenbaseMethod();

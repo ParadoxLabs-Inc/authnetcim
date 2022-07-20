@@ -197,15 +197,12 @@ define([
 
         handleSave: function(event) {
             if (this.processingSave || this.element.find('#' + this.options.target).is(':visible') === false) {
-                console.log('Ignored duplicate handleSave');
                 return;
             }
 
             this.processingSave = true;
             this.element.find('#' + this.options.target).trigger('processStart');
 
-            // TODO: Save address to card
-            // TODO: Support updates to existing card
             $.post({
                 url: this.options.updateCardUrl,
                 dataType: 'json',
