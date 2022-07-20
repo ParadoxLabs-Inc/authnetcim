@@ -196,10 +196,18 @@ class BackendRequest extends AbstractRequestHandler
     /**
      * @return string
      */
+    protected function getTokenbaseCardId(): string
+    {
+        return (string)$this->request->getParam('card_id');
+    }
+
+    /**
+     * @return string
+     */
     protected function getMethodCode(): string
     {
         // TODO: Constrain to allowed methods
-        return $this->request->getParam('method');
+        return (string)$this->request->getParam('method');
     }
 
     /**

@@ -13,6 +13,8 @@
 
 namespace ParadoxLabs\Authnetcim\Model\Service\Hosted;
 
+use ParadoxLabs\TokenBase\Api\Data\CardInterface;
+
 /**
  * AbstractRequestHandler Class
  */
@@ -164,17 +166,31 @@ abstract class AbstractRequestHandler
     }
 
     /**
-     * Get the most recent card added to a CIM profile (via hosted form, presumably)
+     * Sync the new/edited card from CIM to Magento.
      *
-     * @return \ParadoxLabs\TokenBase\Api\Data\CardInterface
+     * @return CardInterface
      */
     public function getCard()
     {
-        $newestCardProfile = $this->fetchAddedCard();
-        $card              = $this->importPaymentProfile($newestCardProfile);
+        $cardId = $this->getTokenbaseCardId();
 
-        if ($this->getRequest()->getParam('source') !== 'paymentinfo') {
-            $this->saveCardToQuote($card);
+        if (empty($cardId)) {
+            // Find the newest card on the CIM profile and import it
+            $newestCardProfile = $this->fetchAddedCard();
+            $card              = $this->importPaymentProfile($newestCardProfile);
+
+            if ($this->getRequest()->getParam('source') !== 'paymentinfo') {
+                $this->saveCardToQuote($card);
+            }
+        } else {
+            // Card already exists; refresh the payment info from the CIM profile
+            $card = $this->cardRepository->getByHash($cardId);
+
+            if ($card->hasOwner((int)$this->helper->getCurrentCustomer()->getId()) === false) {
+                throw new \Magento\Framework\Exception\LocalizedException(__('Could not load payment profile'));
+            }
+
+            $this->updateCardFromPaymentProfile($card);
         }
 
         return $card;
@@ -221,40 +237,86 @@ abstract class AbstractRequestHandler
     }
 
     /**
-     * @param array $newestCard
-     * @return mixed
+     * @param array $paymentProfile
+     * @return CardInterface
      * @throws \Magento\Framework\Exception\AlreadyExistsException
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function importPaymentProfile(array $newestCard)
+    public function importPaymentProfile(array $paymentProfile): CardInterface
     {
         $card = $this->cardFactory->create();
         $card->setMethod($this->getMethodCode());
         $card->setCustomerId($this->getCustomerId());
         $card->setCustomerEmail($this->getEmail());
         $card->setActive(true);
-        $card->setProfileId($newestCard['customerProfileId']);
-        $card->setPaymentId($newestCard['customerPaymentProfileId']);
+        $card->setProfileId($paymentProfile['customerProfileId']);
+        $card->setPaymentId($paymentProfile['customerPaymentProfileId']);
 
-        if (isset($newestCard['payment']['creditCard'])) {
-            [$yr, $mo] = explode('-', (string)$newestCard['payment']['creditCard']['expirationDate'], 2);
+        $this->setPaymentProfileDataOnCard($paymentProfile, $card);
+
+        $this->cardRepository->save($card);
+
+        return $card;
+    }
+
+    /**
+     * @param CardInterface $card
+     * @return CardInterface
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws \Magento\Payment\Gateway\Command\CommandException
+     */
+    public function updateCardFromPaymentProfile(CardInterface $card): CardInterface
+    {
+        /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
+        $gateway = $this->getMethod()->gateway();
+
+        // Get CIM payment profile
+        $gateway->setParameter('customerProfileId', $card->getProfileId());
+        $gateway->setParameter('customerPaymentProfileId', $card->getPaymentId());
+        $gateway->setParameter('unmaskExpirationDate', 'true');
+        $gateway->setParameter('includeIssuerInfo', 'true');
+
+        $response = $gateway->getCustomerPaymentProfile();
+
+        if (!empty($response['messages']['message']['text'])
+            && $response['messages']['message']['text'] !== 'Successful.') {
+            throw new \Magento\Framework\Exception\LocalizedException(__($response['messages']['message']['text']));
+        }
+
+        $paymentProfile = $response['paymentProfile'];
+
+        $this->setPaymentProfileDataOnCard($paymentProfile, $card);
+        $this->cardRepository->save($card);
+
+        return $card;
+    }
+
+    /**
+     * @param array $paymentProfile
+     * @param CardInterface $card
+     * @return CardInterface
+     */
+    public function setPaymentProfileDataOnCard(array $paymentProfile, CardInterface $card): CardInterface
+    {
+        if (isset($paymentProfile['payment']['creditCard'])) {
+            [$yr, $mo] = explode('-', (string)$paymentProfile['payment']['creditCard']['expirationDate'], 2);
             $day  = date('t', strtotime($yr . '-' . $mo));
-            $type = $this->helper->mapCcTypeToMagento($newestCard['payment']['creditCard']['cardType']);
+            $type = $this->helper->mapCcTypeToMagento($paymentProfile['payment']['creditCard']['cardType']);
 
             $paymentData = [
                 'cc_type' => $type,
-                'cc_last4' => substr((string)$newestCard['payment']['creditCard']['cardNumber'], -4),
+                'cc_last4' => substr((string)$paymentProfile['payment']['creditCard']['cardNumber'], -4),
                 'cc_exp_year' => $yr,
                 'cc_exp_month' => $mo,
-                'cc_bin' => $newestCard['payment']['creditCard']['issuerNumber'],
+                'cc_bin' => $paymentProfile['payment']['creditCard']['issuerNumber'],
             ];
+            $paymentData += $card->getAdditional();
 
             $card->setData('additional', json_encode($paymentData));
             $card->setData('expires', sprintf('%s-%s-%s 23:59:59', $yr, $mo, $day));
         }
-
-        $this->cardRepository->save($card);
 
         return $card;
     }
@@ -299,8 +361,13 @@ abstract class AbstractRequestHandler
     abstract protected function getMethodCode(): string;
 
     /**
-     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterface $card
+     * @return string
+     */
+    abstract protected function getTokenbaseCardId(): string;
+
+    /**
+     * @param CardInterface $card
      * @return void
      */
-    abstract protected function saveCardToQuote(\ParadoxLabs\TokenBase\Api\Data\CardInterface $card): void;
+    abstract protected function saveCardToQuote(CardInterface $card): void;
 }

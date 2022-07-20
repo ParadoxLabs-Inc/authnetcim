@@ -197,6 +197,14 @@ class FrontendRequest extends AbstractRequestHandler
     /**
      * @return string
      */
+    protected function getTokenbaseCardId(): string
+    {
+        return (string)($this->request->getParam('card_id') ?? $this->request->getParam('id'));
+    }
+
+    /**
+     * @return string
+     */
     protected function getMethodCode(): string
     {
         // TODO: Constrain to allowed methods
