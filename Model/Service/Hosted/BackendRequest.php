@@ -201,4 +201,20 @@ class BackendRequest extends AbstractRequestHandler
         // TODO: Constrain to allowed methods
         return $this->request->getParam('method');
     }
+
+    /**
+     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterface $card
+     * @return void
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    protected function saveCardToQuote(\ParadoxLabs\TokenBase\Api\Data\CardInterface $card): void
+    {
+        $payment = $this->checkoutSession->getQuote()->getPayment();
+        $method  = $payment->getMethodInstance();
+        $method->assignData(new \Magento\Framework\DataObject(['card_id' => $card->getHash()]));
+
+        $this->paymentResource->save($payment);
+    }
 }
