@@ -149,7 +149,7 @@ abstract class AbstractRequestHandler
         $communicatorUrl = $this->urlBuilder->getUrl('authnetcim/hosted/communicator');
         $gateway->setParameter('hostedProfileIFrameCommunicatorUrl', $communicatorUrl);
         $gateway->setParameter('hostedProfileHeadingBgColor', $method->getConfigData('accent_color'));
-        $gateway->setParameter('customerProfileId', $this->getCustomerProfileId($gateway));
+        $gateway->setParameter('customerProfileId', $this->getCustomerProfileId());
 
         $response = $gateway->getHostedProfilePage();
 
@@ -322,10 +322,9 @@ abstract class AbstractRequestHandler
     }
 
     /**
-     * @param \ParadoxLabs\Authnetcim\Model\Gateway $gateway
      * @return string
      */
-    abstract public function getCustomerProfileId(\ParadoxLabs\Authnetcim\Model\Gateway $gateway): string;
+    abstract public function getCustomerProfileId(): string;
 
     /**
      * @return string|null

@@ -81,13 +81,12 @@ class BackendRequest extends AbstractRequestHandler
     }
 
     /**
-     * @param \ParadoxLabs\Authnetcim\Model\Gateway $gateway
      * @return string
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      * @throws \Magento\Payment\Gateway\Command\CommandException
      */
-    public function getCustomerProfileId(\ParadoxLabs\Authnetcim\Model\Gateway $gateway): string
+    public function getCustomerProfileId(): string
     {
         if ($this->request->getParam('source') === 'paymentinfo') {
             // If we were given a card ID, get the profile ID from that instead of creating new
@@ -106,8 +105,10 @@ class BackendRequest extends AbstractRequestHandler
             }
         }
 
+        /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
+        $gateway = $this->getMethod()->gateway();
         $gateway->setParameter('email', $this->getEmail());
-        $gateway->setParameter('merchantCustomerId', (int)$this->getCustomerId());
+        $gateway->setParameter('merchantCustomerId', $this->getCustomerId());
         $gateway->setParameter('description', 'Magento ' . date('c'));
 
         $profileId = $gateway->createCustomerProfile();

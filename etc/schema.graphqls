@@ -1,3 +1,40 @@
+type Query {
+    authnetcimHostedParams(input: TokenBaseAuthnetcimHostedInput!): TokenBaseAuthnetcimHostedParams @resolver(class: "ParadoxLabs\\Authnetcim\\Model\\Api\\GraphQL\\Hosted\\GetParams") @doc(description: "Get Authnetcim Accept Hosted form URL and parameters for collecting payment data.")
+}
+
+type Mutation {
+    authnetcimSyncHostedForm(input: TokenBaseAuthnetcimHostedInput!): TokenBaseAuthnetcimHostedCardResponse @resolver(class: "ParadoxLabs\\Authnetcim\\Model\\Api\\GraphQL\\Hosted\\SyncHostedForm") @doc(description: "Synchronize a card stored via Authorize.net Accept Customer hosted form to Magento.")
+}
+
+input TokenBaseAuthnetcimHostedInput {
+    cartId: String
+    cardId: String
+    iframeSessionId: String
+    method: TokenBaseAuthnetcimHostedMethod!
+    source: TokenBaseAuthnetcimHostedSource!
+    guestEmail: String
+}
+
+type TokenBaseAuthnetcimHostedParams {
+    iframeSessionId: String
+    iframeAction: String
+    iframeParams: String
+}
+
+type TokenBaseAuthnetcimHostedCardResponse {
+    card: TokenBaseAuthnetcimHostedCard
+}
+
+type TokenBaseAuthnetcimHostedCard {
+    id: String
+    label: String
+    selected: Boolean
+    new: Boolean
+    type: String
+    cc_bin: String
+    cc_last4: String
+}
+
 type TokenBaseCheckoutConfig {
     apiLoginId: String
     clientKey: String
@@ -8,4 +45,14 @@ type TokenBaseCheckoutConfig {
 input TokenBaseCardPaymentInput {
     acceptjs_key: String
     acceptjs_value: String
+}
+
+enum TokenBaseAuthnetcimHostedMethod {
+    authnetcim
+    authnetcim_ach
+}
+
+enum TokenBaseAuthnetcimHostedSource {
+    checkout
+    paymentinfo
 }
