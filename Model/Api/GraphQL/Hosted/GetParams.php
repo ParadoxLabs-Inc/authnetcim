@@ -31,9 +31,6 @@ if (!interface_exists('\ParadoxLabs\TokenBase\Model\Api\GraphQL\ResolverInterfac
     }
 }
 
-/**
- * GetParams Class
- */
 class GetParams implements \ParadoxLabs\TokenBase\Model\Api\GraphQL\ResolverInterface
 {
     /**
@@ -61,7 +58,7 @@ class GetParams implements \ParadoxLabs\TokenBase\Model\Api\GraphQL\ResolverInte
     }
 
     /**
-     * Fetches the data from persistence models and format it according to the GraphQL schema.
+     * Get hosted form parameters for the current request
      *
      * @param \Magento\Framework\GraphQl\Config\Element\Field $field
      * @param \Magento\Framework\GraphQl\Query\Resolver\ContextInterface $context
@@ -83,7 +80,7 @@ class GetParams implements \ParadoxLabs\TokenBase\Model\Api\GraphQL\ResolverInte
 
         $payload = $this->hostedForm->getParams();
         $payload['iframeParams'] = json_encode($payload['iframeParams']);
-        $payload['iframeSessionId'] = $this->hostedForm->getCustomerProfileId($this->hostedForm->getMethod()->gateway());
+        $payload['iframeSessionId'] = $this->hostedForm->getCustomerProfileId();
 
         return $payload;
     }

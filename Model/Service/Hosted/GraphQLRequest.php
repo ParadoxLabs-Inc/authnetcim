@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Paradox Labs, Inc.
  * http://www.paradoxlabs.com
@@ -13,12 +13,9 @@
 
 namespace ParadoxLabs\Authnetcim\Model\Service\Hosted;
 
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
+use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 
-/**
- * GraphQLRequest Class
- */
 class GraphQLRequest extends AbstractRequestHandler
 {
     /**
@@ -60,6 +57,10 @@ class GraphQLRequest extends AbstractRequestHandler
      * @var string
      */
     protected $profileId;
+    /**
+     * @var \Magento\Quote\Model\ResourceModel\Quote\Payment
+     */
+    protected $paymentResource;
 
     /**
      * GraphQLRequest constructor.
@@ -72,6 +73,7 @@ class GraphQLRequest extends AbstractRequestHandler
      * @param \Magento\Framework\HTTP\PhpEnvironment\RemoteAddress $remoteAddress
      * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
      * @param \ParadoxLabs\TokenBase\Model\Api\GraphQL $graphQL
+     * @param \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
      */
     public function __construct(
         \Magento\Framework\UrlInterface $urlBuilder,
@@ -81,29 +83,35 @@ class GraphQLRequest extends AbstractRequestHandler
         \ParadoxLabs\Authnetcim\Helper\Data $helper,
         \Magento\Framework\HTTP\PhpEnvironment\RemoteAddress $remoteAddress,
         \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
-        \ParadoxLabs\TokenBase\Model\Api\GraphQL $graphQL
+        \ParadoxLabs\TokenBase\Model\Api\GraphQL $graphQL,
+        \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
     ) {
         parent::__construct($urlBuilder, $methodFactory, $cardFactory, $cardRepository, $helper);
 
         $this->remoteAddress = $remoteAddress;
         $this->customerRepository = $customerRepository;
         $this->graphQL = $graphQL;
+        $this->paymentResource = $paymentResource;
     }
 
     /**
+     * Set GraphQL request info/args on the object
+     *
      * @param \Magento\Framework\GraphQl\Query\Resolver\ContextInterface $context
      * @param array $args
      * @return void
      */
-    public function setGraphQLContext(ContextInterface $context, array $args)
+    public function setGraphQLContext(ContextInterface $context, array $args): void
     {
         $this->graphQlContext = $context;
         $this->graphQlArgs = $args;
     }
 
     /**
-     * @param \ParadoxLabs\Authnetcim\Model\Gateway $gateway
+     * Get the CIM customer profile ID for the current session/context.
+     *
      * @return string
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getCustomerProfileId(): string
     {
@@ -111,7 +119,7 @@ class GraphQLRequest extends AbstractRequestHandler
         if ($this->graphQlArgs['source'] === 'paymentinfo') {
             $card = $this->getCardModel();
 
-            if ($card instanceof \ParadoxLabs\TokenBase\Api\Data\CardInterface) {
+            if ($card instanceof CardInterface) {
                 return (string)$card->getProfileId();
             }
         }
@@ -144,7 +152,10 @@ class GraphQLRequest extends AbstractRequestHandler
     }
 
     /**
+     * Get the CIM payment ID for the current session/context.
+     *
      * @return string|null
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getCustomerPaymentId(): ?string
     {
@@ -152,7 +163,7 @@ class GraphQLRequest extends AbstractRequestHandler
             $card = $this->getCardModel();
 
             // If we were given a card ID, get the profile ID from that instead of creating new
-            if ($card instanceof \ParadoxLabs\TokenBase\Api\Data\CardInterface) {
+            if ($card instanceof CardInterface) {
                 return (string)$card->getPaymentId();
             }
         }
@@ -161,11 +172,11 @@ class GraphQLRequest extends AbstractRequestHandler
     }
 
     /**
-     * Get customer email for the Secure Acceptance request.
+     * Get customer email for the current session/context.
      *
      * @return string|null
      */
-    protected function getEmail()
+    public function getEmail(): ?string
     {
         if ($this->graphQlArgs['source'] === 'paymentinfo') {
             $customer = $this->customerRepository->getById(
@@ -184,13 +195,13 @@ class GraphQLRequest extends AbstractRequestHandler
     }
 
     /**
-     * Get customer ID for the Secure Acceptance request.
+     * Get customer ID for the current session/context.
      *
-     * @return int|null
+     * @return string|null
      */
-    protected function getCustomerId()
+    public function getCustomerId(): ?string
     {
-        return $this->graphQlContext->getUserId();
+        return (string)$this->graphQlContext->getUserId();
     }
 
     /**
@@ -198,7 +209,7 @@ class GraphQLRequest extends AbstractRequestHandler
      *
      * @return \Magento\Quote\Api\Data\CartInterface
      */
-    protected function getQuote()
+    protected function getQuote(): \Magento\Quote\Api\Data\CartInterface
     {
         if ($this->quote instanceof \Magento\Quote\Api\Data\CartInterface) {
             return $this->quote;
@@ -215,9 +226,9 @@ class GraphQLRequest extends AbstractRequestHandler
     /**
      * Get the stored card from the request's card_id card hash, or null if none.
      *
-     * @return \ParadoxLabs\TokenBase\Api\Data\CardInterface|null
+     * @return CardInterface|null
      */
-    protected function getCardModel()
+    protected function getCardModel(): ?CardInterface
     {
         if (empty($this->graphQlArgs['cardId'])) {
             return null;
@@ -227,7 +238,7 @@ class GraphQLRequest extends AbstractRequestHandler
             $card = $this->cardRepository->getByHash($this->graphQlArgs['cardId']);
 
             if ($card->hasOwner((int)$this->getCustomerId()) === false) {
-                throw new \Magento\Framework\Exception\LocalizedException(__('Could not load payment profile'));
+                return null;
             }
 
             return $card;
@@ -237,13 +248,13 @@ class GraphQLRequest extends AbstractRequestHandler
     }
 
     /**
-     * Get the current store ID, for config scoping.
+     * Get the current store ID, for config loading.
      *
-     * @return string
+     * @return int
      */
-    protected function getStoreId()
+    protected function getStoreId(): int
     {
-        return $this->storeManager->getStore()->getId();
+        return (int)$this->storeManager->getStore()->getId();
     }
 
     /**
@@ -257,6 +268,8 @@ class GraphQLRequest extends AbstractRequestHandler
     }
 
     /**
+     * Get the tokenbase card hash for the current session/context.
+     *
      * @return string
      */
     protected function getTokenbaseCardId(): string
@@ -265,12 +278,19 @@ class GraphQLRequest extends AbstractRequestHandler
     }
 
     /**
-     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterface $card
+     * Save the given card to the active quote as the active payment method.
+     *
+     * @param CardInterface $card
      * @return void
      */
-    protected function saveCardToQuote(\ParadoxLabs\TokenBase\Api\Data\CardInterface $card): void
+    protected function saveCardToQuote(CardInterface $card): void
     {
+        if ($this->graphQlArgs['source'] === 'paymentinfo') {
+            return;
+        }
+
         $payment = $this->getQuote()->getPayment();
+        $method  = $payment->getMethodInstance();
         $method->assignData(new \Magento\Framework\DataObject(['card_id' => $card->getHash()]));
 
         $this->paymentResource->save($payment);
@@ -280,6 +300,8 @@ class GraphQLRequest extends AbstractRequestHandler
      * If we're given a customer profile ID, make sure the user is authorized (info matches the profile).
      *
      * @return void
+     * @throws \Magento\Framework\GraphQl\Exception\GraphQlNoSuchEntityException
+     * @throws \Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException
      */
     protected function validateAndSetProfileId(): void
     {

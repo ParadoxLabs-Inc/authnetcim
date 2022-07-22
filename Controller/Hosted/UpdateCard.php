@@ -13,12 +13,6 @@
 
 namespace ParadoxLabs\Authnetcim\Controller\Hosted;
 
-use Magento\Framework\App\Action\Action;
-use Magento\Framework\App\Action\HttpPostActionInterface;
-use Magento\Framework\App\CsrfAwareActionInterface;
-use Magento\Framework\Controller\Result\Redirect;
-use Magento\Framework\Controller\ResultFactory;
-
 class UpdateCard extends GetNewCard
 {
 }

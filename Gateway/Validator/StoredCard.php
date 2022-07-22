@@ -26,6 +26,8 @@ class StoredCard extends \ParadoxLabs\TokenBase\Gateway\Validator\StoredCard
     private $config;
 
     /**
+     * Constructor
+     *
      * @param \Magento\Payment\Gateway\Validator\ResultInterfaceFactory $resultFactory
      * @param \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard $ccValidator
      * @param \Magento\Payment\Gateway\ConfigInterface $config
@@ -41,6 +43,12 @@ class StoredCard extends \ParadoxLabs\TokenBase\Gateway\Validator\StoredCard
         $this->config = $config;
     }
 
+    /**
+     * Validate a stored card on the payment object
+     *
+     * @param array $validationSubject
+     * @return \Magento\Payment\Gateway\Validator\ResultInterface
+     */
     public function validate(array $validationSubject)
     {
         // If Accept.js is enabled, kick to standard CC validator

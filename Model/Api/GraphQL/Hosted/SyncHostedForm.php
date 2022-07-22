@@ -31,9 +31,6 @@ if (!interface_exists('\ParadoxLabs\TokenBase\Model\Api\GraphQL\ResolverInterfac
     }
 }
 
-/**
- * SyncHostedForm Class
- */
 class SyncHostedForm implements \ParadoxLabs\TokenBase\Model\Api\GraphQL\ResolverInterface
 {
     /**
@@ -61,7 +58,7 @@ class SyncHostedForm implements \ParadoxLabs\TokenBase\Model\Api\GraphQL\Resolve
     }
 
     /**
-     * Fetches the data from persistence models and format it according to the GraphQL schema.
+     * Fetch, save, and return newly added card from hosted form
      *
      * @param \Magento\Framework\GraphQl\Config\Element\Field $field
      * @param \Magento\Framework\GraphQl\Query\Resolver\ContextInterface $context

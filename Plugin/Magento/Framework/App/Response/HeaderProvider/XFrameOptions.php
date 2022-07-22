@@ -13,9 +13,6 @@
 
 namespace ParadoxLabs\Authnetcim\Plugin\Magento\Framework\App\Response\HeaderProvider;
 
-/**
- * XFrameOptions Class
- */
 class XFrameOptions
 {
     /**
@@ -39,7 +36,7 @@ class XFrameOptions
      *
      * @param \Magento\Framework\App\Response\HeaderProvider\XFrameOptions $subject
      * @param bool $result
-     * @return false
+     * @return bool
      */
     public function afterCanApply(
         \Magento\Framework\App\Response\HeaderProvider\XFrameOptions $subject,

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Paradox Labs, Inc.
  * http://www.paradoxlabs.com
@@ -13,9 +13,8 @@
 
 namespace ParadoxLabs\Authnetcim\Model\Service\Hosted;
 
-/**
- * FrontendRequest Class
- */
+use ParadoxLabs\TokenBase\Api\Data\CardInterface;
+
 class FrontendRequest extends AbstractRequestHandler
 {
     /**
@@ -29,19 +28,9 @@ class FrontendRequest extends AbstractRequestHandler
     protected $customerSession;
 
     /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
-    protected $storeManager;
-
-    /**
      * @var \Magento\Framework\App\RequestInterface
      */
     protected $request;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Api\CardRepositoryInterface
-     */
-    protected $cardRepository;
 
     /**
      * @var \Magento\Quote\Model\ResourceModel\Quote\Payment
@@ -49,42 +38,43 @@ class FrontendRequest extends AbstractRequestHandler
     protected $paymentResource;
 
     /**
-     * FrontendRequest constructor.
+     * AbstractRequestHandler constructor.
      *
      * @param \Magento\Framework\UrlInterface $urlBuilder
      * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
+     * @param \ParadoxLabs\TokenBase\Model\Card\Factory $cardFactory
+     * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
+     * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param \Magento\Customer\Model\Session $customerSession
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\App\RequestInterface $request
-     * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
      * @param \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
      */
     public function __construct(
         \Magento\Framework\UrlInterface $urlBuilder,
         \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
+        \ParadoxLabs\TokenBase\Model\Card\Factory $cardFactory,
+        \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
+        \ParadoxLabs\Authnetcim\Helper\Data $helper,
         \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Customer\Model\Session $customerSession,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\App\RequestInterface $request,
-        \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
         \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
     ) {
-        parent::__construct($urlBuilder, $methodFactory);
+        parent::__construct($urlBuilder, $methodFactory, $cardFactory, $cardRepository, $helper);
 
+        // TODO: Proxy sessions
         $this->checkoutSession = $checkoutSession;
         $this->customerSession = $customerSession;
-        $this->storeManager = $storeManager;
         $this->request = $request;
-        $this->cardRepository = $cardRepository;
         $this->paymentResource = $paymentResource;
     }
 
     /**
+     * Get the CIM customer profile ID for the current session/context.
+     *
      * @return string
      * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
-     * @throws \Magento\Payment\Gateway\Command\CommandException
      */
     public function getCustomerProfileId(): string
     {
@@ -100,7 +90,9 @@ class FrontendRequest extends AbstractRequestHandler
                 }
 
                 return (string)$card->getProfileId();
-            } elseif ($this->customerSession->getData('authnetcim_profile_id')) {
+            }
+
+            if ($this->customerSession->getData('authnetcim_profile_id')) {
                 return $this->customerSession->getData('authnetcim_profile_id');
             }
         }
@@ -126,7 +118,10 @@ class FrontendRequest extends AbstractRequestHandler
     }
 
     /**
+     * Get the CIM payment ID for the current session/context.
+     *
      * @return string|null
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getCustomerPaymentId(): ?string
     {
@@ -149,61 +144,51 @@ class FrontendRequest extends AbstractRequestHandler
     }
 
     /**
-     * Get customer email for the payment request.
+     * Get customer email for the current session/context.
      *
      * @return string|null
      */
-    public function getEmail()
+    public function getEmail(): ?string
     {
-        try {
-            if ($this->request->getParam('source') === 'paymentinfo') {
-                return $this->customerSession->getCustomerData()->getEmail();
-            }
-
-            if (!empty($this->checkoutSession->getQuote()->getBillingAddress()->getEmail())) {
-                return $this->checkoutSession->getQuote()->getBillingAddress()->getEmail();
-            }
-
-            // Fall back to guest email parameter iff there's none on the quote.
-            return $this->request->getParam('guest_email');
-        } catch (\Exception $exception) {
-            throw $exception;
+        if ($this->request->getParam('source') === 'paymentinfo') {
+            return $this->customerSession->getCustomerData()->getEmail();
         }
+
+        if (!empty($this->checkoutSession->getQuote()->getBillingAddress()->getEmail())) {
+            return $this->checkoutSession->getQuote()->getBillingAddress()->getEmail();
+        }
+
+        // Fall back to guest email parameter iff there's none on the quote.
+        return $this->request->getParam('guest_email');
     }
 
     /**
-     * Get customer ID for the payment request.
+     * Get customer ID for the current session/context.
      *
-     * @return int|null
+     * @return string|null
      */
-    public function getCustomerId()
+    public function getCustomerId(): ?string
     {
         if ($this->checkoutSession->getQuoteId()) {
-            return $this->checkoutSession->getQuote()->getCustomerId();
+            return (string)$this->checkoutSession->getQuote()->getCustomerId();
         }
 
-        return $this->customerSession->getCustomerId();
+        return (string)$this->customerSession->getCustomerId();
     }
 
     /**
-     * Get the current store ID, for config scoping.
+     * Get the current store ID, for config loading.
      *
-     * @return string
+     * @return int
      */
-    protected function getStoreId()
+    protected function getStoreId(): int
     {
-        return $this->storeManager->getStore()->getId();
+        return (int)$this->helper->getCurrentStoreId();
     }
 
     /**
-     * @return string
-     */
-    protected function getTokenbaseCardId(): string
-    {
-        return (string)($this->request->getParam('card_id') ?? $this->request->getParam('id'));
-    }
-
-    /**
+     * Get the active payment method code.
+     *
      * @return string
      */
     protected function getMethodCode(): string
@@ -213,14 +198,27 @@ class FrontendRequest extends AbstractRequestHandler
     }
 
     /**
-     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterface $card
+     * Get the tokenbase card hash for the current session/context.
+     *
+     * @return string
+     */
+    protected function getTokenbaseCardId(): string
+    {
+        return (string)($this->request->getParam('card_id') ?? $this->request->getParam('id'));
+    }
+
+    /**
+     * Save the given card to the active quote as the active payment method.
+     *
+     * @param CardInterface $card
      * @return void
-     * @throws \Magento\Framework\Exception\AlreadyExistsException
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     protected function saveCardToQuote(\ParadoxLabs\TokenBase\Api\Data\CardInterface $card): void
     {
+        if ($this->request->getParam('source') === 'paymentinfo') {
+            return;
+        }
+
         $payment = $this->checkoutSession->getQuote()->getPayment();
         $method  = $payment->getMethodInstance();
         $method->assignData(new \Magento\Framework\DataObject(['card_id' => $card->getHash()]));

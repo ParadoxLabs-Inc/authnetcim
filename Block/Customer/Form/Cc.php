@@ -13,9 +13,6 @@
 
 namespace ParadoxLabs\Authnetcim\Block\Customer\Form;
 
-/**
- * Cc Class
- */
 class Cc extends \ParadoxLabs\TokenBase\Block\Customer\Form
 {
     /**

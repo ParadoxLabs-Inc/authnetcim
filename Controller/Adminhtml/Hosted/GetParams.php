@@ -16,7 +16,6 @@ namespace ParadoxLabs\Authnetcim\Controller\Adminhtml\Hosted;
 use Magento\Backend\App\Action;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\CsrfAwareActionInterface;
-use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\ResultFactory;
 
 class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActionInterface
@@ -47,6 +46,8 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
      * @param \Magento\Backend\App\Action\Context $context
      * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey
      * @param \ParadoxLabs\Authnetcim\Model\Service\Hosted\BackendRequest $hostedForm
+     * @param \Magento\Framework\Registry $registry
+     * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
      */
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
@@ -64,7 +65,7 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
     }
 
     /**
-     * Execute action based on request and return result
+     * Get hosted form parameters for a session
      *
      * @return \Magento\Framework\Controller\ResultInterface
      */
@@ -91,7 +92,6 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
 
     /**
      * Create exception in case CSRF validation failed.
-     * Return null if default exception will suffice.
      *
      * @param \Magento\Framework\App\RequestInterface $request
      *
@@ -117,7 +117,6 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
 
     /**
      * Perform custom request validation.
-     * Return null if default validation is needed.
      *
      * @param \Magento\Framework\App\RequestInterface $request
      *

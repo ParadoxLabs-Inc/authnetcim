@@ -15,9 +15,6 @@ namespace ParadoxLabs\Authnetcim\Controller\Adminhtml\Hosted;
 
 use Magento\Backend\App\Action;
 
-/**
- * UpdateCard Class
- */
 class UpdateCard extends GetNewCard
 {
     /**
@@ -55,7 +52,6 @@ class UpdateCard extends GetNewCard
         $this->registry = $registry;
         $this->customerRepository = $customerRepository;
     }
-
 
     /**
      * Execute action based on request and return result

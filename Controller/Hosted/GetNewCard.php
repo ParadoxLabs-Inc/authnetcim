@@ -16,7 +16,6 @@ namespace ParadoxLabs\Authnetcim\Controller\Hosted;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\CsrfAwareActionInterface;
-use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\ResultFactory;
 
 class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostActionInterface
@@ -50,7 +49,7 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
     }
 
     /**
-     * Execute action based on request and return result
+     * Fetch, save, and return newly added card from hosted form
      *
      * @return \Magento\Framework\Controller\ResultInterface
      */
@@ -87,7 +86,6 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
 
     /**
      * Create exception in case CSRF validation failed.
-     * Return null if default exception will suffice.
      *
      * @param \Magento\Framework\App\RequestInterface $request
      *
@@ -113,7 +111,6 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
 
     /**
      * Perform custom request validation.
-     * Return null if default validation is needed.
      *
      * @param \Magento\Framework\App\RequestInterface $request
      *

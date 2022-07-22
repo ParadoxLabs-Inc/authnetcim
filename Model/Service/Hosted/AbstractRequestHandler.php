@@ -15,9 +15,6 @@ namespace ParadoxLabs\Authnetcim\Model\Service\Hosted;
 
 use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 
-/**
- * AbstractRequestHandler Class
- */
 abstract class AbstractRequestHandler
 {
     public const HOSTED_ENDPOINTS = [
@@ -36,7 +33,7 @@ abstract class AbstractRequestHandler
     protected $methodFactory;
 
     /**
-     * @var \ParadoxLabs\TokenBase\Api\MethodInterface
+     * @var \ParadoxLabs\Authnetcim\Model\Method
      */
     protected $method;
 
@@ -79,6 +76,8 @@ abstract class AbstractRequestHandler
     }
 
     /**
+     * Get the payment method instance
+     *
      * @return \ParadoxLabs\Authnetcim\Model\Method
      * @throws \Magento\Framework\Exception\LocalizedException
      */
@@ -96,13 +95,15 @@ abstract class AbstractRequestHandler
     }
 
     /**
+     * Get hosted form request parameters and URL
+     *
      * @return array
      */
     public function getParams(): array
     {
         $action = 'customer/addPayment';
         $params = [
-            'token' => $this->getToken(), // TODO: ACH
+            'token' => $this->getToken(),
         ];
 
         $paymentId = $this->getCustomerPaymentId();
@@ -169,8 +170,9 @@ abstract class AbstractRequestHandler
      * Sync the new/edited card from CIM to Magento.
      *
      * @return CardInterface
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function getCard()
+    public function getCard(): CardInterface
     {
         $cardId = $this->getTokenbaseCardId();
 
@@ -179,9 +181,7 @@ abstract class AbstractRequestHandler
             $newestCardProfile = $this->fetchAddedCard();
             $card              = $this->importPaymentProfile($newestCardProfile);
 
-            if ($this->getRequest()->getParam('source') !== 'paymentinfo') {
-                $this->saveCardToQuote($card);
-            }
+            $this->saveCardToQuote($card);
         } else {
             // Card already exists; refresh the payment info from the CIM profile
             $card = $this->cardRepository->getByHash($cardId);
@@ -197,6 +197,8 @@ abstract class AbstractRequestHandler
     }
 
     /**
+     * Get the most recent added card from the current CIM profile.
+     *
      * @return array
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
@@ -204,11 +206,11 @@ abstract class AbstractRequestHandler
      */
     public function fetchAddedCard(): array
     {
+        // Get CIM profile ID
+        $profileId  = $this->getCustomerProfileId();
+
         /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
         $gateway = $this->getMethod()->gateway();
-
-        // Get CIM profile ID
-        $profileId  = $this->getCustomerProfileId($gateway);
 
         // Get CIM profile cards
         $gateway->setParameter('customerProfileId', $profileId);
@@ -237,6 +239,8 @@ abstract class AbstractRequestHandler
     }
 
     /**
+     * Set data from a CIM payment profile onto the given TokenBase Card
+     *
      * @param array $paymentProfile
      * @return CardInterface
      * @throws \Magento\Framework\Exception\AlreadyExistsException
@@ -261,6 +265,8 @@ abstract class AbstractRequestHandler
     }
 
     /**
+     * Update the given TokenBase Card from its source data in Authorize.net CIM.
+     *
      * @param CardInterface $card
      * @return CardInterface
      * @throws \Magento\Framework\Exception\LocalizedException
@@ -294,6 +300,8 @@ abstract class AbstractRequestHandler
     }
 
     /**
+     * Set credit card metadata from a payment profile onto a Card.
+     *
      * @param array $paymentProfile
      * @param CardInterface $card
      * @return CardInterface
@@ -322,35 +330,39 @@ abstract class AbstractRequestHandler
     }
 
     /**
+     * Get the CIM customer profile ID for the current session/context.
+     *
      * @return string
      */
     abstract public function getCustomerProfileId(): string;
 
     /**
+     * Get the CIM payment ID for the current session/context.
+     *
      * @return string|null
      */
     abstract public function getCustomerPaymentId(): ?string;
 
     /**
-     * Get customer email for the payment request.
+     * Get customer email for the current session/context.
      *
      * @return string|null
      */
-    abstract public function getEmail();
+    abstract public function getEmail(): ?string;
 
     /**
-     * Get customer ID for the payment request.
+     * Get customer ID for the current session/context.
      *
-     * @return int|null
+     * @return string|null
      */
-    abstract public function getCustomerId();
+    abstract public function getCustomerId(): ?string;
 
     /**
-     * Get the current store ID, for config scoping.
+     * Get the current store ID, for config loading.
      *
-     * @return string
+     * @return int
      */
-    abstract protected function getStoreId();
+    abstract protected function getStoreId(): int;
 
     /**
      * Get the active payment method code.
@@ -360,11 +372,15 @@ abstract class AbstractRequestHandler
     abstract protected function getMethodCode(): string;
 
     /**
+     * Get the tokenbase card hash for the current session/context.
+     *
      * @return string
      */
     abstract protected function getTokenbaseCardId(): string;
 
     /**
+     * Save the given card to the active quote as the active payment method.
+     *
      * @param CardInterface $card
      * @return void
      */
