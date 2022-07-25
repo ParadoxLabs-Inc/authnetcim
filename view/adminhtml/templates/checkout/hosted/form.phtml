@@ -12,6 +12,7 @@ $storedCards    = $block->getStoredCards();
         "validateForm": false
     },
     "authnetcimHostedForm": {
+        "method": "<?= $code ?>",
         "target": "<?= $code ?>_iframe",
         "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getParams')) ?>",
         "newCardUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getNewCard')) ?>"

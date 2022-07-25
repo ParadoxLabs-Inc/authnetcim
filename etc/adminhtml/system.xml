@@ -223,6 +223,14 @@
                 <field id="title" translate="label" type="text" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
                 </field>
+                <field id="test" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Account Type</label>
+                    <options>
+                        <option label="Sandbox Account">1</option>
+                        <option label="Live Merchant Account">0</option>
+                    </options>
+                    <comment>Test mode must be disabled on the account.</comment>
+                </field>
                 <field id="login" translate="label" type="text" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Api Login ID</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
@@ -232,10 +240,53 @@
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                     <comment>Get these from your Authorize.net account settings.</comment>
                 </field>
-                <field id="test" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Authorize.net Sandbox Account</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>'Yes' only if the API credentials are for a sandbox account. The account must have test mode disabled.</comment>
+                <field id="form_type" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Payment Form Type</label>
+                    <options>
+                        <option label="Inline (deprecated)">0</option>
+                        <option label="Hosted iframe (more secure)">hosted</option>
+                    </options>
+                </field>
+                <field id="heading_hosted" translate="label" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Hosted IFrame Payment Form</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                    <comment>test text</comment>
+                    <attribute type="shared">1</attribute>
+                    <depends>
+                        <field id="form_type">hosted</field>
+                    </depends>
+                </field>
+                <field id="signature_key" translate="label comment" type="obscure" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Signature Key</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment><![CDATA[Required. Find this in Authorize.net at <em>Account &gt; Settings &gt; Security Settings &gt; General Security Settings &gt; API Credentials &amp; Keys</em>.]]></comment>
+                    <depends>
+                        <field id="form_type">hosted</field>
+                    </depends>
+                </field>
+                <field id="accent_color" translate="label comment" type="text" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Accent Color</label>
+                    <comment><![CDATA[Enter a hex color for buttons and borders on the payment form.]]></comment>
+                    <depends>
+                        <field id="form_type">hosted</field>
+                    </depends>
+                </field>
+                <field id="heading_standard" translate="label" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Inline Payment Form</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                    <attribute type="shared">1</attribute>
+                    <depends>
+                        <field id="form_type">0</field>
+                    </depends>
+                </field>
+                <field id="validation_mode" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Validation Type</label>
+                    <source_model>ParadoxLabs\Authnetcim\Model\Source\ValidationType</source_model>
+                    <attribute type="shared">1</attribute>
+                    <comment>'Live' to verify new cards are real before storing. This will incur an extra txn fee.</comment>
+                    <depends>
+                        <field id="form_type">0</field>
+                    </depends>
                 </field>
                 <field id="payment_action" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Payment Action</label>
@@ -247,12 +298,6 @@
                     <label>New Order Status</label>
                     <source_model>ParadoxLabs\TokenBase\Model\Source\OrderStatus</source_model>
                     <comment>Normally 'Pending' if 'Authorize Only' above; 'Processing' if not.</comment>
-                </field>
-                <field id="validation_mode" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
-                    <label>Validation Type</label>
-                    <source_model>ParadoxLabs\Authnetcim\Model\Source\ValidationType</source_model>
-                    <attribute type="shared">1</attribute>
-                    <comment>'Live' to verify new cards are real before storing. This will incur an extra txn fee.</comment>
                 </field>
                 <field id="show_branding" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Show Authorize.net logo</label>
@@ -295,35 +340,29 @@
                     <label>Webhooks</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
                     <attribute type="shared">1</attribute>
+                    <depends>
+                        <field id="form_type">hosted</field>
+                    </depends>
                 </field>
                 <field id="enable_webhooks" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Enable Webhooks</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, Authorize.net transaction changes will automatically synchronize to Magento (when possible). This includes fraud approve/deny, captures, and refunds.</comment>
-                </field>
-                <field id="signature_key" translate="label comment" type="obscure" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Signature Key</label>
-                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                    <comment>Get this from your Authorize.net account settings.</comment>
+                    <depends>
+                        <field id="form_type">hosted</field>
+                    </depends>
                 </field>
                 <field id="validate_and_init" translate="label comment" type="button" showInDefault="1" showInWebsite="1" showInStore="0">
                     <frontend_model>ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ValidateButton</frontend_model>
                     <label></label>
+                    <depends>
+                        <field id="form_type">hosted</field>
+                    </depends>
                 </field>
                 <field id="heading_advanced" translate="label" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Advanced Settings</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
                     <attribute type="shared">1</attribute>
-                </field>
-                <field id="send_shipping_address" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
-                    <label>Send Shipping Address</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>If yes, shipping address will be sent with each transaction. Required for some fraud filters.</comment>
-                </field>
-                <field id="send_line_items" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
-                    <label>Send Line Items</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>If yes, the items will be included with each transaction. May not be desired for some accounting integrations.</comment>
                 </field>
                 <field id="reauthorize_partial_invoice" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Reauthorize on Partial Invoice</label>

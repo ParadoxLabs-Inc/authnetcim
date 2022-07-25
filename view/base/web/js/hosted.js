@@ -20,6 +20,7 @@ define([
 
     $.widget('mage.authnetcimHostedForm', {
         options: {
+            method: 'authnetcim',
             target: null,
             paramUrl: null,
             newCardUrl: null,
@@ -146,11 +147,17 @@ define([
         },
 
         handleCommunication: function(event) {
+            if (!event.data
+                || !event.data.action
+                || this.element.find('#' + this.options.target).is(':visible') === false) {
+                return;
+            }
+
             if (typeof location.origin === 'undefined') {
                 location.origin = location.protocol + '//' + location.host;
             }
 
-            if (event.origin !== location.origin || !event.data || !event.data.action) {
+            if (event.origin !== location.origin) {
                 console.error('Ignored untrusted message from ' + event.origin);
                 return;
             }
@@ -194,6 +201,10 @@ define([
         addAndSelectCard: function(data) {
             this.element.find('#' + this.options.target).trigger('processStop');
 
+            if (data.card.method !== this.options.method) {
+                return;
+            }
+
             var card   = data.card;
             var option = $('<option>');
             option.val(card.id)
@@ -209,7 +220,10 @@ define([
         },
 
         getFormParams: function() {
-            var payload = {};
+            var payload = {
+                'method': this.options.method
+            };
+
             var inputs = this.element.find(':input');
             for (var key = 0; key < inputs.length; key++) {
                 if (inputs[key] === undefined

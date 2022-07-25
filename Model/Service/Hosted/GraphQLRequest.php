@@ -14,6 +14,8 @@
 namespace ParadoxLabs\Authnetcim\Model\Service\Hosted;
 
 use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
+use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider as ConfigProviderAch;
+use ParadoxLabs\Authnetcim\Model\ConfigProvider as ConfigProviderCc;
 use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 
 class GraphQLRequest extends AbstractRequestHandler
@@ -67,7 +69,7 @@ class GraphQLRequest extends AbstractRequestHandler
      *
      * @param \Magento\Framework\UrlInterface $urlBuilder
      * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
-     * @param \ParadoxLabs\TokenBase\Model\Card\Factory $cardFactory
+     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory
      * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
      * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
      * @param \Magento\Framework\HTTP\PhpEnvironment\RemoteAddress $remoteAddress
@@ -78,7 +80,7 @@ class GraphQLRequest extends AbstractRequestHandler
     public function __construct(
         \Magento\Framework\UrlInterface $urlBuilder,
         \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
-        \ParadoxLabs\TokenBase\Model\Card\Factory $cardFactory,
+        \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory,
         \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
         \ParadoxLabs\Authnetcim\Helper\Data $helper,
         \Magento\Framework\HTTP\PhpEnvironment\RemoteAddress $remoteAddress,
@@ -121,6 +123,12 @@ class GraphQLRequest extends AbstractRequestHandler
 
             if ($card instanceof CardInterface) {
                 return (string)$card->getProfileId();
+            }
+        } else {
+            $payment = $this->getQuote()->getPayment();
+
+            if ($payment->hasAdditionalInformation('profile_id')) {
+                return $payment->getAdditionalInformation('profile_id');
             }
         }
 
@@ -264,7 +272,13 @@ class GraphQLRequest extends AbstractRequestHandler
      */
     protected function getMethodCode(): string
     {
-        return $this->graphQlArgs['method'];
+        $methodCode = $this->graphQlArgs['method'];
+
+        if (in_array($methodCode, [ConfigProviderCc::CODE, ConfigProviderAch::CODE], true)) {
+            return $methodCode;
+        }
+
+        return ConfigProviderCc::CODE;
     }
 
     /**
@@ -290,6 +304,7 @@ class GraphQLRequest extends AbstractRequestHandler
         }
 
         $payment = $this->getQuote()->getPayment();
+        $payment->setMethod($this->getMethodCode());
         $method  = $payment->getMethodInstance();
         $method->assignData(new \Magento\Framework\DataObject(['card_id' => $card->getHash()]));
 

@@ -13,6 +13,8 @@
 
 namespace ParadoxLabs\Authnetcim\Model\Service\Hosted;
 
+use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider as ConfigProviderAch;
+use ParadoxLabs\Authnetcim\Model\ConfigProvider as ConfigProviderCc;
 use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 
 class BackendRequest extends AbstractRequestHandler
@@ -42,10 +44,10 @@ class BackendRequest extends AbstractRequestHandler
      *
      * @param \Magento\Framework\UrlInterface $urlBuilder
      * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
-     * @param \ParadoxLabs\TokenBase\Model\Card\Factory $cardFactory
+     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory
      * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
      * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
-     * @param \Magento\Backend\Model\Session\Quote $backendSession
+     * @param \Magento\Backend\Model\Session\Quote $backendSession *Proxy
      * @param \Magento\Framework\App\RequestInterface $request
      * @param \ParadoxLabs\TokenBase\Helper\Data $tokenbaseHelper
      * @param \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
@@ -53,7 +55,7 @@ class BackendRequest extends AbstractRequestHandler
     public function __construct(
         \Magento\Framework\UrlInterface $urlBuilder,
         \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
-        \ParadoxLabs\TokenBase\Model\Card\Factory $cardFactory,
+        \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory,
         \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
         \ParadoxLabs\Authnetcim\Helper\Data $helper,
         \Magento\Backend\Model\Session\Quote $backendSession,
@@ -95,6 +97,12 @@ class BackendRequest extends AbstractRequestHandler
             if ($this->backendSession->getData('authnetcim_profile_id_' . $this->getCustomerId())) {
                 return (string)$this->backendSession->getData('authnetcim_profile_id_' . $this->getCustomerId());
             }
+        } else {
+            $payment = $this->backendSession->getQuote()->getPayment();
+
+            if ($payment->hasAdditionalInformation('profile_id')) {
+                return $payment->getAdditionalInformation('profile_id');
+            }
         }
 
         /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
@@ -106,8 +114,6 @@ class BackendRequest extends AbstractRequestHandler
         $profileId = $gateway->createCustomerProfile();
 
         if ($this->request->getParam('source') !== 'paymentinfo') {
-            $quote   = $this->backendSession->getQuote();
-            $payment = $quote->getPayment();
             $payment->setAdditionalInformation('profile_id', $profileId);
             $this->paymentResource->save($payment);
         } else {
@@ -196,8 +202,13 @@ class BackendRequest extends AbstractRequestHandler
      */
     protected function getMethodCode(): string
     {
-        // TODO: Constrain to allowed methods
-        return (string)$this->request->getParam('method');
+        $methodCode = $this->request->getParam('method');
+
+        if (in_array($methodCode, [ConfigProviderCc::CODE, ConfigProviderAch::CODE], true)) {
+            return $methodCode;
+        }
+
+        return ConfigProviderCc::CODE;
     }
 
     /**
@@ -223,6 +234,7 @@ class BackendRequest extends AbstractRequestHandler
         }
 
         $payment = $this->backendSession->getQuote()->getPayment();
+        $payment->setMethod($this->getMethodCode());
         $method  = $payment->getMethodInstance();
         $method->assignData(new \Magento\Framework\DataObject(['card_id' => $card->getHash()]));
 

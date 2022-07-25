@@ -42,6 +42,10 @@ class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
                 'id'       => $card->getHash(),
                 'label'    => $card->getLabel(),
                 'selected' => false,
+                'new'      => $card->getLastUse() === null,
+                'type'     => $card->getType(),
+                'cc_bin'   => $card->getAdditional('cc_bin'),
+                'cc_last4' => $card->getAdditional('cc_last4'),
             ];
 
             $selected               = $card->getHash();
@@ -56,6 +60,10 @@ class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
             'logoImage'                 => $this->getLogoImage(),
             'achImage'                  => $this->getAchImage(),
             'achAccountTypes'           => $this->getAchAccountTypes(),
+            'requireCcv'                => false,
+            'formType'                  => $this->methods[static::CODE]->getConfigData('form_type'),
+            'paramUrl'                  => $this->urlBuilder->getUrl('authnetcim/hosted/getParams'),
+            'newCardUrl'                => $this->urlBuilder->getUrl('authnetcim/hosted/getNewCard'),
         ];
 
         return $config;

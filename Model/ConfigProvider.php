@@ -133,7 +133,10 @@ class ConfigProvider extends CcGenericConfigProvider
                     'id'       => $card->getHash(),
                     'label'    => $card->getLabel(),
                     'selected' => false,
+                    'new'      => $card->getLastUse() === null,
                     'type'     => $card->getType(),
+                    'cc_bin'   => $card->getAdditional('cc_bin'),
+                    'cc_last4' => $card->getAdditional('cc_last4'),
                 ];
 
                 $selected               = $card->getHash();

@@ -13,6 +13,8 @@
 
 namespace ParadoxLabs\Authnetcim\Model\Service\Hosted;
 
+use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider as ConfigProviderAch;
+use ParadoxLabs\Authnetcim\Model\ConfigProvider as ConfigProviderCc;
 use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 
 class FrontendRequest extends AbstractRequestHandler
@@ -42,18 +44,18 @@ class FrontendRequest extends AbstractRequestHandler
      *
      * @param \Magento\Framework\UrlInterface $urlBuilder
      * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
-     * @param \ParadoxLabs\TokenBase\Model\Card\Factory $cardFactory
+     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory
      * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
      * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
-     * @param \Magento\Checkout\Model\Session $checkoutSession
-     * @param \Magento\Customer\Model\Session $customerSession
+     * @param \Magento\Checkout\Model\Session $checkoutSession *Proxy
+     * @param \Magento\Customer\Model\Session $customerSession *Proxy
      * @param \Magento\Framework\App\RequestInterface $request
      * @param \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
      */
     public function __construct(
         \Magento\Framework\UrlInterface $urlBuilder,
         \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
-        \ParadoxLabs\TokenBase\Model\Card\Factory $cardFactory,
+        \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory,
         \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
         \ParadoxLabs\Authnetcim\Helper\Data $helper,
         \Magento\Checkout\Model\Session $checkoutSession,
@@ -63,7 +65,6 @@ class FrontendRequest extends AbstractRequestHandler
     ) {
         parent::__construct($urlBuilder, $methodFactory, $cardFactory, $cardRepository, $helper);
 
-        // TODO: Proxy sessions
         $this->checkoutSession = $checkoutSession;
         $this->customerSession = $customerSession;
         $this->request = $request;
@@ -78,6 +79,8 @@ class FrontendRequest extends AbstractRequestHandler
      */
     public function getCustomerProfileId(): string
     {
+        $payment = $this->checkoutSession->getQuote()->getPayment();
+
         if ($this->request->getParam('source') === 'paymentinfo') {
             // If we were given a card ID, get the profile ID from that instead of creating new
             $cardId = $this->request->getParam('card_id') ?? $this->request->getParam('id');
@@ -95,6 +98,8 @@ class FrontendRequest extends AbstractRequestHandler
             if ($this->customerSession->getData('authnetcim_profile_id')) {
                 return $this->customerSession->getData('authnetcim_profile_id');
             }
+        } elseif ($payment->hasAdditionalInformation('profile_id')) {
+            return $payment->getAdditionalInformation('profile_id');
         }
 
         /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
@@ -106,8 +111,6 @@ class FrontendRequest extends AbstractRequestHandler
         $profileId = $gateway->createCustomerProfile();
 
         if ($this->request->getParam('source') !== 'paymentinfo') {
-            $quote   = $this->checkoutSession->getQuote();
-            $payment = $quote->getPayment();
             $payment->setAdditionalInformation('profile_id', $profileId);
             $this->paymentResource->save($payment);
         } else {
@@ -193,8 +196,13 @@ class FrontendRequest extends AbstractRequestHandler
      */
     protected function getMethodCode(): string
     {
-        // TODO: Constrain to allowed methods
-        return 'authnetcim';//$this->request->getParam('method');
+        $methodCode = $this->request->getParam('method');
+
+        if (in_array($methodCode, [ConfigProviderCc::CODE, ConfigProviderAch::CODE], true)) {
+            return $methodCode;
+        }
+
+        return ConfigProviderCc::CODE;
     }
 
     /**
@@ -220,6 +228,7 @@ class FrontendRequest extends AbstractRequestHandler
         }
 
         $payment = $this->checkoutSession->getQuote()->getPayment();
+        $payment->setMethod($this->getMethodCode());
         $method  = $payment->getMethodInstance();
         $method->assignData(new \Magento\Framework\DataObject(['card_id' => $card->getHash()]));
 

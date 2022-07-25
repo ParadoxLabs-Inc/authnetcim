@@ -74,9 +74,10 @@ $storedCards    = $block->getStoredCards();
     {
         "#payment_form_<?= $code ?>": {
             "tokenbaseForm": {
-                "code":"<?= $code ?>"
+                "code": "<?= $code ?>"
             },
             "authnetcimHostedForm": {
+                "method": "<?= $code ?>",
                 "target": "<?= $code ?>_iframe",
                 "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getParams')) ?>",
                 "newCardUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getNewCard')) ?>"

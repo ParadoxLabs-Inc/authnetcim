@@ -90,6 +90,7 @@ class SyncHostedForm implements \ParadoxLabs\TokenBase\Model\Api\GraphQL\Resolve
             'card' => [
                 'id' => $card->getHash(),
                 'label' => $card->getLabel(),
+                'method' => $card->getMethod(),
                 'selected' => false,
                 'new' => true,
                 'type' => $card->getType(),

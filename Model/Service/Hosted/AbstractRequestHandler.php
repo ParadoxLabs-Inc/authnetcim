@@ -38,7 +38,7 @@ abstract class AbstractRequestHandler
     protected $method;
 
     /**
-     * @var \ParadoxLabs\TokenBase\Model\Card\Factory
+     * @var \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory
      */
     protected $cardFactory;
 
@@ -64,7 +64,7 @@ abstract class AbstractRequestHandler
     public function __construct(
         \Magento\Framework\UrlInterface $urlBuilder,
         \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
-        \ParadoxLabs\TokenBase\Model\Card\Factory $cardFactory,
+        \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory,
         \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
         \ParadoxLabs\Authnetcim\Helper\Data $helper
     ) {
@@ -152,6 +152,10 @@ abstract class AbstractRequestHandler
         $gateway->setParameter('hostedProfileHeadingBgColor', $method->getConfigData('accent_color'));
         $gateway->setParameter('customerProfileId', $this->getCustomerProfileId());
 
+        if ($this->getMethodCode() === \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider::CODE) {
+            $gateway->setParameter('hostedProfilePaymentOptions', 'showBankAccount');
+        }
+
         $response = $gateway->getHostedProfilePage();
 
         if (!empty($response['messages']['message']['text'])
@@ -190,6 +194,9 @@ abstract class AbstractRequestHandler
                 throw new \Magento\Framework\Exception\LocalizedException(__('Could not load payment profile'));
             }
 
+            $card = $card->getTypeInstance();
+            $card->setData('no_sync', true);
+
             $this->updateCardFromPaymentProfile($card);
         }
 
@@ -224,6 +231,10 @@ abstract class AbstractRequestHandler
             throw new \Magento\Framework\Exception\LocalizedException(__($response['messages']['message']['text']));
         }
 
+        if (!isset($response['profile']['paymentProfiles'])) {
+            throw new \Magento\Framework\Exception\LocalizedException(__('Unable to find payment record.'));
+        }
+
         $newestCard = $response['profile']['paymentProfiles'] ?? [];
         if (!isset($response['profile']['paymentProfiles']['customerPaymentProfileId'])) {
             $paymentProfiles = [];
@@ -249,17 +260,32 @@ abstract class AbstractRequestHandler
      */
     public function importPaymentProfile(array $paymentProfile): CardInterface
     {
+        /** @var \ParadoxLabs\Authnetcim\Model\Card $card */
         $card = $this->cardFactory->create();
         $card->setMethod($this->getMethodCode());
         $card->setCustomerId($this->getCustomerId());
         $card->setCustomerEmail($this->getEmail());
         $card->setActive(true);
-        $card->setProfileId($paymentProfile['customerProfileId']);
+        $card->setProfileId($this->getCustomerProfileId());
         $card->setPaymentId($paymentProfile['customerPaymentProfileId']);
+
+        $card = $card->getTypeInstance();
+        $card->setData('no_sync', true);
 
         $this->setPaymentProfileDataOnCard($paymentProfile, $card);
 
         $this->cardRepository->save($card);
+
+        $this->helper->log(
+            $this->getMethodCode(),
+            sprintf(
+                "Imported card %s (ID %s) from CIM (profile_id '%s', payment_id '%s')",
+                $card->getLabel(),
+                $card->getId(),
+                $card->getProfileId(),
+                $card->getPaymentId()
+            )
+        );
 
         return $card;
     }
@@ -296,6 +322,17 @@ abstract class AbstractRequestHandler
         $this->setPaymentProfileDataOnCard($paymentProfile, $card);
         $this->cardRepository->save($card);
 
+        $this->helper->log(
+            $this->getMethodCode(),
+            sprintf(
+                "Updated card %s (ID %s) from CIM (profile_id '%s', payment_id '%s')",
+                $card->getLabel(),
+                $card->getId(),
+                $paymentProfile['customerProfileId'],
+                $paymentProfile['customerPaymentProfileId']
+            )
+        );
+
         return $card;
     }
 
@@ -308,23 +345,37 @@ abstract class AbstractRequestHandler
      */
     public function setPaymentProfileDataOnCard(array $paymentProfile, CardInterface $card): CardInterface
     {
+        $paymentData = [];
+
         if (isset($paymentProfile['payment']['creditCard'])) {
-            [$yr, $mo] = explode('-', (string)$paymentProfile['payment']['creditCard']['expirationDate'], 2);
-            $day  = date('t', strtotime($yr . '-' . $mo));
-            $type = $this->helper->mapCcTypeToMagento($paymentProfile['payment']['creditCard']['cardType']);
+            $creditCard = $paymentProfile['payment']['creditCard'];
+            [$yr, $mo]  = explode('-', (string)$creditCard['expirationDate'], 2);
+            $day        = date('t', strtotime($yr . '-' . $mo));
+            $type       = $this->helper->mapCcTypeToMagento($creditCard['cardType']);
 
             $paymentData = [
                 'cc_type' => $type,
-                'cc_last4' => substr((string)$paymentProfile['payment']['creditCard']['cardNumber'], -4),
+                'cc_last4' => substr((string)$creditCard['cardNumber'], -4),
                 'cc_exp_year' => $yr,
                 'cc_exp_month' => $mo,
-                'cc_bin' => $paymentProfile['payment']['creditCard']['issuerNumber'],
+                'cc_bin' => $creditCard['issuerNumber'],
             ];
-            $paymentData += $card->getAdditional();
 
-            $card->setData('additional', json_encode($paymentData));
             $card->setData('expires', sprintf('%s-%s-%s 23:59:59', $yr, $mo, $day));
+        } elseif (isset($paymentProfile['payment']['bankAccount'])) {
+            $bankAccount = $paymentProfile['payment']['bankAccount'];
+            $paymentData = [
+                'echeck_account_type' => $bankAccount['accountType'],
+                'echeck_account_name' => $bankAccount['nameOnAccount'],
+                'echeck_bank_name' => $bankAccount['bankName'],
+                'echeck_routing_number_last4' => substr((string)$bankAccount['routingNumber'], -4),
+                'echeck_account_number_last4' => substr((string)$bankAccount['accountNumber'], -4),
+                'cc_last4' => substr((string)$bankAccount['accountNumber'], -4),
+            ];
         }
+
+        $paymentData += (array)$card->getAdditional();
+        $card->setData('additional', json_encode($paymentData));
 
         return $card;
     }

@@ -21,23 +21,27 @@ define(
     ],
     function (ko, $, Component, alert, quote) {
         'use strict';
-        var config=window.checkoutConfig.payment.authnetcim;
+
         return Component.extend({
             defaults: {
                 template: 'ParadoxLabs_Authnetcim/payment/hosted',
-                save: config ? config.canSaveCard && config.defaultSaveCard : false,
-                selectedCard: config ? config.selectedCard : '',
-                storedCards: config ? config.storedCards : {},
-                logoImage: config ? config.logoImage : false,
                 iframeInitialized: false,
                 processingSave: false
             },
 
             initVars: function() {
+                var config=window.checkoutConfig.payment[this.index];
+
                 this.canSaveCard     = config ? config.canSaveCard : false;
                 this.forceSaveCard   = config ? config.forceSaveCard : false;
                 this.defaultSaveCard = config ? config.defaultSaveCard : false;
+                this.storedCards     = ko.observableArray(config ? config.storedCards : null);
+                this.save            = config ? config.canSaveCard && config.defaultSaveCard : false;
+                this.selectedCard    = config ? config.selectedCard : '';
                 this.requireCcv      = config ? config.requireCcv : false;
+                this.paramUrl        = config ? config.paramUrl : null;
+                this.newCardUrl      = config ? config.newCardUrl : null;
+                this.logoImage       = config ? config.logoImage : false;
             },
 
             /**
@@ -79,8 +83,6 @@ define(
                     return false;
                 }, this);
 
-                this.storedCards = ko.observableArray(config.storedCards);
-
                 this.useVault = ko.computed(function() {
                     return this.storedCards().length > 0;
                 }, this);
@@ -88,6 +90,9 @@ define(
                 return this;
             },
 
+            /**
+             * Track billing address changes
+             */
             syncBillingAddress: function() {
                 // Don't progess until the iframe has rendered, we're the active payment method, we have a billing addr.
                 if ($('#' + this.getCode() + '_iframe').length === 0
@@ -101,6 +106,9 @@ define(
                 this.billingAddressLine(this.getAddressLine(quote.billingAddress()));
             },
 
+            /**
+             * Reload tha payment form if circumstances require
+             */
             checkReinitHostedForm: function() {
                 if (this.iframeInitialized === false
                     && (this.selectedCard() === null || this.selectedCard() === undefined)
@@ -111,6 +119,9 @@ define(
                 }
             },
 
+            /**
+             * Reload the payment form when it's expired
+             */
             reloadExpiredHostedForm: function() {
                 if (this.iframeInitialized === true) {
                     // If form has expired (15 minutes), and is still being displayed, force reload it.
@@ -118,13 +129,16 @@ define(
                 }
             },
 
+            /**
+             * Clear and reload the payment form
+             */
             initHostedForm: function() {
                 // Clear and spinner the CC form while we load new params
                 $('#' + this.getCode() + '_iframe').prop('src', 'about:blank')
                     .trigger('processStart');
 
                 $.post({
-                    url: config.paramUrl,
+                    url: this.paramUrl,
                     dataType: 'json',
                     data: this.getFormParams(),
                     global: false,
@@ -133,9 +147,16 @@ define(
                 });
             },
 
+            /**
+             * Post data to iframe to load the hosted payment form
+             * @param data
+             */
             loadForm: function(data) {
+                var iframe = $('#' + this.getCode() + '_iframe');
+                iframe[0].contentWindow.name = iframe.attr('name');
+
                 var form = document.createElement('form');
-                form.target = this.getCode() + '_iframe';
+                form.target = iframe.attr('name');
                 form.method = 'post';
                 form.action = data.iframeAction;
 
@@ -150,11 +171,18 @@ define(
                 document.body.appendChild(form);
                 form.submit();
 
+                // Reload the hosted form when it expires
                 setTimeout(this.reloadExpiredHostedForm.bind(this), 15*60*1000);
 
-                $('#' + this.getCode() + '_iframe').trigger('processStop');
+                iframe.trigger('processStop');
             },
 
+            /**
+             * Display error message when AJAX request fails
+             * @param jqXHR
+             * @param status
+             * @param error
+             */
             handleAjaxError: function(jqXHR, status, error) {
                 var message = $.mage.__('A server error occurred. Please try again.');
 
@@ -179,6 +207,9 @@ define(
                 }
             },
 
+            /**
+             * Listen for messages from the payment form iframe
+             */
             bindCommunicator: function() {
                 window.addEventListener(
                     'message',
@@ -187,12 +218,22 @@ define(
                 );
             },
 
+            /**
+             * Validate and process a message from the payment form
+             * @param event
+             */
             handleCommunication: function(event) {
+                if (!event.data
+                    || !event.data.action
+                    || $('#' + this.getCode() + '_iframe').is(':visible') === false) {
+                    return;
+                }
+
                 if (typeof location.origin === 'undefined') {
                     location.origin = location.protocol + '//' + location.host;
                 }
 
-                if (event.origin !== location.origin || !event.data || !event.data.action) {
+                if (event.origin !== location.origin) {
                     console.error('Ignored untrusted message from ' + event.origin);
                     return;
                 }
@@ -211,10 +252,18 @@ define(
                 }
             },
 
+            /**
+             * Reinitialize the form when canceled
+             * @param response
+             */
             handleCancel: function(response) {
                 this.initHostedForm();
             },
 
+            /**
+             * Fetch new card details upon payment form completion
+             * @param event
+             */
             handleSave: function(event) {
                 if (this.processingSave) {
                     console.log('Ignored duplicate handleSave');
@@ -225,7 +274,7 @@ define(
                 $('#' + this.getCode() + '_iframe').trigger('processStart');
 
                 $.post({
-                    url: config.newCardUrl,
+                    url: this.newCardUrl,
                     dataType: 'json',
                     data: this.getFormParams(),
                     global: false,
@@ -234,15 +283,32 @@ define(
                 });
             },
 
+            /**
+             * Add and select new card on the UI after completing the payment form
+             * @param data
+             */
             addAndSelectCard: function(data) {
                 $('#' + this.getCode() + '_iframe').trigger('processStop');
+
+                if (data.card.method !== this.getCode()) {
+                    return;
+                }
 
                 this.storedCards.push(data.card);
                 this.selectedCard(data.card.id);
                 this.iframeInitialized = false;
                 this.processingSave = false;
+
+                if (this.hasVerification()) {
+                    $('#' + this.getCode() + '-cc-cid').trigger('focus');
+                }
             },
 
+            /**
+             * Get stringified address from address object
+             * @param address
+             * @returns {string|null}
+             */
             getAddressLine: function(address) {
                 if (address === null) {
                     return null;
@@ -262,6 +328,10 @@ define(
                        + address.telephone;
             },
 
+            /**
+             * Get AJAX request parameters from form input
+             * @returns {{}}
+             */
             getFormParams: function() {
                 var billingAddress = _.pick(
                     quote.billingAddress(),
@@ -293,10 +363,18 @@ define(
                 }
             },
 
+            /**
+             * Get session form key
+             * @returns {*|string|jQuery}
+             */
             getFormKey: function() {
                 return $('input[name="form_key"]').val();
             },
 
+            /**
+             * Check for CVV requirement
+             * @returns {*}
+             */
             hasVerification: function () {
                 return this.requireCcv();
             },

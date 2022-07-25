@@ -168,11 +168,17 @@ define([
         },
 
         handleCommunication: function(event) {
+            if (!event.data
+                || !event.data.action
+                || this.element.find('#' + this.options.target).is(':visible') === false) {
+                return;
+            }
+
             if (typeof location.origin === 'undefined') {
                 location.origin = location.protocol + '//' + location.host;
             }
 
-            if (event.origin !== location.origin || !event.data || !event.data.action) {
+            if (event.origin !== location.origin) {
                 console.error('Ignored untrusted message from ' + event.origin);
                 return;
             }

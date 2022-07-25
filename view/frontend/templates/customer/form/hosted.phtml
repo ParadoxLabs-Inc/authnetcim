@@ -9,7 +9,7 @@
         <?php if ($block->isEdit()): ?>
             <?= $block->escapeHtml(__('Editing %1', $block->getCard()->getLabel())); ?>
         <?php else: ?>
-            <?= $block->escapeHtml(__('Add A Credit Card')); ?>
+            <?= $block->escapeHtml(__($block->getData('default_title'))); ?>
         <?php endif; ?>
     </h2>
 </div>
@@ -125,9 +125,10 @@
         "#form-validate": {
             "validation": {},
             "authnetcimHostedPaymentInfo": {
+                "method": "<?= $code ?>",
                 "target": "<?= $code ?>_iframe",
-                "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getParams')) ?>",
-                "updateCardUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/updateCard')) ?>",
+                "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getParams', ['method' => $code])) ?>",
+                "updateCardUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/updateCard', ['method' => $code])) ?>",
                 "successUrl": "<?= $block->escapeJs($block->getUrl('*/*', ['method' => $code])) ?>"
             }
         },

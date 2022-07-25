@@ -65,6 +65,7 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
                 'card' => [
                     'id' => $card->getHash(),
                     'label' => $card->getLabel(),
+                    'method' => $card->getMethod(),
                     'selected' => false,
                     'new' => true,
                     'type' => $card->getType(),

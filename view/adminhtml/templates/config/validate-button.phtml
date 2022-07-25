@@ -12,6 +12,7 @@
             $.post({
                 url: '<?= $block->escapeUrl($block->getAjaxUrl()) ?>',
                 data: {
+                    // TODO: Does this work for ACH?
                     apiLoginId: $('input[name="groups[authnetcim][fields][login][value]"]').val(),
                     transactionKey: $('input[name="groups[authnetcim][fields][trans_key][value]"]').val(),
                     signatureKey: $('input[name="groups[authnetcim][fields][signature_key][value]"]').val(),

@@ -9,7 +9,7 @@
         <?php if ($block->isEdit()): ?>
             <?= $block->escapeHtml(__('Editing %1', $block->getCard()->getLabel())) ?>
         <?php else: ?>
-            <?= $block->escapeHtml(__('Add A Credit Card')) ?>
+            <?= $block->escapeHtml(__($block->getData('default_title'))) ?>
         <?php endif; ?>
     </h2>
 </div>
@@ -20,9 +20,10 @@
         "ccTypeContainer": ".credit-card-types"
     },
     "authnetcimHostedPaymentInfo": {
+        "method": "<?= $code ?>",
         "target": "<?= $code ?>_iframe",
-        "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getParams', ['id' => $this->getRequest()->getParam('id')])) ?>",
-        "updateCardUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/updateCard', ['id' => $this->getRequest()->getParam('id')])) ?>",
+        "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getParams', ['id' => $this->getRequest()->getParam('id'), 'method' => $code])) ?>",
+        "updateCardUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/updateCard', ['id' => $this->getRequest()->getParam('id'), 'method' => $code])) ?>",
         "fieldPrefix": "#<?= $code ?>-"
     }
 }'>
