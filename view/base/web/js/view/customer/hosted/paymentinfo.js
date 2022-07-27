@@ -27,6 +27,10 @@ define([
             fieldPrefix: '#'
         },
 
+        /**
+         * Bind and initialize component
+         * @private
+         */
         _create: function() {
             this.element.find('#submit-address').on('click', this.saveAddress.bind(this));
             this.element.find('#edit-address').on('click', this.editAddress.bind(this));
@@ -34,11 +38,17 @@ define([
             this.bindCommunicator();
         },
 
+        /**
+         * Edit billing address
+         */
         editAddress: function() {
             this.element.find('.address').show();
             this.element.find('.payment').hide();
         },
 
+        /**
+         * Confirm billing address
+         */
         saveAddress: function() {
             if (this.element.valid() === false) {
                 return;
@@ -54,6 +64,9 @@ define([
             this.initHostedForm();
         },
 
+        /**
+         * Draw address inputs to text
+         */
         renderAddress: function() {
             var address = $(this.options.fieldPrefix + 'firstname').val() + ' ';
             address += $(this.options.fieldPrefix + 'lastname').val() + '<br />';
@@ -77,6 +90,9 @@ define([
             this.element.find('address').html(address);
         },
 
+        /**
+         * Rescroll window upon address confirmation, if needed
+         */
         fixScroll: function() {
             var topPosition = $('fieldset.payment:first').position().top;
 
@@ -85,6 +101,9 @@ define([
             }
         },
 
+        /**
+         * Clear and reload the payment form
+         */
         initHostedForm: function() {
             if (this.element.find('#' + this.options.target).is(':visible') === false) {
                 return;
@@ -106,6 +125,10 @@ define([
             });
         },
 
+        /**
+         * Post data to iframe to load the hosted payment form
+         * @param data
+         */
         loadHostedForm: function(data) {
             var form = document.createElement('form');
             form.target = this.options.target;
@@ -129,6 +152,12 @@ define([
             this.element.find('#' + this.options.target).trigger('processStop');
         },
 
+        /**
+         * Display error message when AJAX request fails
+         * @param jqXHR
+         * @param status
+         * @param error
+         */
         handleAjaxError: function(jqXHR, status, error) {
             this.processingSave = false;
             this.element.find('#' + this.options.target).trigger('processStop');
@@ -153,6 +182,9 @@ define([
             }
         },
 
+        /**
+         * Listen for messages from the payment form iframe
+         */
         bindCommunicator: function() {
             window.removeEventListener(
                 'message',
@@ -167,6 +199,10 @@ define([
             );
         },
 
+        /**
+         * Validate and process a message from the payment form
+         * @param event
+         */
         handleCommunication: function(event) {
             if (!event.data
                 || !event.data.action
@@ -192,15 +228,23 @@ define([
                     break;
                 case 'resizeWindow':
                     var height = Math.ceil(parseFloat(event.data.height));
-                    this.element.find('#' + this.options.target).height(height + 'px');
+                    this.element.find(this.options.fieldPrefix + this.options.target).height(height + 'px');
                     break;
             }
         },
 
+        /**
+         * Reinitialize the form when canceled
+         * @param response
+         */
         handleCancel: function(response) {
             this.initHostedForm();
         },
 
+        /**
+         * Fetch new card details upon payment form completion
+         * @param event
+         */
         handleSave: function(event) {
             if (this.processingSave || this.element.find('#' + this.options.target).is(':visible') === false) {
                 return;
@@ -219,6 +263,10 @@ define([
             });
         },
 
+        /**
+         * Complete card edit process; save address to card
+         * @param data
+         */
         updateCard: function(response) {
             this.processingSave = false;
 

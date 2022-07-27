@@ -29,6 +29,10 @@ define([
 
         processingSave: false,
 
+        /**
+         * Bind and initialize component
+         * @private
+         */
         _create: function() {
             this.element.on('change', this.options.cardSelector, this.handleCardSelectChange.bind(this));
 
@@ -37,6 +41,9 @@ define([
             this.handleCardSelectChange();
         },
 
+        /**
+         * Reload the payment form/toggle fields if circumstances require
+         */
         handleCardSelectChange: function() {
             if (this.element.find(this.options.cardSelector).val() !== '') {
                 this.element.find('div.cvv').show();
@@ -55,6 +62,9 @@ define([
             this.initHostedForm();
         },
 
+        /**
+         * Clear and reload the payment form
+         */
         initHostedForm: function() {
             if (this.element.find('#' + this.options.target).is(':visible') === false) {
                 return;
@@ -76,11 +86,18 @@ define([
             });
         },
 
+        /**
+         * Reload the payment form when it's expired
+         */
         reloadExpiredHostedForm: function() {
             // If form has expired (15 minutes), and is still being displayed, force reload it.
             this.initHostedForm();
         },
 
+        /**
+         * Post data to iframe to load the hosted payment form
+         * @param data
+         */
         loadHostedForm: function(data, status, jqXHR) {
             if (data.iframeAction === undefined) {
                 return this.handleAjaxError(jqXHR, status, data);
@@ -107,6 +124,12 @@ define([
             this.element.find('#' + this.options.target).trigger('processStop');
         },
 
+        /**
+         * Display error message when AJAX request fails
+         * @param jqXHR
+         * @param status
+         * @param error
+         */
         handleAjaxError: function(jqXHR, status, error) {
             var iframe  = this.element.find('#' + this.options.target);
             var message = $.mage.__('A server error occurred. Please try again.');
@@ -138,6 +161,9 @@ define([
             }
         },
 
+        /**
+         * Listen for messages from the payment form iframe
+         */
         bindCommunicator: function() {
             window.addEventListener(
                 'message',
@@ -146,6 +172,10 @@ define([
             );
         },
 
+        /**
+         * Validate and process a message from the payment form
+         * @param event
+         */
         handleCommunication: function(event) {
             if (!event.data
                 || !event.data.action
@@ -176,10 +206,18 @@ define([
             }
         },
 
+        /**
+         * Reinitialize the form when canceled
+         * @param response
+         */
         handleCancel: function(response) {
             this.initHostedForm();
         },
 
+        /**
+         * Fetch new card details upon payment form completion
+         * @param event
+         */
         handleSave: function(event) {
             if (this.processingSave || this.element.find('#' + this.options.target).is(':visible') === false) {
                 return;
@@ -198,6 +236,10 @@ define([
             });
         },
 
+        /**
+         * Add and select new card on the UI after completing the payment form
+         * @param data
+         */
         addAndSelectCard: function(data) {
             this.element.find('#' + this.options.target).trigger('processStop');
 
@@ -217,8 +259,16 @@ define([
             this.element.find(this.options.cardSelector).append(option).val(card.id).trigger('change');
 
             this.processingSave = false;
+
+            if (this.element.find('#' + this.options.method + '-cc-cid').length > 0) {
+                this.element.find('#' + this.options.method + '-cc-cid').trigger('focus');
+            }
         },
 
+        /**
+         * Get AJAX request parameters from form input
+         * @returns {{}}
+         */
         getFormParams: function() {
             var payload = {
                 'method': this.options.method

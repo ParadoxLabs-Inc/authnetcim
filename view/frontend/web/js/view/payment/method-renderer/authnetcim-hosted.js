@@ -107,7 +107,7 @@ define(
             },
 
             /**
-             * Reload tha payment form if circumstances require
+             * Reload the payment form if circumstances require
              */
             checkReinitHostedForm: function() {
                 if (this.iframeInitialized === false

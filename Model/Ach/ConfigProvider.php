@@ -38,6 +38,8 @@ class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
 
         /** @var \ParadoxLabs\TokenBase\Model\Card $card */
         foreach ($cards as $card) {
+            $card = $card->getTypeInstance();
+
             $storedCardOptions[]    = [
                 'id'       => $card->getHash(),
                 'label'    => $card->getLabel(),
