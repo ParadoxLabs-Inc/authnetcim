@@ -42,28 +42,20 @@ class FrontendRequest extends AbstractRequestHandler
     /**
      * AbstractRequestHandler constructor.
      *
-     * @param \Magento\Framework\UrlInterface $urlBuilder
-     * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
-     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory
-     * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
-     * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
+     * @param \ParadoxLabs\Authnetcim\Model\Service\Hosted\Context $context
      * @param \Magento\Checkout\Model\Session $checkoutSession *Proxy
      * @param \Magento\Customer\Model\Session $customerSession *Proxy
      * @param \Magento\Framework\App\RequestInterface $request
      * @param \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
      */
     public function __construct(
-        \Magento\Framework\UrlInterface $urlBuilder,
-        \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
-        \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory,
-        \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
-        \ParadoxLabs\Authnetcim\Helper\Data $helper,
+        Context $context,
         \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Customer\Model\Session $customerSession,
         \Magento\Framework\App\RequestInterface $request,
         \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
     ) {
-        parent::__construct($urlBuilder, $methodFactory, $cardFactory, $cardRepository, $helper);
+        parent::__construct($context);
 
         $this->checkoutSession = $checkoutSession;
         $this->customerSession = $customerSession;

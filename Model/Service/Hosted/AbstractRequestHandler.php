@@ -23,7 +23,7 @@ abstract class AbstractRequestHandler
     ];
 
     /**
-     * @var \Magento\Framework\UrlInterface
+     * @var \Magento\Framework\Url
      */
     protected $urlBuilder;
 
@@ -31,11 +31,6 @@ abstract class AbstractRequestHandler
      * @var \ParadoxLabs\TokenBase\Model\Method\Factory
      */
     protected $methodFactory;
-
-    /**
-     * @var \ParadoxLabs\Authnetcim\Model\Method
-     */
-    protected $method;
 
     /**
      * @var \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory
@@ -53,26 +48,23 @@ abstract class AbstractRequestHandler
     protected $helper;
 
     /**
+     * @var \ParadoxLabs\Authnetcim\Model\Method
+     */
+    protected $method;
+
+    /**
      * AbstractRequestHandler constructor.
      *
-     * @param \Magento\Framework\UrlInterface $urlBuilder
-     * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
-     * @param \ParadoxLabs\TokenBase\Model\Card\Factory $cardFactory
-     * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
-     * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
+     * @param \ParadoxLabs\Authnetcim\Model\Service\Hosted\Context $context
      */
     public function __construct(
-        \Magento\Framework\UrlInterface $urlBuilder,
-        \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
-        \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory,
-        \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
-        \ParadoxLabs\Authnetcim\Helper\Data $helper
+        Context $context
     ) {
-        $this->urlBuilder = $urlBuilder;
-        $this->methodFactory = $methodFactory;
-        $this->cardFactory = $cardFactory;
-        $this->cardRepository = $cardRepository;
-        $this->helper = $helper;
+        $this->urlBuilder = $context->getUrlBuilder();
+        $this->methodFactory = $context->getMethodFactory();
+        $this->cardFactory = $context->getCardFactory();
+        $this->cardRepository = $context->getCardRepository();
+        $this->helper = $context->getHelper();
     }
 
     /**

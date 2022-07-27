@@ -20,7 +20,8 @@ use Magento\Backend\Block\Widget\Button;
 class ValidateButton extends Field
 {
     protected $_template = 'ParadoxLabs_Authnetcim::config/validate-button.phtml';
-    protected $buttonId = 'authnetcim_validate_button';
+    protected $groupCode = 'authnetcim';
+    protected $buttonId = 'validate_button';
 
     /**
      * Remove scope label
@@ -55,7 +56,7 @@ class ValidateButton extends Field
      */
     public function getAjaxUrl()
     {
-        return $this->getUrl('authnetcim/system_config/initWebhooks');
+        return $this->getUrl('authnetcim/system_config/initWebhooks', ['method' => $this->getGroupCode()]);
     }
 
     /**
@@ -79,6 +80,16 @@ class ValidateButton extends Field
      */
     public function getButtonId()
     {
-        return $this->buttonId;
+        return $this->getGroupCode() . '_' . $this->buttonId;
+    }
+
+    /**
+     * Get setting group code
+     *
+     * @return mixed
+     */
+    public function getGroupCode()
+    {
+        return $this->groupCode;
     }
 }

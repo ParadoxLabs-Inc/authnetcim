@@ -35,7 +35,7 @@
                 <reauthorize_partial_invoice>1</reauthorize_partial_invoice>
                 <savecard_opt_out>1</savecard_opt_out>
                 <verify_ssl>1</verify_ssl>
-                <acceptjs>1</acceptjs> <!-- TODO: Default 0 for new installs -->
+                <acceptjs>0</acceptjs>
                 <enable_webhooks>0</enable_webhooks>
                 <accent_color>#1979C3</accent_color>
                 <client_key />
@@ -73,7 +73,7 @@
                 <model>ParadoxLabs\Authnetcim\Gateway\Ach\VirtualFacade</model>
                 <card_model>ParadoxLabs\Authnetcim\Model\Ach\Card</card_model>
                 <method_model>ParadoxLabs\Authnetcim\Model\Ach\Method</method_model>
-                <form_type>0</form_type> <!-- TODO: Default hosted for new installs -->
+                <form_type>hosted</form_type>
                 <accent_color>#1979C3</accent_color>
                 <order_status>pending</order_status>
                 <payment_action>authorize</payment_action>

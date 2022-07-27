@@ -26,9 +26,19 @@ class GraphQLRequest extends AbstractRequestHandler
     protected $remoteAddress;
 
     /**
-     * @var \Magento\Store\Model\StoreManagerInterface
+     * @var \Magento\Customer\Api\CustomerRepositoryInterface
      */
-    protected $storeManager;
+    protected $customerRepository;
+
+    /**
+     * @var \ParadoxLabs\TokenBase\Model\Api\GraphQL
+     */
+    protected $graphQL;
+
+    /**
+     * @var \Magento\Quote\Model\ResourceModel\Quote\Payment
+     */
+    protected $paymentResource;
 
     /**
      * @var \Magento\GraphQl\Model\Query\Resolver\Context
@@ -41,54 +51,32 @@ class GraphQLRequest extends AbstractRequestHandler
     protected $graphQlArgs;
 
     /**
-     * @var \Magento\Customer\Api\CustomerRepositoryInterface
-     */
-    protected $customerRepository;
-
-    /**
      * @var \Magento\Quote\Api\Data\CartInterface
      */
     protected $quote;
 
     /**
-     * @var \ParadoxLabs\TokenBase\Model\Api\GraphQL
-     */
-    protected $graphQL;
-
-    /**
      * @var string
      */
     protected $profileId;
-    /**
-     * @var \Magento\Quote\Model\ResourceModel\Quote\Payment
-     */
-    protected $paymentResource;
 
     /**
      * GraphQLRequest constructor.
      *
-     * @param \Magento\Framework\UrlInterface $urlBuilder
-     * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
-     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory
-     * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
-     * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
+     * @param \ParadoxLabs\Authnetcim\Model\Service\Hosted\Context $context
      * @param \Magento\Framework\HTTP\PhpEnvironment\RemoteAddress $remoteAddress
      * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
      * @param \ParadoxLabs\TokenBase\Model\Api\GraphQL $graphQL
      * @param \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
      */
     public function __construct(
-        \Magento\Framework\UrlInterface $urlBuilder,
-        \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
-        \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory,
-        \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
-        \ParadoxLabs\Authnetcim\Helper\Data $helper,
+        Context $context,
         \Magento\Framework\HTTP\PhpEnvironment\RemoteAddress $remoteAddress,
         \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
         \ParadoxLabs\TokenBase\Model\Api\GraphQL $graphQL,
         \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
     ) {
-        parent::__construct($urlBuilder, $methodFactory, $cardFactory, $cardRepository, $helper);
+        parent::__construct($context);
 
         $this->remoteAddress = $remoteAddress;
         $this->customerRepository = $customerRepository;
@@ -262,7 +250,7 @@ class GraphQLRequest extends AbstractRequestHandler
      */
     protected function getStoreId(): int
     {
-        return (int)$this->storeManager->getStore()->getId();
+        return (int)$this->graphQlContext->getExtensionAttributes()->getStore()->getId();
     }
 
     /**
@@ -320,7 +308,7 @@ class GraphQLRequest extends AbstractRequestHandler
      */
     protected function validateAndSetProfileId(): void
     {
-        $profileId = $this->graphQlArgs['iframeSessionId'];
+        $profileId = $this->graphQlArgs['iframeSessionId'] ?? null;
 
         if (empty($profileId)) {
             return;

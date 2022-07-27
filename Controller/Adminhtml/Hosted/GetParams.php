@@ -71,7 +71,7 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
      */
     public function execute()
     {
-        $this->getCustomer();
+        $this->initCustomer();
 
         /** @var \Magento\Framework\Controller\Result\Json $result */
         $result = $this->resultFactory->create(ResultFactory::TYPE_JSON);
@@ -130,19 +130,30 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
     /**
      * Get current customer model.
      *
-     * @return \Magento\Customer\Api\Data\CustomerInterface
+     * @return void
      */
-    protected function getCustomer()
+    protected function initCustomer()
     {
         if ($this->registry->registry('current_customer')) {
-            return $this->registry->registry('current_customer');
+            return;
         }
 
-        $customerId = (int)$this->getRequest()->getParam('id');
-        $customer   = $this->customerRepository->getById($customerId);
+        // Take from request if given (for account card management)
+        $customerId = $this->getRequest()->getParam('id');
 
-        $this->registry->register('current_customer', $customer);
+        if ($customerId === null) {
+            // Otherwise, defer to TokenBase logic (for admin ordering)
+            $customerId = $this->hostedForm->getCustomerId();
+        }
 
-        return $customer;
+        if ($customerId > 0) {
+            try {
+                $customer = $this->customerRepository->getById($customerId);
+
+                $this->registry->register('current_customer', $customer);
+            } catch (\Magento\Framework\Exception\NoSuchEntityException $exception) {
+                // Ignore 'no such customer' errors, remainder code will handle accordingly.
+            }
+        }
     }
 }

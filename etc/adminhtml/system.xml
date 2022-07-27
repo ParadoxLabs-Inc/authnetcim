@@ -53,14 +53,6 @@
                         <field id="acceptjs">0</field>
                     </depends>
                 </field>
-                <field id="signature_key" translate="label comment" type="obscure" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Signature Key</label>
-                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                    <comment><![CDATA[Required. Find this in Authorize.net at <em>Account &gt; Settings &gt; Security Settings &gt; General Security Settings &gt; API Credentials &amp; Keys</em>.]]></comment>
-                    <depends>
-                        <field id="acceptjs">0</field>
-                    </depends>
-                </field>
                 <field id="accent_color" translate="label comment" type="text" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Accent Color</label>
                     <comment><![CDATA[Enter a hex color for buttons and borders on the payment form.]]></comment>
@@ -157,23 +149,25 @@
                     <label>Webhooks</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
                     <attribute type="shared">1</attribute>
-                    <depends>
-                        <field id="acceptjs">0</field>
-                    </depends>
                 </field>
                 <field id="enable_webhooks" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Enable Webhooks</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, Authorize.net transaction changes will automatically synchronize to Magento (when possible). This includes fraud approve/deny, captures, and refunds. If you don't do 'hold for review', and process all transactions through Magento, you don't need webhooks. See the user manual for more details and constraints.</comment>
+                </field>
+                <field id="signature_key" translate="label comment" type="obscure" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Signature Key</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment><![CDATA[Required. Find this in Authorize.net at <em>Account &gt; Settings &gt; Security Settings &gt; General Security Settings &gt; API Credentials &amp; Keys</em>.]]></comment>
                     <depends>
-                        <field id="acceptjs">0</field>
+                        <field id="enable_webhooks">1</field>
                     </depends>
                 </field>
                 <field id="validate_and_init" translate="label comment" type="button" showInDefault="1" showInWebsite="1" showInStore="0">
                     <frontend_model>ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ValidateButton</frontend_model>
                     <label></label>
                     <depends>
-                        <field id="acceptjs">0</field>
+                        <field id="enable_webhooks">1</field>
                     </depends>
                 </field>
                 <field id="heading_advanced" translate="label" showInDefault="1" showInWebsite="1" showInStore="0">
@@ -256,14 +250,6 @@
                         <field id="form_type">hosted</field>
                     </depends>
                 </field>
-                <field id="signature_key" translate="label comment" type="obscure" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Signature Key</label>
-                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                    <comment><![CDATA[Required. Find this in Authorize.net at <em>Account &gt; Settings &gt; Security Settings &gt; General Security Settings &gt; API Credentials &amp; Keys</em>.]]></comment>
-                    <depends>
-                        <field id="form_type">hosted</field>
-                    </depends>
-                </field>
                 <field id="accent_color" translate="label comment" type="text" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Accent Color</label>
                     <comment><![CDATA[Enter a hex color for buttons and borders on the payment form.]]></comment>
@@ -340,23 +326,25 @@
                     <label>Webhooks</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
                     <attribute type="shared">1</attribute>
-                    <depends>
-                        <field id="form_type">hosted</field>
-                    </depends>
                 </field>
                 <field id="enable_webhooks" translate="label comment" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Enable Webhooks</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, Authorize.net transaction changes will automatically synchronize to Magento (when possible). This includes fraud approve/deny, captures, and refunds.</comment>
+                </field>
+                <field id="signature_key" translate="label comment" type="obscure" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Signature Key</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment><![CDATA[Required. Find this in Authorize.net at <em>Account &gt; Settings &gt; Security Settings &gt; General Security Settings &gt; API Credentials &amp; Keys</em>.]]></comment>
                     <depends>
-                        <field id="form_type">hosted</field>
+                        <field id="enable_webhooks">1</field>
                     </depends>
                 </field>
                 <field id="validate_and_init" translate="label comment" type="button" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <frontend_model>ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ValidateButton</frontend_model>
+                    <frontend_model>ParadoxLabs\Authnetcim\Block\Adminhtml\Config\AchValidateButton</frontend_model>
                     <label></label>
                     <depends>
-                        <field id="form_type">hosted</field>
+                        <field id="enable_webhooks">1</field>
                     </depends>
                 </field>
                 <field id="heading_advanced" translate="label" showInDefault="1" showInWebsite="1" showInStore="0">

@@ -42,28 +42,20 @@ class BackendRequest extends AbstractRequestHandler
     /**
      * AbstractRequestHandler constructor.
      *
-     * @param \Magento\Framework\UrlInterface $urlBuilder
-     * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
-     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory
-     * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
-     * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
+     * @param \ParadoxLabs\Authnetcim\Model\Service\Hosted\Context $context
      * @param \Magento\Backend\Model\Session\Quote $backendSession *Proxy
      * @param \Magento\Framework\App\RequestInterface $request
      * @param \ParadoxLabs\TokenBase\Helper\Data $tokenbaseHelper
      * @param \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
      */
     public function __construct(
-        \Magento\Framework\UrlInterface $urlBuilder,
-        \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
-        \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory,
-        \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
-        \ParadoxLabs\Authnetcim\Helper\Data $helper,
+        Context $context,
         \Magento\Backend\Model\Session\Quote $backendSession,
         \Magento\Framework\App\RequestInterface $request,
         \ParadoxLabs\TokenBase\Helper\Data $tokenbaseHelper,
         \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
     ) {
-        parent::__construct($urlBuilder, $methodFactory, $cardFactory, $cardRepository, $helper);
+        parent::__construct($context);
 
         $this->backendSession = $backendSession;
         $this->request = $request;
