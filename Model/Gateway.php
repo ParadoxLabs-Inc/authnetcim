@@ -382,7 +382,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $maskFour = ['cardNumber', 'name', 'transactionKey', 'routingNumber', 'accountNumber'];
 
         foreach ($maskAll as $val) {
-            $string = preg_replace('#' . $val . '>(.+?)</' . $val . '#', $val . '>XXX</' . $val, $string);
+            $string = preg_replace('#' . $val . '>(.+?)</' . $val . '#', $val . '>XXX</' . $val, (string)$string);
         }
 
         foreach ($maskFour as $val) {
@@ -953,7 +953,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
              * Handle duplicate card errors. Painful process.
              */
             if (empty($paymentId)) {
-                $paymentId = preg_replace('/[^0-9]/', '', $text);
+                $paymentId = preg_replace('/[^0-9]/', '', (string)$text);
             }
 
             /**
