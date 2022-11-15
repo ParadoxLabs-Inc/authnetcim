@@ -183,8 +183,6 @@ define(
             },
 
             placeOrder: function (data, event) {
-                this.isPlaceOrderActionAllowed(false);
-
                 if (this.selectedCard() || this.acceptJsValue() || !this.useAcceptJs()) {
                     return this._super(data, event);
                 } else {
