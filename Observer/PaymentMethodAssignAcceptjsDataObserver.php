@@ -76,6 +76,10 @@ class PaymentMethodAssignAcceptjsDataObserver implements \Magento\Framework\Even
             if ($method->getConfigData('can_store_bin') == 1) {
                 $payment->setAdditionalInformation('cc_bin', $data->getData('cc_bin'));
             }
+
+            if (empty($data->getData('card_id'))) {
+                $payment->setData('tokenbase_id', null);
+            }
         }
     }
 }
