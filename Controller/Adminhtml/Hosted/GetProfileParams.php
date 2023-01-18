@@ -18,7 +18,7 @@ use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\CsrfAwareActionInterface;
 use Magento\Framework\Controller\ResultFactory;
 
-class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostActionInterface
+class GetProfileParams extends Action implements CsrfAwareActionInterface, HttpPostActionInterface
 {
     /**
      * @var \Magento\Framework\Data\Form\FormKey\Validator
@@ -31,50 +31,55 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
     protected $hostedForm;
 
     /**
-     * GetNewCard constructor.
+     * @var \Magento\Framework\Registry
+     */
+    protected $registry;
+
+    /**
+     * @var \Magento\Customer\Api\CustomerRepositoryInterface
+     */
+    protected $customerRepository;
+
+    /**
+     * GetParams constructor.
      *
      * @param \Magento\Backend\App\Action\Context $context
      * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey
      * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\BackendRequest $hostedForm
+     * @param \Magento\Framework\Registry $registry
+     * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
      */
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
         \Magento\Framework\Data\Form\FormKey\Validator $formKey,
-        \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\BackendRequest $hostedForm
+        \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\BackendRequest $hostedForm,
+        \Magento\Framework\Registry $registry,
+        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
     ) {
         parent::__construct($context);
 
         $this->formKey = $formKey;
         $this->hostedForm = $hostedForm;
+        $this->registry = $registry;
+        $this->customerRepository = $customerRepository;
     }
 
     /**
-     * Fetch, save, and return newly added card from hosted form
+     * Get hosted form parameters for a session
      *
      * @return \Magento\Framework\Controller\ResultInterface
      */
     public function execute()
     {
+        $this->initCustomer();
+
         /** @var \Magento\Framework\Controller\Result\Json $result */
         $result = $this->resultFactory->create(ResultFactory::TYPE_JSON);
 
         try {
-            $card    = $this->hostedForm->getCard();
-            $message = [
-                'success' => true,
-                'card' => [
-                    'id' => $card->getHash(),
-                    'label' => $card->getLabel(),
-                    'method' => $card->getMethod(),
-                    'selected' => false,
-                    'new' => true,
-                    'type' => $card->getType(),
-                    'cc_bin' => $card->getAdditional('cc_bin'),
-                    'cc_last4' => $card->getAdditional('cc_last4'),
-                ],
-            ];
+            $params = $this->hostedForm->getParams();
 
-            $result->setData($message);
+            $result->setData($params);
         } catch (\Exception $exception) {
             $result->setHttpResponseCode(400);
             $result->setData([
@@ -120,5 +125,35 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
     public function validateForCsrf(\Magento\Framework\App\RequestInterface $request): ?bool
     {
         return $this->formKey->validate($request);
+    }
+
+    /**
+     * Get current customer model.
+     *
+     * @return void
+     */
+    protected function initCustomer()
+    {
+        if ($this->registry->registry('current_customer')) {
+            return;
+        }
+
+        // Take from request if given (for account card management)
+        $customerId = $this->getRequest()->getParam('id');
+
+        if ($customerId === null) {
+            // Otherwise, defer to TokenBase logic (for admin ordering)
+            $customerId = $this->hostedForm->getCustomerId();
+        }
+
+        if ($customerId > 0) {
+            try {
+                $customer = $this->customerRepository->getById($customerId);
+
+                $this->registry->register('current_customer', $customer);
+            } catch (\Magento\Framework\Exception\NoSuchEntityException $exception) {
+                // Ignore 'no such customer' errors, remainder code will handle accordingly.
+            }
+        }
     }
 }

@@ -127,7 +127,7 @@
             "authnetcimHostedPaymentInfo": {
                 "method": "<?= $code ?>",
                 "target": "<?= $code ?>_iframe",
-                "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getParams', ['method' => $code])) ?>",
+                "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getProfileParams', ['method' => $code])) ?>",
                 "updateCardUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/updateCard', ['method' => $code])) ?>",
                 "successUrl": "<?= $block->escapeJs($block->getUrl('*/*', ['method' => $code])) ?>"
             }

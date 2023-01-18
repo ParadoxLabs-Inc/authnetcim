@@ -39,7 +39,7 @@ class GetParams implements \ParadoxLabs\TokenBase\Model\Api\GraphQL\ResolverInte
     protected $graphQL;
 
     /**
-     * @var \ParadoxLabs\Authnetcim\Model\Service\Hosted\GraphQLRequest
+     * @var \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\GraphQLRequest
      */
     protected $hostedForm;
 
@@ -47,11 +47,11 @@ class GetParams implements \ParadoxLabs\TokenBase\Model\Api\GraphQL\ResolverInte
      * GetParams constructor.
      *
      * @param \ParadoxLabs\TokenBase\Model\Api\GraphQL $graphQL
-     * @param \ParadoxLabs\Authnetcim\Model\Service\Hosted\GraphQLRequest $hostedForm
+     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\GraphQLRequest $hostedForm
      */
     public function __construct(
         \ParadoxLabs\TokenBase\Model\Api\GraphQL $graphQL,
-        \ParadoxLabs\Authnetcim\Model\Service\Hosted\GraphQLRequest $hostedForm
+        \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\GraphQLRequest $hostedForm
     ) {
         $this->graphQL = $graphQL;
         $this->hostedForm = $hostedForm;

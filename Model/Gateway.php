@@ -1358,6 +1358,129 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     }
 
     /**
+     * Get the token for an Accept Hosted payment form page
+     *
+     * @return array
+     * @throws \Magento\Payment\Gateway\Command\CommandException
+     */
+    public function getHostedPaymentPage(): array
+    {
+        $params = [
+            'transactionRequest' => [
+                'transactionType' => $this->getParameter('transactionType'),
+                'amount' => static::formatAmount($this->getParameter('amount')),
+                'profile' => [
+                    'customerProfileId' => $this->getParameter('customerProfileId'),
+                ],
+                'solution' => [
+                    'id' => self::SOLUTION_ID,
+                ],
+                'order' => [
+                    'invoiceNumber' => $this->getParameter('invoiceNumber'),
+                ],
+            ],
+            'hostedPaymentSettings' => [
+                'setting' => [
+                    [
+                        'settingName' => 'hostedPaymentReturnOptions',
+                        'settingValue' => json_encode([
+                            'showReceipt' => false,
+                            'cancelUrlText' => $this->getParameter('hostedPaymentCancelText', 'Cancel'),
+                        ]),
+                    ],
+                    [
+                        'settingName' => 'hostedPaymentButtonOptions',
+                        'settingValue' => json_encode([
+                            'text' => $this->getParameter('hostedPaymentPayButtonText', 'Pay'),
+                        ]),
+                    ],
+                    [
+                        'settingName' => 'hostedPaymentStyleOptions',
+                        'settingValue' => json_encode([
+                            'bgColor' => $this->getParameter('hostedProfileHeadingBgColor', '#1979C3'),
+                        ]),
+                    ],
+                    [
+                        'settingName' => 'hostedPaymentPaymentOptions',
+                        'settingValue' => json_encode([
+                            'cardCodeRequired' => $this->getParameter('hostedPaymentCardCodeRequired', 'true'),
+                            'showCreditCard' => $this->getParameter('hostedPaymentShowCreditCard', 'true'),
+                            'showBankAccount' => $this->getParameter('hostedPaymentShowACH', 'false'),
+                        ]),
+                    ],
+                    [
+                        'settingName' => 'hostedPaymentSecurityOptions',
+                        'settingValue' => json_encode([
+                            'captcha' => $this->getParameter('hostedPaymentValidateCaptcha', 'true'),
+                        ]),
+                    ],
+                    [
+                        'settingName' => 'hostedPaymentBillingAddressOptions',
+                        'settingValue' => json_encode([
+                            'show' => false,
+                        ]),
+                    ],
+                    [
+                        'settingName' => 'hostedPaymentOrderOptions',
+                        'settingValue' => json_encode([
+                            'show' => false,
+                        ]),
+                    ],
+                    [
+                        'settingName' => 'hostedPaymentIFrameCommunicatorUrl',
+                        'settingValue' => json_encode([
+                            'url' => $this->getParameter('communicatorUrl'),
+                        ]),
+                    ],
+                ],
+            ],
+        ];
+
+        $params['transactionRequest'] += $this->createTransactionAddItemInfo([]);
+        $params['transactionRequest'] += $this->createTransactionAddAmounts([]);
+
+        if (empty($this->getParameter('customerProfileId'))) {
+            unset($params['transactionRequest']['profile']);
+        }
+
+        if ($this->getParameter('email') !== null || $this->getParameter('customerId') !== null) {
+            $params['transactionRequest']['customer'] = [
+                'id' => $this->getParameter('customerId'),
+                'email' => $this->getParameter('email'),
+            ];
+        }
+
+        if ($this->getParameter('billToFirstName') !== null) {
+            $params['transactionRequest']['billTo'] = [
+                'firstName'   => $this->getParameter('billToFirstName'),
+                'lastName'    => $this->getParameter('billToLastName'),
+                'company'     => $this->getParameter('billToCompany'),
+                'address'     => $this->getParameter('billToAddress'),
+                'city'        => $this->getParameter('billToCity'),
+                'state'       => $this->getParameter('billToState'),
+                'zip'         => $this->getParameter('billToZip'),
+                'country'     => $this->getParameter('billToCountry'),
+                'phoneNumber' => $this->getParameter('billToPhoneNumber'),
+                'faxNumber'   => $this->getParameter('billToFaxNumber'),
+            ];
+        }
+        if ($this->getParameter('shipToFirstName') !== null) {
+            $params['transactionRequest']['shipTo'] = [
+                'firstName'   => $this->getParameter('shipToFirstName'),
+                'lastName'    => $this->getParameter('shipToLastName'),
+                'company'     => $this->getParameter('shipToCompany'),
+                'address'     => $this->getParameter('shipToAddress'),
+                'city'        => $this->getParameter('shipToCity'),
+                'state'       => $this->getParameter('shipToState'),
+                'zip'         => $this->getParameter('shipToZip'),
+                'country'     => $this->getParameter('shipToCountry'),
+            ];
+        }
+
+        return $this->runTransaction('getHostedPaymentPageRequest', $params);
+    }
+
+    /**
      * Get the token for an Accept Customer hosted profile form page
      *
      * @return array

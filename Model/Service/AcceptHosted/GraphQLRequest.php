@@ -11,7 +11,7 @@
  * @license     http://store.paradoxlabs.com/license.html
  */
 
-namespace ParadoxLabs\Authnetcim\Model\Service\Hosted;
+namespace ParadoxLabs\Authnetcim\Model\Service\AcceptHosted;
 
 use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider as ConfigProviderAch;
@@ -63,7 +63,7 @@ class GraphQLRequest extends AbstractRequestHandler
     /**
      * GraphQLRequest constructor.
      *
-     * @param \ParadoxLabs\Authnetcim\Model\Service\Hosted\Context $context
+     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\Context $context
      * @param \Magento\Framework\HTTP\PhpEnvironment\RemoteAddress $remoteAddress
      * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
      * @param \ParadoxLabs\TokenBase\Model\Api\GraphQL $graphQL

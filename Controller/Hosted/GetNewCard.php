@@ -26,7 +26,7 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
     protected $formKey;
 
     /**
-     * @var \ParadoxLabs\Authnetcim\Model\Service\Hosted\FrontendRequest
+     * @var \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\FrontendRequest
      */
     protected $hostedForm;
 
@@ -35,12 +35,12 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
      *
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey
-     * @param \ParadoxLabs\Authnetcim\Model\Service\Hosted\FrontendRequest $hostedForm
+     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\FrontendRequest $hostedForm
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Magento\Framework\Data\Form\FormKey\Validator $formKey,
-        \ParadoxLabs\Authnetcim\Model\Service\Hosted\FrontendRequest $hostedForm
+        \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\FrontendRequest $hostedForm
     ) {
         parent::__construct($context);
 

@@ -32,14 +32,14 @@ class UpdateCard extends GetNewCard
      *
      * @param \Magento\Backend\App\Action\Context $context
      * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey
-     * @param \ParadoxLabs\Authnetcim\Model\Service\Hosted\BackendRequest $hostedForm
+     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\BackendRequest $hostedForm
      * @param \Magento\Framework\Registry $registry
      * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
      */
     public function __construct(
         Action\Context $context,
         \Magento\Framework\Data\Form\FormKey\Validator $formKey,
-        \ParadoxLabs\Authnetcim\Model\Service\Hosted\BackendRequest $hostedForm,
+        \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\BackendRequest $hostedForm,
         \Magento\Framework\Registry $registry,
         \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
     ) {

@@ -11,14 +11,14 @@
  * @license     http://store.paradoxlabs.com/license.html
  */
 
-namespace ParadoxLabs\Authnetcim\Controller\Adminhtml\Hosted;
+namespace ParadoxLabs\Authnetcim\Controller\Hosted;
 
-use Magento\Backend\App\Action;
+use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\CsrfAwareActionInterface;
 use Magento\Framework\Controller\ResultFactory;
 
-class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostActionInterface
+class GetProfileParams extends Action implements CsrfAwareActionInterface, HttpPostActionInterface
 {
     /**
      * @var \Magento\Framework\Data\Form\FormKey\Validator
@@ -26,21 +26,21 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
     protected $formKey;
 
     /**
-     * @var \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\BackendRequest
+     * @var \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\FrontendRequest
      */
     protected $hostedForm;
 
     /**
-     * GetNewCard constructor.
+     * GetParams constructor.
      *
-     * @param \Magento\Backend\App\Action\Context $context
+     * @param \Magento\Framework\App\Action\Context $context
      * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey
-     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\BackendRequest $hostedForm
+     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\FrontendRequest $hostedForm
      */
     public function __construct(
-        \Magento\Backend\App\Action\Context $context,
+        \Magento\Framework\App\Action\Context $context,
         \Magento\Framework\Data\Form\FormKey\Validator $formKey,
-        \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\BackendRequest $hostedForm
+        \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\FrontendRequest $hostedForm
     ) {
         parent::__construct($context);
 
@@ -49,7 +49,7 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
     }
 
     /**
-     * Fetch, save, and return newly added card from hosted form
+     * Execute action based on request and return result
      *
      * @return \Magento\Framework\Controller\ResultInterface
      */
@@ -59,22 +59,9 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
         $result = $this->resultFactory->create(ResultFactory::TYPE_JSON);
 
         try {
-            $card    = $this->hostedForm->getCard();
-            $message = [
-                'success' => true,
-                'card' => [
-                    'id' => $card->getHash(),
-                    'label' => $card->getLabel(),
-                    'method' => $card->getMethod(),
-                    'selected' => false,
-                    'new' => true,
-                    'type' => $card->getType(),
-                    'cc_bin' => $card->getAdditional('cc_bin'),
-                    'cc_last4' => $card->getAdditional('cc_last4'),
-                ],
-            ];
+            $params = $this->hostedForm->getParams();
 
-            $result->setData($message);
+            $result->setData($params);
         } catch (\Exception $exception) {
             $result->setHttpResponseCode(400);
             $result->setData([

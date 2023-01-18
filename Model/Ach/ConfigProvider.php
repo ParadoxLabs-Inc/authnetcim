@@ -64,8 +64,7 @@ class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
             'achAccountTypes'           => $this->getAchAccountTypes(),
             'requireCcv'                => false,
             'formType'                  => $this->methods[static::CODE]->getConfigData('form_type'),
-            'paramUrl'                  => $this->urlBuilder->getUrl('authnetcim/hosted/getParams'),
-            'newCardUrl'                => $this->urlBuilder->getUrl('authnetcim/hosted/getNewCard'),
+            'paramUrl'                  => $this->urlBuilder->getUrl('authnetcim/hosted/getPaymentParams'),
         ];
 
         return $config;

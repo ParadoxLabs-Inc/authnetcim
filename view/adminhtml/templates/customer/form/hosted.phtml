@@ -22,7 +22,7 @@
     "authnetcimHostedPaymentInfo": {
         "method": "<?= $code ?>",
         "target": "<?= $code ?>_iframe",
-        "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getParams', ['id' => $this->getRequest()->getParam('id'), 'method' => $code])) ?>",
+        "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getProfileParams', ['id' => $this->getRequest()->getParam('id'), 'method' => $code])) ?>",
         "updateCardUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/updateCard', ['id' => $this->getRequest()->getParam('id'), 'method' => $code])) ?>",
         "fieldPrefix": "#<?= $code ?>-"
     }

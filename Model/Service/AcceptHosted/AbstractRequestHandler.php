@@ -11,7 +11,7 @@
  * @license     http://store.paradoxlabs.com/license.html
  */
 
-namespace ParadoxLabs\Authnetcim\Model\Service\Hosted;
+namespace ParadoxLabs\Authnetcim\Model\Service\AcceptHosted;
 
 use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 
@@ -55,7 +55,7 @@ abstract class AbstractRequestHandler
     /**
      * AbstractRequestHandler constructor.
      *
-     * @param \ParadoxLabs\Authnetcim\Model\Service\Hosted\Context $context
+     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\Context $context
      */
     public function __construct(
         Context $context
@@ -93,16 +93,10 @@ abstract class AbstractRequestHandler
      */
     public function getParams(): array
     {
-        $action = 'customer/addPayment';
+        $action = 'payment/payment';
         $params = [
             'token' => $this->getToken(),
         ];
-
-        $paymentId = $this->getCustomerPaymentId();
-        if ($paymentId) {
-            $action = 'customer/editPayment';
-            $params['paymentProfileId'] = $paymentId;
-        }
 
         return [
             'iframeAction' => $this->getEndpoint() . $action,
@@ -144,11 +138,9 @@ abstract class AbstractRequestHandler
         $gateway->setParameter('hostedProfileHeadingBgColor', $method->getConfigData('accent_color'));
         $gateway->setParameter('customerProfileId', $this->getCustomerProfileId());
 
-        if ($this->getMethodCode() === \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider::CODE) {
-            $gateway->setParameter('hostedProfilePaymentOptions', 'showBankAccount');
-        }
+        // TODO: Payment form params
 
-        $response = $gateway->getHostedProfilePage();
+        $response = $gateway->getHostedPaymentPage();
 
         if (!empty($response['messages']['message']['text'])
             && $response['messages']['message']['text'] !== 'Successful.') {

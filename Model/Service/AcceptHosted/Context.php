@@ -11,7 +11,7 @@
  * @license     http://store.paradoxlabs.com/license.html
  */
 
-namespace ParadoxLabs\Authnetcim\Model\Service\Hosted;
+namespace ParadoxLabs\Authnetcim\Model\Service\AcceptHosted;
 
 class Context
 {

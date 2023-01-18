@@ -18,7 +18,7 @@ use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\CsrfAwareActionInterface;
 use Magento\Framework\Controller\ResultFactory;
 
-class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActionInterface
+class GetPaymentParams extends Action implements CsrfAwareActionInterface, HttpPostActionInterface
 {
     /**
      * @var \Magento\Framework\Data\Form\FormKey\Validator
@@ -26,7 +26,7 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
     protected $formKey;
 
     /**
-     * @var \ParadoxLabs\Authnetcim\Model\Service\Hosted\FrontendRequest
+     * @var \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\FrontendRequest
      */
     protected $hostedForm;
 
@@ -35,12 +35,12 @@ class GetParams extends Action implements CsrfAwareActionInterface, HttpPostActi
      *
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey
-     * @param \ParadoxLabs\Authnetcim\Model\Service\Hosted\FrontendRequest $hostedForm
+     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\FrontendRequest $hostedForm
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Magento\Framework\Data\Form\FormKey\Validator $formKey,
-        \ParadoxLabs\Authnetcim\Model\Service\Hosted\FrontendRequest $hostedForm
+        \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\FrontendRequest $hostedForm
     ) {
         parent::__construct($context);
 

@@ -11,7 +11,7 @@
  * @license     http://store.paradoxlabs.com/license.html
  */
 
-namespace ParadoxLabs\Authnetcim\Model\Service\Hosted;
+namespace ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer;
 
 use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider as ConfigProviderAch;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider as ConfigProviderCc;
@@ -42,7 +42,7 @@ class BackendRequest extends AbstractRequestHandler
     /**
      * AbstractRequestHandler constructor.
      *
-     * @param \ParadoxLabs\Authnetcim\Model\Service\Hosted\Context $context
+     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\Context $context
      * @param \Magento\Backend\Model\Session\Quote $backendSession *Proxy
      * @param \Magento\Framework\App\RequestInterface $request
      * @param \ParadoxLabs\TokenBase\Helper\Data $tokenbaseHelper

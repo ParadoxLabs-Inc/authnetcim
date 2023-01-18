@@ -40,7 +40,6 @@ define(
                 this.selectedCard    = config ? config.selectedCard : '';
                 this.requireCcv      = config ? config.requireCcv : false;
                 this.paramUrl        = config ? config.paramUrl : null;
-                this.newCardUrl      = config ? config.newCardUrl : null;
                 this.logoImage       = config ? config.logoImage : false;
             },
 
@@ -243,7 +242,6 @@ define(
                         this.handleCancel(event.data);
                         break;
                     case 'successfulSave':
-                        this.handleSave(event.data);
                         break;
                     case 'resizeWindow':
                         var height = Math.ceil(parseFloat(event.data.height));
@@ -258,50 +256,6 @@ define(
              */
             handleCancel: function(response) {
                 this.initHostedForm();
-            },
-
-            /**
-             * Fetch new card details upon payment form completion
-             * @param event
-             */
-            handleSave: function(event) {
-                if (this.processingSave) {
-                    console.log('Ignored duplicate handleSave');
-                    return;
-                }
-
-                this.processingSave = true;
-                $('#' + this.getCode() + '_iframe').trigger('processStart');
-
-                $.post({
-                    url: this.newCardUrl,
-                    dataType: 'json',
-                    data: this.getFormParams(),
-                    global: false,
-                    success: this.addAndSelectCard.bind(this),
-                    error: this.handleAjaxError.bind(this)
-                });
-            },
-
-            /**
-             * Add and select new card on the UI after completing the payment form
-             * @param data
-             */
-            addAndSelectCard: function(data) {
-                $('#' + this.getCode() + '_iframe').trigger('processStop');
-
-                if (data.card.method !== this.getCode()) {
-                    return;
-                }
-
-                this.storedCards.push(data.card);
-                this.selectedCard(data.card.id);
-                this.iframeInitialized = false;
-                this.processingSave = false;
-
-                if (this.hasVerification()) {
-                    $('#' + this.getCode() + '-cc-cid').trigger('focus');
-                }
             },
 
             /**

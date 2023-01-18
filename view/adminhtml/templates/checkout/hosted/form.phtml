@@ -14,8 +14,7 @@ $storedCards    = $block->getStoredCards();
     "authnetcimHostedForm": {
         "method": "<?= $code ?>",
         "target": "<?= $code ?>_iframe",
-        "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getParams')) ?>",
-        "newCardUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getNewCard')) ?>"
+        "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getPaymentParams')) ?>"
     }
 }'>
     <input id="<?= $code ?>-payment-method" type="hidden" name="payment[method]" value="<?= $code ?>" />
