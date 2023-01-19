@@ -14,9 +14,9 @@
 namespace ParadoxLabs\Authnetcim\Observer;
 
 /**
- * PaymentMethodAssignAcceptjsDataObserver Class
+ * PaymentMethodAssignDataObserver Class
  */
-class PaymentMethodAssignAcceptjsDataObserver implements \Magento\Framework\Event\ObserverInterface
+class PaymentMethodAssignDataObserver extends \ParadoxLabs\TokenBase\Observer\PaymentMethodAssignDataObserver
 {
     /**
      * @var \ParadoxLabs\TokenBase\Model\Method\Factory
@@ -26,42 +26,36 @@ class PaymentMethodAssignAcceptjsDataObserver implements \Magento\Framework\Even
     /**
      * PaymentMethodAssignAcceptjsDataObserver constructor.
      *
+     * @param \ParadoxLabs\TokenBase\Helper\Data $helper
+     * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
      * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
      */
     public function __construct(
+        \ParadoxLabs\TokenBase\Helper\Data $helper,
+        \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
         \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
     ) {
+        parent::__construct($helper, $cardRepository);
+
         $this->methodFactory = $methodFactory;
     }
 
     /**
      * Assign data to the payment instance for our methods.
      *
-     * @param \Magento\Framework\Event\Observer $observer
+     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param \Magento\Framework\DataObject $data
+     * @param \Magento\Payment\Model\MethodInterface $method
      * @return void
      */
-    public function execute(\Magento\Framework\Event\Observer $observer)
-    {
-        /** @var \Magento\Payment\Model\MethodInterface $method */
-        $method = $observer->getData('method');
-        $tokenbaseMethod = $this->methodFactory->getMethodInstance($method->getCode());
-
+    protected function assignTokenbaseData(
+        \Magento\Payment\Model\InfoInterface $payment,
+        \Magento\Framework\DataObject $data,
+        \Magento\Payment\Model\MethodInterface $method
+    ) {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
-        $payment = $observer->getData('payment_model');
 
-        /** @var \Magento\Framework\DataObject $data */
-        $data = $observer->getData('data');
-
-        /**
-         * Merge together data from additional_data array
-         */
-        if ($data->hasData('additional_data')) {
-            foreach ($data->getData('additional_data') as $key => $value) {
-                if ($data->getData($key) == false) {
-                    $data->setData($key, $value);
-                }
-            }
-        }
+        $tokenbaseMethod = $this->methodFactory->getMethodInstance($method->getCode());
 
         /**
          * Store Accept.js info if given and enabled.
@@ -77,5 +71,14 @@ class PaymentMethodAssignAcceptjsDataObserver implements \Magento\Framework\Even
                 $payment->setAdditionalInformation('cc_bin', $data->getData('cc_bin'));
             }
         }
+
+        /**
+         * Store transaction ID if given and not Accept.js
+         */
+        if ($tokenbaseMethod->isAcceptJsEnabled() === false) {
+            $payment->setAdditionalInformation('transaction_id', $data->getData('transaction_id'));
+        }
+
+        parent::assignTokenbaseData($payment, $data, $method);
     }
 }

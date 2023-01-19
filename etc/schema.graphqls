@@ -45,6 +45,7 @@ type TokenBaseCheckoutConfig {
 input TokenBaseCardPaymentInput {
     acceptjs_key: String
     acceptjs_value: String
+    transaction_id: String
 }
 
 enum TokenBaseAuthnetcimHostedMethod {

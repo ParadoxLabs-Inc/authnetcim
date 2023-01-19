@@ -50,7 +50,8 @@ define(
                 this.initVars();
                 this._super()
                     .observe([
-                        'billingAddressLine'
+                        'billingAddressLine',
+                        'transactionId'
                     ]);
 
                 this.bindCommunicator();
@@ -241,7 +242,8 @@ define(
                     case 'cancel':
                         this.handleCancel(event.data);
                         break;
-                    case 'successfulSave':
+                    case "transactResponse":
+                        this.handleResponse(JSON.parse(event.data.response));
                         break;
                     case 'resizeWindow':
                         var height = Math.ceil(parseFloat(event.data.height));
@@ -256,6 +258,18 @@ define(
              */
             handleCancel: function(response) {
                 this.initHostedForm();
+            },
+
+            handleResponse: function(response) {
+                if (response.createPaymentProfileResponse !== undefined
+                    && response.createPaymentProfileResponse.success === 'true') {
+                    this.save(true);
+                }
+
+                // TODO: Validate and verify the transaction server-side, throw error if failed
+                this.transactionId(response.transId);
+
+                this.placeOrder();
             },
 
             /**
@@ -341,7 +355,8 @@ define(
                     additional_data: {
                         'save': this.save(),
                         'cc_cid': this.creditCardVerificationNumber(),
-                        'card_id': this.selectedCard()
+                        'card_id': this.selectedCard(),
+                        'transaction_id': this.transactionId()
                     }
                 };
             }
