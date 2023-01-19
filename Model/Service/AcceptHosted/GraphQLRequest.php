@@ -63,7 +63,7 @@ class GraphQLRequest extends AbstractRequestHandler
     /**
      * GraphQLRequest constructor.
      *
-     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\Context $context
+     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\Context $context
      * @param \Magento\Framework\HTTP\PhpEnvironment\RemoteAddress $remoteAddress
      * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
      * @param \ParadoxLabs\TokenBase\Model\Api\GraphQL $graphQL
@@ -106,18 +106,9 @@ class GraphQLRequest extends AbstractRequestHandler
     public function getCustomerProfileId(): string
     {
         // If we were given a card ID, get the profile ID from that
-        if ($this->graphQlArgs['source'] === 'paymentinfo') {
-            $card = $this->getCardModel();
-
-            if ($card instanceof CardInterface) {
-                return (string)$card->getProfileId();
-            }
-        } else {
-            $payment = $this->getQuote()->getPayment();
-
-            if ($payment->hasAdditionalInformation('profile_id')) {
-                return $payment->getAdditionalInformation('profile_id');
-            }
+        $payment = $this->getQuote()->getPayment();
+        if ($payment->hasAdditionalInformation('profile_id')) {
+            return $payment->getAdditionalInformation('profile_id');
         }
 
         // Otherwise, look for a profile ID (iframe Session ID) in the input
@@ -148,40 +139,12 @@ class GraphQLRequest extends AbstractRequestHandler
     }
 
     /**
-     * Get the CIM payment ID for the current session/context.
-     *
-     * @return string|null
-     * @throws \Magento\Framework\Exception\LocalizedException
-     */
-    public function getCustomerPaymentId(): ?string
-    {
-        if ($this->graphQlArgs['source'] === 'paymentinfo') {
-            $card = $this->getCardModel();
-
-            // If we were given a card ID, get the profile ID from that instead of creating new
-            if ($card instanceof CardInterface) {
-                return (string)$card->getPaymentId();
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Get customer email for the current session/context.
      *
      * @return string|null
      */
     public function getEmail(): ?string
     {
-        if ($this->graphQlArgs['source'] === 'paymentinfo') {
-            $customer = $this->customerRepository->getById(
-                $this->graphQlContext->getUserId()
-            );
-
-            return $customer->getEmail();
-        }
-
         if (!empty($this->getQuote()->getBillingAddress()->getEmail())) {
             return $this->getQuote()->getBillingAddress()->getEmail();
         }
@@ -267,36 +230,6 @@ class GraphQLRequest extends AbstractRequestHandler
         }
 
         return ConfigProviderCc::CODE;
-    }
-
-    /**
-     * Get the tokenbase card hash for the current session/context.
-     *
-     * @return string
-     */
-    protected function getTokenbaseCardId(): string
-    {
-        return (string)($this->graphQlArgs['cardId'] ?? '');
-    }
-
-    /**
-     * Save the given card to the active quote as the active payment method.
-     *
-     * @param CardInterface $card
-     * @return void
-     */
-    protected function saveCardToQuote(CardInterface $card): void
-    {
-        if ($this->graphQlArgs['source'] === 'paymentinfo') {
-            return;
-        }
-
-        $payment = $this->getQuote()->getPayment();
-        $payment->setMethod($this->getMethodCode());
-        $method  = $payment->getMethodInstance();
-        $method->assignData(new \Magento\Framework\DataObject(['card_id' => $card->getHash()]));
-
-        $this->paymentResource->save($payment);
     }
 
     /**

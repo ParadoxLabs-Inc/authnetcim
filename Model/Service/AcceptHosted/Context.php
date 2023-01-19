@@ -41,26 +41,43 @@ class Context
     private $helper;
 
     /**
+     * @var \Magento\Quote\Api\CartRepositoryInterface
+     */
+    private $quoteRepository;
+
+    /**
+     * @var \ParadoxLabs\TokenBase\Helper\Address
+     */
+    private $addressHelper;
+
+    /**
      * AbstractRequestHandler constructor.
      *
      * @param \Magento\Framework\Url $urlBuilder
      * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
-     * @param \ParadoxLabs\TokenBase\Model\Card\Factory $cardFactory
+     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory
      * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
      * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
+     * @param \Magento\Quote\Api\CartRepositoryInterface $quoteRepository
+     * @param \ParadoxLabs\TokenBase\Helper\Address $addressHelper
      */
     public function __construct(
         \Magento\Framework\Url $urlBuilder,
         \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
         \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory,
         \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
-        \ParadoxLabs\Authnetcim\Helper\Data $helper
+        \ParadoxLabs\Authnetcim\Helper\Data $helper,
+        \Magento\Quote\Api\CartRepositoryInterface $quoteRepository,
+        \ParadoxLabs\TokenBase\Helper\Address $addressHelper
     ) {
+        // TODO: Check for unused vars
         $this->urlBuilder = $urlBuilder;
         $this->methodFactory = $methodFactory;
         $this->cardFactory = $cardFactory;
         $this->cardRepository = $cardRepository;
         $this->helper = $helper;
+        $this->quoteRepository = $quoteRepository;
+        $this->addressHelper = $addressHelper;
     }
 
     /**
@@ -111,5 +128,25 @@ class Context
     public function getHelper()
     {
         return $this->helper;
+    }
+
+    /**
+     * Get quoteRepository
+     *
+     * @return \Magento\Quote\Api\CartRepositoryInterface
+     */
+    public function getQuoteRepository()
+    {
+        return $this->quoteRepository;
+    }
+
+    /**
+     * Get addressHelper
+     *
+     * @return \ParadoxLabs\TokenBase\Helper\Address
+     */
+    public function getAddressHelper()
+    {
+        return $this->addressHelper;
     }
 }

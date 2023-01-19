@@ -15,7 +15,6 @@ namespace ParadoxLabs\Authnetcim\Model\Service\AcceptHosted;
 
 use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider as ConfigProviderAch;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider as ConfigProviderCc;
-use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 
 class FrontendRequest extends AbstractRequestHandler
 {
@@ -42,7 +41,7 @@ class FrontendRequest extends AbstractRequestHandler
     /**
      * AbstractRequestHandler constructor.
      *
-     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\Context $context
+     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\Context $context
      * @param \Magento\Checkout\Model\Session $checkoutSession *Proxy
      * @param \Magento\Customer\Model\Session $customerSession *Proxy
      * @param \Magento\Framework\App\RequestInterface $request
@@ -73,24 +72,7 @@ class FrontendRequest extends AbstractRequestHandler
     {
         $payment = $this->checkoutSession->getQuote()->getPayment();
 
-        if ($this->request->getParam('source') === 'paymentinfo') {
-            // If we were given a card ID, get the profile ID from that instead of creating new
-            $cardId = $this->request->getParam('card_id') ?? $this->request->getParam('id');
-
-            if (!empty($cardId)) {
-                $card = $this->cardRepository->getByHash($cardId);
-
-                if ($card->hasOwner((int)$this->getCustomerId()) === false) {
-                    throw new \Magento\Framework\Exception\LocalizedException(__('Could not load payment profile'));
-                }
-
-                return (string)$card->getProfileId();
-            }
-
-            if ($this->customerSession->getData('authnetcim_profile_id')) {
-                return $this->customerSession->getData('authnetcim_profile_id');
-            }
-        } elseif ($payment->hasAdditionalInformation('profile_id')) {
+        if ($payment->hasAdditionalInformation('profile_id')) {
             return $payment->getAdditionalInformation('profile_id');
         }
 
@@ -113,44 +95,14 @@ class FrontendRequest extends AbstractRequestHandler
     }
 
     /**
-     * Get the CIM payment ID for the current session/context.
-     *
-     * @return string|null
-     * @throws \Magento\Framework\Exception\LocalizedException
-     */
-    public function getCustomerPaymentId(): ?string
-    {
-        if ($this->request->getParam('source') === 'paymentinfo') {
-            // If we were given a card ID, get the profile ID from that instead of creating new
-            $cardId = $this->request->getParam('card_id') ?? $this->request->getParam('id');
-
-            if (!empty($cardId)) {
-                $card = $this->cardRepository->getByHash($cardId);
-
-                if ($card->hasOwner((int)$this->getCustomerId()) === false) {
-                    throw new \Magento\Framework\Exception\LocalizedException(__('Could not load payment profile'));
-                }
-
-                return (string)$card->getPaymentId();
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Get customer email for the current session/context.
      *
      * @return string|null
      */
     public function getEmail(): ?string
     {
-        if ($this->request->getParam('source') === 'paymentinfo') {
-            return $this->customerSession->getCustomerData()->getEmail();
-        }
-
-        if (!empty($this->checkoutSession->getQuote()->getBillingAddress()->getEmail())) {
-            return $this->checkoutSession->getQuote()->getBillingAddress()->getEmail();
+        if (!empty($this->getQuote()->getBillingAddress()->getEmail())) {
+            return $this->getQuote()->getBillingAddress()->getEmail();
         }
 
         // Fall back to guest email parameter iff there's none on the quote.
@@ -169,6 +121,18 @@ class FrontendRequest extends AbstractRequestHandler
         }
 
         return (string)$this->customerSession->getCustomerId();
+    }
+
+    /**
+     * Get the active quote.
+     *
+     * @return \Magento\Quote\Api\Data\CartInterface
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    protected function getQuote(): \Magento\Quote\Api\Data\CartInterface
+    {
+        return $this->checkoutSession->getQuote();
     }
 
     /**
@@ -205,25 +169,5 @@ class FrontendRequest extends AbstractRequestHandler
     protected function getTokenbaseCardId(): string
     {
         return (string)($this->request->getParam('card_id') ?? $this->request->getParam('id'));
-    }
-
-    /**
-     * Save the given card to the active quote as the active payment method.
-     *
-     * @param CardInterface $card
-     * @return void
-     */
-    protected function saveCardToQuote(\ParadoxLabs\TokenBase\Api\Data\CardInterface $card): void
-    {
-        if ($this->request->getParam('source') === 'paymentinfo') {
-            return;
-        }
-
-        $payment = $this->checkoutSession->getQuote()->getPayment();
-        $payment->setMethod($this->getMethodCode());
-        $method  = $payment->getMethodInstance();
-        $method->assignData(new \Magento\Framework\DataObject(['card_id' => $card->getHash()]));
-
-        $this->paymentResource->save($payment);
     }
 }

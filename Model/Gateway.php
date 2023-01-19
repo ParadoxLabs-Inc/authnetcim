@@ -113,13 +113,13 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'emailCustomer'             => ['enum' => ['true', 'false']],
         'expirationDate'            => ['maxLength' => 7],
         'hostedProfileSaveButtonText'           => ['maxLength' => 32, 'noSymbols' => true],
-        'hostedProfilePageBorderVisible'        => ['enum' => ['true', 'false']],
+        'hostedProfilePageBorderVisible'        => ['enum' => [true, false]],
         'hostedProfileHeadingBgColor'           => ['maxLength' => 7, 'charMask' => 'a-zA-Z0-9#'],
         'hostedProfileIFrameCommunicatorUrl'    => [],
         'hostedProfilePaymentOptions'           => ['enum' => ['showAll', 'showCreditCard', 'showBankAccount']],
         'hostedProfileValidationMode'           => ['enum' => ['liveMode', 'testMode']],
-        'hostedProfileBillingAddressRequired'   => ['enum' => ['true', 'false']],
-        'hostedProfileCardCodeRequired'         => ['enum' => ['true', 'false']],
+        'hostedProfileBillingAddressRequired'   => ['enum' => [true, false]],
+        'hostedProfileCardCodeRequired'         => ['enum' => [true, false]],
         'hostedProfileBillingAddressOptions'    => ['enum' => ['showBillingAddress', 'showNone']],
         'hostedProfileManageOptions'            => ['enum' => ['showAll', 'showPayment', 'showShipping']],
         'includeIssuerInfo'         => ['enum' => ['true', 'false']],
@@ -541,6 +541,52 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         return $response;
+    }
+
+    /**
+     * Set billing address params from Address object
+     *
+     * @param \Magento\Customer\Api\Data\AddressInterface $address
+     * @return $this
+     */
+    public function setBillTo(\Magento\Customer\Api\Data\AddressInterface $address)
+    {
+        $region = $address->getRegion()->getRegionCode() ?: $address->getRegion()->getRegion();
+
+        $this->setParameter('billToFirstName', $address->getFirstname());
+        $this->setParameter('billToLastName', $address->getLastname());
+        $this->setParameter('billToCompany', $address->getCompany());
+        $this->setParameter('billToAddress', implode(', ', $address->getStreet() ?: []));
+        $this->setParameter('billToCity', $address->getCity());
+        $this->setParameter('billToState', $region);
+        $this->setParameter('billToZip', $address->getPostcode());
+        $this->setParameter('billToCountry', $address->getCountryId());
+        $this->setParameter('billToPhoneNumber', $address->getTelephone());
+        $this->setParameter('billToFaxNumber', $address->getFax());
+
+        return $this;
+    }
+
+    /**
+     * Set shipping address params from Address object
+     *
+     * @param \Magento\Customer\Api\Data\AddressInterface $address
+     * @return $this
+     */
+    public function setShipTo(\Magento\Customer\Api\Data\AddressInterface $address)
+    {
+        $region = $address->getRegion()->getRegionCode() ?: $address->getRegion()->getRegion();
+
+        $this->setParameter('shipToFirstName', $address->getFirstname());
+        $this->setParameter('shipToLastName', $address->getLastname());
+        $this->setParameter('shipToCompany', $address->getCompany());
+        $this->setParameter('shipToAddress', implode(', ', $address->getStreet() ?: []));
+        $this->setParameter('shipToCity', $address->getCity());
+        $this->setParameter('shipToState', $region);
+        $this->setParameter('shipToZip', $address->getPostcode());
+        $this->setParameter('shipToCountry', $address->getCountryId());
+
+        return $this;
     }
 
     /**
@@ -1367,7 +1413,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         $params = [
             'transactionRequest' => [
-                'transactionType' => $this->getParameter('transactionType'),
+                'transactionType' => $this->getParameter('transactionType', 'authOnlyTransaction'),
                 'amount' => static::formatAmount($this->getParameter('amount')),
                 'profile' => [
                     'customerProfileId' => $this->getParameter('customerProfileId'),
@@ -1385,13 +1431,13 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                         'settingName' => 'hostedPaymentReturnOptions',
                         'settingValue' => json_encode([
                             'showReceipt' => false,
-                            'cancelUrlText' => $this->getParameter('hostedPaymentCancelText', 'Cancel'),
+                            'cancelUrlText' => $this->getParameter('hostedPaymentCancelText', 'Reset'),
                         ]),
                     ],
                     [
                         'settingName' => 'hostedPaymentButtonOptions',
                         'settingValue' => json_encode([
-                            'text' => $this->getParameter('hostedPaymentPayButtonText', 'Pay'),
+                            'text' => $this->getParameter('hostedPaymentPayButtonText', 'Place Order'),
                         ]),
                     ],
                     [
@@ -1403,15 +1449,21 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     [
                         'settingName' => 'hostedPaymentPaymentOptions',
                         'settingValue' => json_encode([
-                            'cardCodeRequired' => $this->getParameter('hostedPaymentCardCodeRequired', 'true'),
-                            'showCreditCard' => $this->getParameter('hostedPaymentShowCreditCard', 'true'),
-                            'showBankAccount' => $this->getParameter('hostedPaymentShowACH', 'false'),
+                            'cardCodeRequired' => $this->getParameter('hostedPaymentCardCodeRequired', true),
+                            'showCreditCard' => $this->getParameter('hostedPaymentShowCreditCard', true),
+                            'showBankAccount' => $this->getParameter('hostedPaymentShowACH', false),
                         ]),
                     ],
                     [
                         'settingName' => 'hostedPaymentSecurityOptions',
                         'settingValue' => json_encode([
-                            'captcha' => $this->getParameter('hostedPaymentValidateCaptcha', 'true'),
+                            'captcha' => $this->getParameter('hostedPaymentValidateCaptcha', true),
+                        ]),
+                    ],
+                    [
+                        'settingName' => 'hostedPaymentShippingAddressOptions',
+                        'settingValue' => json_encode([
+                            'show' => false,
                         ]),
                     ],
                     [
@@ -1429,7 +1481,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     [
                         'settingName' => 'hostedPaymentIFrameCommunicatorUrl',
                         'settingValue' => json_encode([
-                            'url' => $this->getParameter('communicatorUrl'),
+                            'url' => $this->getParameter('hostedProfileIFrameCommunicatorUrl'),
                         ]),
                     ],
                 ],
@@ -1498,7 +1550,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     ],
                     [
                         'settingName' => 'hostedProfilePageBorderVisible',
-                        'settingValue' => $this->getParameter('hostedProfilePageBorderVisible', 'false'),
+                        'settingValue' => $this->getParameter('hostedProfilePageBorderVisible', false),
                     ],
                     [
                         'settingName' => 'hostedProfileHeadingBgColor',
@@ -1518,11 +1570,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     ],
                     [
                         'settingName' => 'hostedProfileBillingAddressRequired',
-                        'settingValue' => $this->getParameter('hostedProfileBillingAddressRequired', 'false'),
+                        'settingValue' => $this->getParameter('hostedProfileBillingAddressRequired', false),
                     ],
                     [
                         'settingName' => 'hostedProfileCardCodeRequired',
-                        'settingValue' => $this->getParameter('hostedProfileCardCodeRequired', 'false'),
+                        'settingValue' => $this->getParameter('hostedProfileCardCodeRequired', false),
                     ],
                     [
                         'settingName' => 'hostedProfileBillingAddressOptions',
@@ -2211,6 +2263,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             'name'      => !empty($name) ? $name : $sku,
             'quantity'  => static::formatAmount($qty),
             'unitPrice' => static::formatAmount($unitPrice),
+            'taxable'   => $item->getData('tax_amount') > 0 ? 'true' : 'false',
         ];
         
         return $itemData;

@@ -310,7 +310,6 @@ define(
 
                 return {
                     'billing': billingAddress,
-                    'source': 'checkout',
                     'method': this.getCode(),
                     'guest_email': quote.guestEmail !== undefined ? quote.guestEmail : null,
                     'form_key': this.getFormKey()

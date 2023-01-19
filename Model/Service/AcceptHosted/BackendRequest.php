@@ -42,7 +42,7 @@ class BackendRequest extends AbstractRequestHandler
     /**
      * AbstractRequestHandler constructor.
      *
-     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\Context $context
+     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\Context $context
      * @param \Magento\Backend\Model\Session\Quote $backendSession *Proxy
      * @param \Magento\Framework\App\RequestInterface $request
      * @param \ParadoxLabs\TokenBase\Helper\Data $tokenbaseHelper
@@ -72,29 +72,10 @@ class BackendRequest extends AbstractRequestHandler
      */
     public function getCustomerProfileId(): string
     {
-        if ($this->request->getParam('source') === 'paymentinfo') {
-            // If we were given a card ID, get the profile ID from that instead of creating new
-            $cardId = $this->request->getParam('card_id');
+        $payment = $this->backendSession->getQuote()->getPayment();
 
-            if (!empty($cardId)) {
-                $card = $this->cardRepository->getByHash($cardId);
-
-                if ($card->hasOwner((int)$this->getCustomerId()) === false) {
-                    throw new \Magento\Framework\Exception\LocalizedException(__('Could not load payment profile'));
-                }
-
-                return (string)$card->getProfileId();
-            }
-
-            if ($this->backendSession->getData('authnetcim_profile_id_' . $this->getCustomerId())) {
-                return (string)$this->backendSession->getData('authnetcim_profile_id_' . $this->getCustomerId());
-            }
-        } else {
-            $payment = $this->backendSession->getQuote()->getPayment();
-
-            if ($payment->hasAdditionalInformation('profile_id')) {
-                return $payment->getAdditionalInformation('profile_id');
-            }
+        if ($payment->hasAdditionalInformation('profile_id')) {
+            return $payment->getAdditionalInformation('profile_id');
         }
 
         /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
@@ -116,32 +97,6 @@ class BackendRequest extends AbstractRequestHandler
     }
 
     /**
-     * Get the CIM payment ID for the current session/context.
-     *
-     * @return string|null
-     * @throws \Magento\Framework\Exception\LocalizedException
-     */
-    public function getCustomerPaymentId(): ?string
-    {
-        if ($this->request->getParam('source') === 'paymentinfo') {
-            // If we were given a card ID, get the profile ID from that instead of creating new
-            $cardId = $this->request->getParam('card_id');
-
-            if (!empty($cardId)) {
-                $card = $this->cardRepository->getByHash($cardId);
-
-                if ($card->hasOwner((int)$this->getCustomerId()) === false) {
-                    throw new \Magento\Framework\Exception\LocalizedException(__('Could not load payment profile'));
-                }
-
-                return (string)$card->getPaymentId();
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Get customer email for the current session/context.
      *
      * @return string|null
@@ -153,7 +108,7 @@ class BackendRequest extends AbstractRequestHandler
                 return $this->tokenbaseHelper->getCurrentCustomer()->getEmail();
             }
 
-            return $this->backendSession->getQuote()->getBillingAddress()->getEmail();
+            return $this->getQuote()->getBillingAddress()->getEmail();
         } catch (\Exception $exception) {
             return null;
         }
@@ -170,6 +125,18 @@ class BackendRequest extends AbstractRequestHandler
     }
 
     /**
+     * Get the active quote.
+     *
+     * @return \Magento\Quote\Api\Data\CartInterface
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    protected function getQuote(): \Magento\Quote\Api\Data\CartInterface
+    {
+        return $this->backendSession->getQuote();
+    }
+
+    /**
      * Get the current store ID, for config loading.
      *
      * @return int
@@ -181,7 +148,7 @@ class BackendRequest extends AbstractRequestHandler
                 return (int)$this->tokenbaseHelper->getCurrentCustomer()->getStoreId();
             }
 
-            return (int)$this->backendSession->getQuote()->getStoreId();
+            return (int)$this->getQuote()->getStoreId();
         } catch (\Exception $exception) {
             return (int)$this->tokenbaseHelper->getCurrentStoreId();
         }
@@ -225,7 +192,7 @@ class BackendRequest extends AbstractRequestHandler
             return;
         }
 
-        $payment = $this->backendSession->getQuote()->getPayment();
+        $payment = $this->getQuote()->getPayment();
         $payment->setMethod($this->getMethodCode());
         $method  = $payment->getMethodInstance();
         $method->assignData(new \Magento\Framework\DataObject(['card_id' => $card->getHash()]));

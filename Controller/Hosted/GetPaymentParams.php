@@ -28,24 +28,24 @@ class GetPaymentParams extends Action implements CsrfAwareActionInterface, HttpP
     /**
      * @var \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\FrontendRequest
      */
-    protected $hostedForm;
+    protected $acceptHosted;
 
     /**
      * GetParams constructor.
      *
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey
-     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\FrontendRequest $hostedForm
+     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\FrontendRequest $acceptHosted
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Magento\Framework\Data\Form\FormKey\Validator $formKey,
-        \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\FrontendRequest $hostedForm
+        \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\FrontendRequest $acceptHosted
     ) {
         parent::__construct($context);
 
         $this->formKey = $formKey;
-        $this->hostedForm = $hostedForm;
+        $this->acceptHosted = $acceptHosted;
     }
 
     /**
@@ -59,7 +59,7 @@ class GetPaymentParams extends Action implements CsrfAwareActionInterface, HttpP
         $result = $this->resultFactory->create(ResultFactory::TYPE_JSON);
 
         try {
-            $params = $this->hostedForm->getParams();
+            $params = $this->acceptHosted->getParams();
 
             $result->setData($params);
         } catch (\Exception $exception) {
