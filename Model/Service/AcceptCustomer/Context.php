@@ -41,26 +41,34 @@ class Context
     private $helper;
 
     /**
+     * @var \ParadoxLabs\Authnetcim\Model\Service\CustomerProfile
+     */
+    private $customerProfileService;
+
+    /**
      * AbstractRequestHandler constructor.
      *
      * @param \Magento\Framework\Url $urlBuilder
      * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
-     * @param \ParadoxLabs\TokenBase\Model\Card\Factory $cardFactory
+     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory
      * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
      * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
+     * @param \ParadoxLabs\Authnetcim\Model\Service\CustomerProfile $customerProfileService
      */
     public function __construct(
         \Magento\Framework\Url $urlBuilder,
         \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
         \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory,
         \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
-        \ParadoxLabs\Authnetcim\Helper\Data $helper
+        \ParadoxLabs\Authnetcim\Helper\Data $helper,
+        \ParadoxLabs\Authnetcim\Model\Service\CustomerProfile $customerProfileService
     ) {
         $this->urlBuilder = $urlBuilder;
         $this->methodFactory = $methodFactory;
         $this->cardFactory = $cardFactory;
         $this->cardRepository = $cardRepository;
         $this->helper = $helper;
+        $this->customerProfileService = $customerProfileService;
     }
 
     /**
@@ -111,5 +119,15 @@ class Context
     public function getHelper()
     {
         return $this->helper;
+    }
+
+    /**
+     * Get customerProfileService
+     *
+     * @return \ParadoxLabs\Authnetcim\Model\Service\CustomerProfile
+     */
+    public function getCustomerProfileService()
+    {
+        return $this->customerProfileService;
     }
 }

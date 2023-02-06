@@ -17,9 +17,10 @@ define(
         'ParadoxLabs_TokenBase/js/view/payment/method-renderer/cc',
         'Magento_Ui/js/modal/alert',
         'Magento_Checkout/js/model/quote',
+        'Magento_Checkout/js/model/payment/additional-validators',
         'mage/translate'
     ],
-    function (ko, $, Component, alert, quote) {
+    function (ko, $, Component, alert, quote, additionalValidators) {
         'use strict';
 
         return Component.extend({
@@ -63,6 +64,7 @@ define(
 
                 this.showIframe = ko.computed(function() {
                     return (this.selectedCard() === null || this.selectedCard() === undefined)
+                           && (this.transactionId() === null || this.transactionId() === undefined)
                            && quote.billingAddress() !== null;
                 }, this);
 
@@ -86,6 +88,13 @@ define(
                 this.useVault = ko.computed(function() {
                     return this.storedCards().length > 0;
                 }, this);
+
+                // Revalidate checkout agreements for hosted form upon any changes in that area
+                $('#' + this.getCode() + '-agreements').on(
+                    'click change',
+                    'input textarea select',
+                    this.checkReinitHostedForm.bind(this)
+                );
 
                 return this;
             },
@@ -112,7 +121,8 @@ define(
             checkReinitHostedForm: function() {
                 if (this.iframeInitialized === false
                     && (this.selectedCard() === null || this.selectedCard() === undefined)
-                    && this.storedCards().length > 0) {
+                    && this.storedCards().length > 0
+                    && additionalValidators.validate() === true) {
                     // The initialized flag is to debounce and ensure we don't reinit unless absolutely necessary.
                     this.iframeInitialized = true;
                     this.initHostedForm();
@@ -260,16 +270,23 @@ define(
                 this.initHostedForm();
             },
 
+            /**
+             * Process payment transaction result (place the order)
+             * @param response
+             */
             handleResponse: function(response) {
                 if (response.createPaymentProfileResponse !== undefined
                     && response.createPaymentProfileResponse.success === 'true') {
                     this.save(true);
+                } else {
+                    this.save(false);
                 }
 
-                // TODO: Validate and verify the transaction server-side, throw error if failed
                 this.transactionId(response.transId);
 
                 this.placeOrder();
+
+                this.iframeInitialized = false;
             },
 
             /**
@@ -344,6 +361,29 @@ define(
              */
             hasVerification: function () {
                 return this.requireCcv();
+            },
+
+            /**
+             * Validate the form before order placement
+             * @returns {boolean}
+             */
+            validate: function () {
+                if (this.transactionId()) {
+                    return true;
+                }
+
+                return this._super();
+            },
+
+            /**
+             * Allow order placement
+             */
+            checkPlaceOrderAllowed: function () {
+                if (this.transactionId && this.transactionId()) {
+                    return true;
+                }
+
+                return this._super();
             },
 
             /**

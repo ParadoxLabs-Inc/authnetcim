@@ -15,7 +15,7 @@
     {
         if (event && event.data) {
             if (event.origin === 'https://test.authorize.net'
-                || event.origin === 'https://accept.authorize.net')) {
+                || event.origin === 'https://accept.authorize.net') {
                 communicateAuthnetResponse(event.data);
             } else {
                 console.error('Ignored untrusted message from ' + event.origin);

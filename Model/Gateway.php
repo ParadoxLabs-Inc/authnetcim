@@ -132,6 +132,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'loginId'                   => ['maxLength' => 20],
         'merchantCustomerId'        => ['maxLength' => 20],
         'nameOnAccount'             => ['maxLength' => 22],
+        'profileType'               => ['enum' => ['guest', 'regular']],
         'purchaseOrderNumber'       => ['maxLength' => 25, 'noSymbols' => true],
         'recurringBilling'          => ['enum' => ['true', 'false']],
         'refId'                     => ['maxLength' => 20],
@@ -619,6 +620,23 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
 
+        /**
+         * Short circuit if prior hosted transaction
+         */
+        if ($payment->getAdditionalInformation('transaction_status') === 'authorizedPendingCapture'
+            && !empty($payment->getAdditionalInformation('transaction_id'))
+            && $this->getHaveAuthorized() !== true) {
+            /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
+            $response = $this->responseFactory->create();
+            $response->setData($payment->getAdditionalInformation());
+
+            if ((int)$response->getResponseCode() === 4) {
+                $response->setIsFraud(true);
+            }
+
+            return $response;
+        }
+
         $this->setParameter('transactionType', 'authOnlyTransaction');
         $this->setParameter('amount', $amount);
         $this->setParameter('invoiceNumber', $payment->getOrder()->getIncrementId());
@@ -671,6 +689,16 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
 
+        /**
+         * Adjust transaction flow if there was a prior hosted transaction
+         */
+        if ($payment->getAdditionalInformation('transaction_status') === 'authorizedPendingCapture'
+            && !empty($payment->getAdditionalInformation('transaction_id'))
+            && $this->getHaveAuthorized() !== true) {
+            $transactionId = $payment->getAdditionalInformation('transaction_id');
+            $this->setHaveAuthorized(true);
+        }
+
         if ($this->getHaveAuthorized()) {
             $this->setParameter('transactionType', 'priorAuthCaptureTransaction');
 
@@ -719,6 +747,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $this->setParameter('transId', null)
                  ->setHaveAuthorized(false)
                  ->setCard($this->getData('card'));
+
+            $payment->setAdditionalInformation('transaction_id', null);
 
             $response = $this->capture($payment, $amount, '');
         }
@@ -1186,6 +1216,22 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     }
 
     /**
+     * Create CIM profiles from a transaction
+     *
+     * @return array Transaction result
+     */
+    public function createCustomerProfileFromTransaction()
+    {
+        $params = [
+            'transId' => $this->getParameter('transId'),
+            'customerProfileId' => $this->getParameter('customerProfileId'),
+            'profileType' => $this->getParameter('profileType', 'regular'),
+        ];
+
+        return $this->runTransaction('createCustomerProfileFromTransactionRequest', $params);
+    }
+
+    /**
      * Run an actual transaction with Authorize.Net with stored data.
      *
      * Implements the new generic API method (createTransactionRequest), as opposed
@@ -1601,6 +1647,22 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $details = $this->runTransaction('getTransactionDetailsRequest', $params);
 
         return $this->mapTransactionDetails($details);
+    }
+
+    /**
+     * Get current details for a given transaction ID.
+     *
+     * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
+     */
+    public function getTransactionDetailsObject(): \ParadoxLabs\TokenBase\Model\Gateway\Response
+    {
+        $data = $this->getTransactionDetails();
+
+        /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
+        $response = $this->responseFactory->create();
+        $response->setData($data);
+
+        return $response;
     }
 
     /**

@@ -74,6 +74,7 @@ class StoredCard extends \ParadoxLabs\TokenBase\Gateway\Validator\StoredCard
              */
             if ($this->config->getValue('require_ccv') == 1
                 && $payment->getAdditionalInformation('is_subscription_generated') != 1
+                && empty($payment->getAdditionalInformation('transaction_id'))
                 && $payment->getData('tokenbase_source') !== 'paymentinfo') {
                 $ccvLength = null;
                 $ccvLabel  = 'CVV';

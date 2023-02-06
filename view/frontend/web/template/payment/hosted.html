@@ -18,6 +18,12 @@
             <!--/ko-->
         </div>
 
+        <div class="checkout-agreements-block" data-bind="attr: {id: getCode() + '-agreements'}">
+            <!-- ko foreach: $parent.getRegion('before-place-order') -->
+            <!-- ko template: getTemplate() --><!-- /ko -->
+            <!--/ko-->
+        </div>
+
         <fieldset data-bind="attr: {class: 'fieldset payment items ccard ' + getCode(), id: getCode() + '-form-cc'}">
             <!-- ko if: (isShowLegend())-->
             <legend class="legend"><span><!-- ko text: $t('Credit Card Information')--><!-- /ko --></span></legend><br />
@@ -117,11 +123,6 @@
         </fieldset>
 
         <div class="payment-method-content" data-bind="visible: selectedCard()">
-            <div class="checkout-agreements-block">
-                <!-- ko foreach: $parent.getRegion('before-place-order') -->
-                <!-- ko template: getTemplate() --><!-- /ko -->
-                <!--/ko-->
-            </div>
             <div class="actions-toolbar">
                 <div class="primary">
                     <button class="action primary checkout"

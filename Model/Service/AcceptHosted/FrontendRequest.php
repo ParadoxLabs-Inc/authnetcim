@@ -84,12 +84,8 @@ class FrontendRequest extends AbstractRequestHandler
 
         $profileId = $gateway->createCustomerProfile();
 
-        if ($this->request->getParam('source') !== 'paymentinfo') {
-            $payment->setAdditionalInformation('profile_id', $profileId);
-            $this->paymentResource->save($payment);
-        } else {
-            $this->customerSession->setData('authnetcim_profile_id', $profileId);
-        }
+        $payment->setAdditionalInformation('profile_id', $profileId);
+        $this->paymentResource->save($payment);
 
         return (string)$profileId;
     }
