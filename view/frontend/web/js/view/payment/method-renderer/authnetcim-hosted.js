@@ -256,7 +256,7 @@ define(
                         this.handleResponse(JSON.parse(event.data.response));
                         break;
                     case 'resizeWindow':
-                        var height = Math.ceil(parseFloat(event.data.height));
+                        var height = Math.ceil(parseFloat(event.data.height)) + 80;
                         $('#' + this.getCode() + '_iframe').height(height + 'px');
                         break;
                 }

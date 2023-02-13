@@ -238,7 +238,7 @@ define([
                     this.handleSave(event.data);
                     break;
                 case 'resizeWindow':
-                    var height = Math.ceil(parseFloat(event.data.height));
+                    var height = Math.ceil(parseFloat(event.data.height)) + 80;
                     this.element.find('#' + this.options.target).height(height + 'px');
                     break;
             }

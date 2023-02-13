@@ -47,7 +47,6 @@
                 <field id="heading_hosted" translate="label" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Hosted IFrame Payment Form</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
-                    <comment>test text</comment>
                     <attribute type="shared">1</attribute>
                     <depends>
                         <field id="acceptjs">0</field>
@@ -56,6 +55,14 @@
                 <field id="accent_color" translate="label comment" type="text" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Accent Color</label>
                     <comment><![CDATA[Enter a hex color for buttons and borders on the payment form.]]></comment>
+                    <depends>
+                        <field id="acceptjs">0</field>
+                    </depends>
+                </field>
+                <field id="enable_hosted_captcha" translate="label" type="select" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enable Captcha</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If yes, captcha validation will be required for new card entry at checkout. This is recommended to protect against carding attacks.</comment>
                     <depends>
                         <field id="acceptjs">0</field>
                     </depends>

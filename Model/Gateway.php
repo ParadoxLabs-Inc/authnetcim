@@ -112,6 +112,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'email'                     => ['maxLength' => 255],
         'emailCustomer'             => ['enum' => ['true', 'false']],
         'expirationDate'            => ['maxLength' => 7],
+        'hostedPaymentCancelText'               => ['maxLength' => 31],
+        'hostedPaymentPayButtonText'            => ['maxLength' => 31],
+        'hostedPaymentCardCodeRequired'         => ['enum' => [true, false]],
+        'hostedPaymentShowCreditCard'           => ['enum' => [true, false]],
+        'hostedPaymentShowBankAccount'          => ['enum' => [true, false]],
+        'hostedPaymentValidateCaptcha'          => ['enum' => [true, false]],
         'hostedProfileSaveButtonText'           => ['maxLength' => 32, 'noSymbols' => true],
         'hostedProfilePageBorderVisible'        => ['enum' => [true, false]],
         'hostedProfileHeadingBgColor'           => ['maxLength' => 7, 'charMask' => 'a-zA-Z0-9#'],
@@ -1497,7 +1503,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                         'settingValue' => json_encode([
                             'cardCodeRequired' => $this->getParameter('hostedPaymentCardCodeRequired', true),
                             'showCreditCard' => $this->getParameter('hostedPaymentShowCreditCard', true),
-                            'showBankAccount' => $this->getParameter('hostedPaymentShowACH', false),
+                            'showBankAccount' => $this->getParameter('hostedPaymentShowBankAccount', false),
                         ]),
                     ],
                     [

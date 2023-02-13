@@ -38,6 +38,7 @@
                 <acceptjs>0</acceptjs>
                 <enable_webhooks>0</enable_webhooks>
                 <accent_color>#1979C3</accent_color>
+                <enable_hosted_captcha>1</enable_hosted_captcha>
                 <client_key />
                 <group>tokenbase</group>
                 <!-- Feature flags -->
