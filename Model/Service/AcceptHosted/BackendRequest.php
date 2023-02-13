@@ -15,7 +15,6 @@ namespace ParadoxLabs\Authnetcim\Model\Service\AcceptHosted;
 
 use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider as ConfigProviderAch;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider as ConfigProviderCc;
-use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 
 class BackendRequest extends AbstractRequestHandler
 {
@@ -86,12 +85,8 @@ class BackendRequest extends AbstractRequestHandler
 
         $profileId = $gateway->createCustomerProfile();
 
-        if ($this->request->getParam('source') !== 'paymentinfo') {
-            $payment->setAdditionalInformation('profile_id', $profileId);
-            $this->paymentResource->save($payment);
-        } else {
-            $this->backendSession->setData('authnetcim_profile_id_' . $this->getCustomerId(), $profileId);
-        }
+        $payment->setAdditionalInformation('profile_id', $profileId);
+        $this->paymentResource->save($payment);
 
         return (string)$profileId;
     }
@@ -104,10 +99,6 @@ class BackendRequest extends AbstractRequestHandler
     public function getEmail(): ?string
     {
         try {
-            if ($this->request->getParam('source') === 'paymentinfo') {
-                return $this->tokenbaseHelper->getCurrentCustomer()->getEmail();
-            }
-
             return $this->getQuote()->getBillingAddress()->getEmail();
         } catch (\Exception $exception) {
             return null;
@@ -144,10 +135,6 @@ class BackendRequest extends AbstractRequestHandler
     protected function getStoreId(): int
     {
         try {
-            if ($this->request->getParam('source') === 'paymentinfo') {
-                return (int)$this->tokenbaseHelper->getCurrentCustomer()->getStoreId();
-            }
-
             return (int)$this->getQuote()->getStoreId();
         } catch (\Exception $exception) {
             return (int)$this->tokenbaseHelper->getCurrentStoreId();
@@ -168,35 +155,5 @@ class BackendRequest extends AbstractRequestHandler
         }
 
         return ConfigProviderCc::CODE;
-    }
-
-    /**
-     * Get the tokenbase card hash for the current session/context.
-     *
-     * @return string
-     */
-    protected function getTokenbaseCardId(): string
-    {
-        return (string)$this->request->getParam('card_id');
-    }
-
-    /**
-     * Save the given card to the active quote as the active payment method.
-     *
-     * @param CardInterface $card
-     * @return void
-     */
-    protected function saveCardToQuote(\ParadoxLabs\TokenBase\Api\Data\CardInterface $card): void
-    {
-        if ($this->request->getParam('source') === 'paymentinfo') {
-            return;
-        }
-
-        $payment = $this->getQuote()->getPayment();
-        $payment->setMethod($this->getMethodCode());
-        $method  = $payment->getMethodInstance();
-        $method->assignData(new \Magento\Framework\DataObject(['card_id' => $card->getHash()]));
-
-        $this->paymentResource->save($payment);
     }
 }

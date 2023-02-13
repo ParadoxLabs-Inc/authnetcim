@@ -14,7 +14,6 @@
 namespace ParadoxLabs\Authnetcim\Model\Service\AcceptHosted;
 
 use Magento\Quote\Api\Data\AddressInterface;
-use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 
 abstract class AbstractRequestHandler
 {
@@ -146,6 +145,7 @@ abstract class AbstractRequestHandler
         $communicatorUrl = $this->urlBuilder->getUrl('authnetcim/hosted/communicator');
         $gateway->setParameter('hostedProfileIFrameCommunicatorUrl', $communicatorUrl);
         $gateway->setParameter('hostedProfileHeadingBgColor', $method->getConfigData('accent_color'));
+        $gateway->setParameter('hostedPaymentValidateCaptcha', (bool)$method->getConfigData('enable_hosted_captcha'));
         $gateway->setParameter('customerProfileId', $this->getCustomerProfileId());
 
         /** @var \Magento\Quote\Model\Quote $quote */
@@ -282,11 +282,4 @@ abstract class AbstractRequestHandler
      * @return string
      */
     abstract protected function getMethodCode(): string;
-
-    /**
-     * Get the tokenbase card hash for the current session/context.
-     *
-     * @return string
-     */
-    abstract protected function getTokenbaseCardId(): string;
 }

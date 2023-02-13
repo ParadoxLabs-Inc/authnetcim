@@ -156,14 +156,4 @@ class FrontendRequest extends AbstractRequestHandler
 
         return ConfigProviderCc::CODE;
     }
-
-    /**
-     * Get the tokenbase card hash for the current session/context.
-     *
-     * @return string
-     */
-    protected function getTokenbaseCardId(): string
-    {
-        return (string)($this->request->getParam('card_id') ?? $this->request->getParam('id'));
-    }
 }

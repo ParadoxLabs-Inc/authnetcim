@@ -111,6 +111,11 @@ class CustomerProfile
         }
 
         if (!isset($response['profile']['paymentProfiles'])) {
+            $this->helper->log(
+                ConfigProvider::CODE,
+                sprintf('Unable to load payment record for CIM profile "%s"', $profileId)
+            );
+
             throw new \Magento\Framework\Exception\LocalizedException(__('Unable to find payment record.'));
         }
 

@@ -36,6 +36,11 @@ define([
         _create: function() {
             this.element.on('change', this.options.cardSelector, this.handleCardSelectChange.bind(this));
 
+            // Admin only listener
+            if (typeof order === 'object') {
+                $('body').on('beforeSubmitOrder', '#edit_form', this.checkHostedFormStatus.bind(this));
+            }
+
             this.bindCommunicator();
 
             this.handleCardSelectChange();
@@ -46,6 +51,7 @@ define([
          */
         handleCardSelectChange: function() {
             if (this.element.find(this.options.cardSelector).val() !== '') {
+                this.element.find('input.cvv').prop('disabled', false);
                 this.element.find('div.cvv').show();
                 this.element.find('div.save').toggle(
                     !!this.element.find(this.options.cardSelector + ' option:selected').data('new')
@@ -55,6 +61,7 @@ define([
             }
 
             // Hide additional fields when iframe is visible
+            this.element.find('input.cvv').prop('disabled', true);
             this.element.find('div.cvv').hide();
             this.element.find('div.save').hide();
 
@@ -162,6 +169,34 @@ define([
         },
 
         /**
+         * Prevent standard button submit if the hosted form is active
+         */
+        checkHostedFormStatus: function(event) {
+            if (this.element.find('#' + this.options.target).is(':visible') === false) {
+                return;
+            }
+
+            var message = $.mage.__('Please use the payment form to complete the order.');
+
+            try {
+                alert({
+                    title: $.mage.__('Error'),
+                    content: message
+                });
+            } catch (error) {
+                // Fall back to standard alert if jq widget hasn't initialized yet
+                window.alert(message);
+            }
+
+            if (typeof order === 'object') {
+                $('#edit_form').trigger('processStop');
+                $('#order-billing_method')[0].scrollIntoView();
+            }
+
+            return false;
+        },
+
+        /**
          * Listen for messages from the payment form iframe
          */
         bindCommunicator: function() {
@@ -196,6 +231,9 @@ define([
                 case 'cancel':
                     this.handleCancel(event.data);
                     break;
+                case "transactResponse":
+                    this.handleResponse(JSON.parse(event.data.response));
+                    break;
                 case 'successfulSave':
                     this.handleSave(event.data);
                     break;
@@ -212,6 +250,29 @@ define([
          */
         handleCancel: function(response) {
             this.initHostedForm();
+        },
+
+        /**
+         * Process payment transaction result (place the order)
+         * @param response
+         */
+        handleResponse: function(response) {
+            if (response.createPaymentProfileResponse !== undefined
+                && response.createPaymentProfileResponse.success === 'true') {
+                this.element.find('input[name="payment[save]"]').val(1).prop('checked', true);
+            } else {
+                this.element.find('input[name="payment[save]"]').val(0).prop('checked', false);
+            }
+
+            this.element.find('#' + this.options.method + '-transaction-id').val(response.transId).trigger('change');
+
+            if (typeof order === 'object') {
+                $('#edit_form').trigger('realOrder');
+            } else {
+                this.element.closest('form').submit();
+            }
+
+            this.iframeInitialized = false;
         },
 
         /**

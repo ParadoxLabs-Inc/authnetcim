@@ -183,8 +183,7 @@ class PaymentMethodAssignDataObserver extends \ParadoxLabs\TokenBase\Observer\Pa
                 $payment->getAdditionalInformation('profile_id')
             );
 
-            $card->setProfileId($payment->getAdditionalInformation('profile_id'));
-            $card->setActive(true);
+            $card->setActive($quote->getCustomerId() > 0);
 
             $card = $this->customerProfileService->importPaymentProfile(
                 $card,
@@ -194,12 +193,25 @@ class PaymentMethodAssignDataObserver extends \ParadoxLabs\TokenBase\Observer\Pa
             /**
              * Card was not saved to profile at checkout -- we need to save it from the transaction, then import it.
              */
-            $gateway->setParameter('customerProfileId', $payment->getAdditionalInformation('profile_id'));
-            $result = $gateway->createCustomerProfileFromTransaction();
+            try {
+                $gateway->setParameter('customerProfileId', $payment->getAdditionalInformation('profile_id'));
+                $result = $gateway->createCustomerProfileFromTransaction();
 
-            $card->setPaymentId($result['customerPaymentProfileIdList']['numericString']);
+                $card->setPaymentId($result['customerPaymentProfileIdList']['numericString']);
 
-            $card = $this->customerProfileService->updateCardFromPaymentProfile($card);
+                $card = $this->customerProfileService->updateCardFromPaymentProfile($card);
+            } catch (\Exception $exception) {
+                /**
+                 * If CIM payment storage failed, create card without it for processing purposes.
+                 * New transactions won't work, but capture/void will.
+                 */
+                $this->helper->log(
+                    \ParadoxLabs\Authnetcim\Model\ConfigProvider::CODE,
+                    'CIM Payment Profile creation failed: ' . $exception->getMessage()
+                );
+
+                $this->cardRepository->save($card);
+            }
         }
 
         $payment->setData('tokenbase_id', $card->getId());

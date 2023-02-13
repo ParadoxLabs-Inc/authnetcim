@@ -18,6 +18,7 @@ $storedCards    = $block->getStoredCards();
     }
 }'>
     <input id="<?= $code ?>-payment-method" type="hidden" name="payment[method]" value="<?= $code ?>" />
+    <input id="<?= $code ?>-transaction-id" type="hidden" name="payment[transaction_id]" value="" />
     <?= $block->getBlockHtml('formkey') ?>
 
     <fieldset class="admin__fieldset payment items ccard">
@@ -49,6 +50,7 @@ $storedCards    = $block->getStoredCards();
 
         <div class="admin__field _required card hide-if-card-selected">
             <div class="admin__field-control control">
+                <p><?= $block->escapeHtml(__('Please complete all fields before clicking Place Order.')) ?></p>
                 <iframe src="about:blank" frameborder="0" id="<?= $code ?>_iframe" name="<?= $code ?>_iframe" style="width:100%;min-width:300px;max-width:550px;height:400px;"></iframe>
                 <p id="<?= $code ?>_warning" class="message message-error" style="display:none"></p>
             </div>

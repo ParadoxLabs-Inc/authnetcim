@@ -28,7 +28,7 @@ class GetPaymentParams extends Action implements CsrfAwareActionInterface, HttpP
     /**
      * @var \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\BackendRequest
      */
-    protected $hostedForm;
+    protected $acceptHosted;
 
     /**
      * @var \Magento\Framework\Registry
@@ -45,21 +45,21 @@ class GetPaymentParams extends Action implements CsrfAwareActionInterface, HttpP
      *
      * @param \Magento\Backend\App\Action\Context $context
      * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey
-     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\BackendRequest $hostedForm
+     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\BackendRequest $acceptHosted
      * @param \Magento\Framework\Registry $registry
      * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
      */
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
         \Magento\Framework\Data\Form\FormKey\Validator $formKey,
-        \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\BackendRequest $hostedForm,
+        \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\BackendRequest $acceptHosted,
         \Magento\Framework\Registry $registry,
         \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
     ) {
         parent::__construct($context);
 
         $this->formKey = $formKey;
-        $this->hostedForm = $hostedForm;
+        $this->acceptHosted = $acceptHosted;
         $this->registry = $registry;
         $this->customerRepository = $customerRepository;
     }
@@ -77,7 +77,7 @@ class GetPaymentParams extends Action implements CsrfAwareActionInterface, HttpP
         $result = $this->resultFactory->create(ResultFactory::TYPE_JSON);
 
         try {
-            $params = $this->hostedForm->getParams();
+            $params = $this->acceptHosted->getParams();
 
             $result->setData($params);
         } catch (\Exception $exception) {
@@ -138,13 +138,7 @@ class GetPaymentParams extends Action implements CsrfAwareActionInterface, HttpP
             return;
         }
 
-        // Take from request if given (for account card management)
-        $customerId = $this->getRequest()->getParam('id');
-
-        if ($customerId === null) {
-            // Otherwise, defer to TokenBase logic (for admin ordering)
-            $customerId = $this->hostedForm->getCustomerId();
-        }
+        $customerId = $this->acceptHosted->getCustomerId();
 
         if ($customerId > 0) {
             try {
