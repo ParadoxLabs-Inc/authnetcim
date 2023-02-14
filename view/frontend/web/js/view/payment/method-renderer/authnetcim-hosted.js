@@ -52,7 +52,8 @@ define(
                 this._super()
                     .observe([
                         'billingAddressLine',
-                        'transactionId'
+                        'transactionId',
+                        'communicatorActive'
                     ]);
 
                 this.bindCommunicator();
@@ -184,6 +185,10 @@ define(
                 // Reload the hosted form when it expires
                 setTimeout(this.reloadExpiredHostedForm.bind(this), 15*60*1000);
 
+                // Verify communicator connected
+                this.communicatorActive(false);
+                setTimeout(this.checkCommunicator.bind(this), 20*1000);
+
                 iframe.trigger('processStop');
             },
 
@@ -229,6 +234,30 @@ define(
             },
 
             /**
+             * Throw an error if the communicator has not connected after 30 seconds (bad)
+             */
+            checkCommunicator: function() {
+                if (this.communicatorActive() || !this.showIframe()) {
+                    return;
+                }
+
+                var message = $.mage.__('Payment gateway failed to connect. Please reload and try again. If the problem'
+                                    + ' continues, please seek support.');
+
+                console.error('No message received from communicator.', message);
+
+                try {
+                    alert({
+                        title: $.mage.__('Error'),
+                        content: message
+                    });
+                } catch (error) {
+                    // Fall back to standard alert if jq widget hasn't initialized yet
+                    window.alert(message);
+                }
+            },
+
+            /**
              * Validate and process a message from the payment form
              * @param event
              */
@@ -248,12 +277,17 @@ define(
                     return;
                 }
 
+                this.communicatorActive(true);
+
                 switch (event.data.action) {
                     case 'cancel':
                         this.handleCancel(event.data);
                         break;
                     case "transactResponse":
                         this.handleResponse(JSON.parse(event.data.response));
+                        break;
+                    case 'successfulSave':
+                        this.handleSave(event.data);
                         break;
                     case 'resizeWindow':
                         var height = Math.ceil(parseFloat(event.data.height)) + 80;
@@ -287,6 +321,50 @@ define(
                 this.placeOrder();
 
                 this.iframeInitialized = false;
+            },
+
+            /**
+             * Fetch new card details upon payment form completion
+             * @param event
+             */
+            handleSave: function(event) {
+                if (this.processingSave) {
+                    console.log('Ignored duplicate handleSave');
+                    return;
+                }
+
+                this.processingSave = true;
+                $('#' + this.getCode() + '_iframe').trigger('processStart');
+
+                $.post({
+                    url: this.newCardUrl,
+                    dataType: 'json',
+                    data: this.getFormParams(),
+                    global: false,
+                    success: this.addAndSelectCard.bind(this),
+                    error: this.handleAjaxError.bind(this)
+                });
+            },
+
+            /**
+             * Add and select new card on the UI after completing the payment form
+             * @param data
+             */
+            addAndSelectCard: function(data) {
+                $('#' + this.getCode() + '_iframe').trigger('processStop');
+
+                if (data.card.method !== this.getCode()) {
+                    return;
+                }
+
+                this.storedCards.push(data.card);
+                this.selectedCard(data.card.id);
+                this.iframeInitialized = false;
+                this.processingSave = false;
+
+                if (this.hasVerification()) {
+                    $('#' + this.getCode() + '-cc-cid').trigger('focus');
+                }
             },
 
             /**

@@ -39,5 +39,7 @@
 
     if (window.location.hash && window.location.hash.length > 1) {
         communicateAuthnetResponse(window.location.hash.substring(1));
+    } else {
+        communicateAuthnetResponse('action=ping');
     }
 </script>

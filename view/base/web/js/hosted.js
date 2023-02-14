@@ -27,6 +27,7 @@ define([
             cardSelector: '[name="payment[card_id]"]'
         },
 
+        communicatorActive: false,
         processingSave: false,
 
         /**
@@ -126,7 +127,12 @@ define([
             document.body.appendChild(form);
             form.submit();
 
+            // Reload the hosted form when it expires
             setTimeout(this.reloadExpiredHostedForm.bind(this), 15*60*1000);
+
+            // Verify communicator connected
+            this.communicatorActive = false;
+            setTimeout(this.checkCommunicator.bind(this), 20*1000);
 
             this.element.find('#' + this.options.target).trigger('processStop');
         },
@@ -208,6 +214,31 @@ define([
         },
 
         /**
+         * Throw an error if the communicator has not connected after 30 seconds (bad)
+         */
+        checkCommunicator: function() {
+            if (this.communicatorActive
+                || this.element.find('#' + this.options.target).is(':visible') === false) {
+                return;
+            }
+
+            var message = $.mage.__('Payment gateway failed to connect. Please reload and try again. If the problem'
+                                + ' continues, please seek support.');
+
+            console.error('No message received from communicator.', message);
+
+            try {
+                alert({
+                    title: $.mage.__('Error'),
+                    content: message
+                });
+            } catch (error) {
+                // Fall back to standard alert if jq widget hasn't initialized yet
+                window.alert(message);
+            }
+        },
+
+        /**
          * Validate and process a message from the payment form
          * @param event
          */
@@ -226,6 +257,8 @@ define([
                 console.error('Ignored untrusted message from ' + event.origin);
                 return;
             }
+
+            this.communicatorActive = true;
 
             switch (event.data.action) {
                 case 'cancel':
