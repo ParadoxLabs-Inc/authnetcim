@@ -41,6 +41,7 @@ define(
                 this.selectedCard    = config ? config.selectedCard : '';
                 this.requireCcv      = config ? config.requireCcv : false;
                 this.paramUrl        = config ? config.paramUrl : null;
+                this.newCardUrl      = config ? config.newCardUrl : null;
                 this.logoImage       = config ? config.logoImage : false;
             },
 

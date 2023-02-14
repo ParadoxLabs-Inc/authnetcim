@@ -43,18 +43,15 @@ class CustomerProfile
      *
      * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
      * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
-     * @param \ParadoxLabs\TokenBase\Model\Card\Factory $cardFactory
      * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
      */
     public function __construct(
         \ParadoxLabs\Authnetcim\Helper\Data $helper,
         \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
-        \ParadoxLabs\TokenBase\Model\Card\Factory $cardFactory,
         \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
     ) {
         $this->helper = $helper;
         $this->cardRepository = $cardRepository;
-        $this->cardFactory = $cardFactory;
         $this->methodFactory = $methodFactory;
     }
 

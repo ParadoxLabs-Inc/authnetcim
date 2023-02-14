@@ -21,7 +21,7 @@ use Magento\Payment\Model\CcGenericConfigProvider;
  */
 class ConfigProvider extends CcGenericConfigProvider
 {
-    const CODE = 'authnetcim';
+    public const CODE = 'authnetcim';
 
     /**
      * @var \Magento\Checkout\Model\Session
@@ -159,7 +159,8 @@ class ConfigProvider extends CcGenericConfigProvider
                     'clientKey'               => $this->getClientKey(),
                     'sandbox'                 => $this->getSandbox(),
                     'canStoreBin'             => $this->getCanStoreBin(),
-                    'paramUrl'                => $this->urlBuilder->getUrl('authnetcim/hosted/getPaymentParams'),
+                    'paramUrl'                => $this->getParamUrl(),
+                    'newCardUrl'              => $this->getNewCardUrl(),
                 ],
             ],
         ]);
@@ -283,5 +284,29 @@ class ConfigProvider extends CcGenericConfigProvider
     public function getCode(): string
     {
         return static::CODE;
+    }
+
+    /**
+     * Get hosted form parameter URL
+     *
+     * @return string
+     */
+    public function getParamUrl(): string
+    {
+        if ($this->methods[static::CODE]->getConfigData('payment_action') === 'order') {
+            return $this->urlBuilder->getUrl('authnetcim/hosted/getProfileParams', ['source' => 'checkout']);
+        }
+
+        return $this->urlBuilder->getUrl('authnetcim/hosted/getPaymentParams');
+    }
+
+    /**
+     * Get Accept Customer hosted form new-card URL
+     *
+     * @return string
+     */
+    public function getNewCardUrl(): string
+    {
+        return $this->urlBuilder->getUrl('authnetcim/hosted/getNewCard');
     }
 }

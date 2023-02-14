@@ -41,7 +41,7 @@ class GetProfileParams extends Action implements CsrfAwareActionInterface, HttpP
     protected $customerRepository;
 
     /**
-     * GetParams constructor.
+     * GetProfileParams constructor.
      *
      * @param \Magento\Backend\App\Action\Context $context
      * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey
@@ -132,7 +132,7 @@ class GetProfileParams extends Action implements CsrfAwareActionInterface, HttpP
      *
      * @return void
      */
-    protected function initCustomer()
+    protected function initCustomer(): void
     {
         if ($this->registry->registry('current_customer')) {
             return;

@@ -33,16 +33,6 @@ abstract class AbstractRequestHandler
     protected $methodFactory;
 
     /**
-     * @var \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory
-     */
-    protected $cardFactory;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Api\CardRepositoryInterface
-     */
-    protected $cardRepository;
-
-    /**
      * @var \ParadoxLabs\Authnetcim\Helper\Data
      */
     protected $helper;
@@ -72,8 +62,6 @@ abstract class AbstractRequestHandler
     ) {
         $this->urlBuilder = $context->getUrlBuilder();
         $this->methodFactory = $context->getMethodFactory();
-        $this->cardFactory = $context->getCardFactory();
-        $this->cardRepository = $context->getCardRepository();
         $this->helper = $context->getHelper();
         $this->quoteRepository = $context->getQuoteRepository();
         $this->addressHelper = $context->getAddressHelper();
@@ -133,6 +121,8 @@ abstract class AbstractRequestHandler
      *
      * @throws \Magento\Framework\Exception\InputException
      * @throws \Magento\Framework\Exception\StateException
+     * @throws \Magento\Payment\Gateway\Command\CommandException
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getToken(): string
     {
@@ -190,34 +180,6 @@ abstract class AbstractRequestHandler
         }
 
         return (string)$quote->getReservedOrderId();
-    }
-
-    /**
-     * Set billing address parameters on the Gateway
-     *
-     * @param \ParadoxLabs\Authnetcim\Model\Gateway $gateway
-     * @return void
-     * @throws \Magento\Framework\Exception\LocalizedException
-     */
-    protected function setBillingParams(\ParadoxLabs\Authnetcim\Model\Gateway $gateway): void
-    {
-        // Use billing params over quote data, if given
-        $post = $this->request->getPostValue('billing');
-        if (!empty($post)) {
-            $post['country_id']  = $post['country_id'] ?? $post['countryId'] ?? null;
-            $post['region_id']   = $post['region_id'] ?? $post['regionId'] ?? null;
-            $post['region_code'] = $post['region_code'] ?? $post['regionCode'] ?? null;
-
-            $address = $this->addressHelper->buildAddressFromInput($post);
-            $gateway->setBillTo($address);
-
-            return;
-        }
-
-        $billing = $this->getQuote()->getBillingAddress();
-        if ($billing instanceof AddressInterface) {
-            $gateway->setBillTo($billing->getDataModel());
-        }
     }
 
     /**
@@ -282,4 +244,12 @@ abstract class AbstractRequestHandler
      * @return string
      */
     abstract protected function getMethodCode(): string;
+
+    /**
+     * Set billing address parameters on the Gateway
+     *
+     * @param \ParadoxLabs\Authnetcim\Model\Gateway $gateway
+     * @return void
+     */
+    abstract protected function setBillingParams(\ParadoxLabs\Authnetcim\Model\Gateway $gateway): void;
 }

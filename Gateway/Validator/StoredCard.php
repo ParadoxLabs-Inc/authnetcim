@@ -56,8 +56,6 @@ class StoredCard extends \ParadoxLabs\TokenBase\Gateway\Validator\StoredCard
             return parent::validate($validationSubject);
         }
 
-        // Otherwise, we need to validate no payment data at all
-
         $isValid = true;
         $fails   = [];
 
@@ -73,7 +71,7 @@ class StoredCard extends \ParadoxLabs\TokenBase\Gateway\Validator\StoredCard
              * If Require CCV is enabled, enforce it.
              */
             if ($this->config->getValue('require_ccv') == 1
-                && $payment->getAdditionalInformation('is_subscription_generated') != 1
+                && (bool)$payment->getAdditionalInformation('is_subscription_generated') !== true
                 && empty($payment->getAdditionalInformation('transaction_id'))
                 && $payment->getData('tokenbase_source') !== 'paymentinfo') {
                 $ccvLength = null;
@@ -89,7 +87,7 @@ class StoredCard extends \ParadoxLabs\TokenBase\Gateway\Validator\StoredCard
                 }
 
                 if (!is_numeric($payment->getData('cc_cid'))
-                    || ($ccvLength !== null && strlen((string)$payment->getData('cc_cid')) != $ccvLength)
+                    || ($ccvLength !== null && strlen((string)$payment->getData('cc_cid')) !== (int)$ccvLength)
                     || strlen((string)$payment->getData('cc_cid')) < 3) {
                     $isValid = false;
                     $fails[] = __('Please enter your credit card %1.', $ccvLabel);

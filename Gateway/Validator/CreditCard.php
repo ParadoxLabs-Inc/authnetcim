@@ -99,7 +99,7 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
     /**
      * Determine whether Accept.js is configured.
      */
-    public function isAcceptJsEnabled()
+    public function isAcceptJsEnabled(): bool
     {
         $clientKey = $this->config->getValue('client_key');
 
@@ -117,7 +117,7 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
      * @return void
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    protected function validateAcceptJs(\Magento\Payment\Model\InfoInterface $payment)
+    protected function validateAcceptJs(\Magento\Payment\Model\InfoInterface $payment): void
     {
         if ($this->isAcceptJsEnabled() !== true) {
             return;
@@ -141,7 +141,7 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
      * @return void
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    protected function validateHostedTransaction(\Magento\Payment\Model\InfoInterface $payment, int $storeId)
+    protected function validateHostedTransaction(\Magento\Payment\Model\InfoInterface $payment, int $storeId): void
     {
         // TODO: Add differentiation between AcceptJS disabled and Hosted enabled
         //  (does that mean not removing raw CC processing yet?)
@@ -178,7 +178,7 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
      * @param \Magento\Payment\Model\InfoInterface $payment
      * @return void
      */
-    protected function validateCcType(\Magento\Payment\Model\InfoInterface $payment)
+    protected function validateCcType(\Magento\Payment\Model\InfoInterface $payment): void
     {
         $typeInfo       = $payment->getData('cc_type');
         $availableTypes = explode(',', $this->config->getValue('cctypes'));

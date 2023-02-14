@@ -13,6 +13,7 @@
 
 namespace ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer;
 
+use Magento\Quote\Model\Quote\Payment as QuotePayment;
 use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider as ConfigProviderAch;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider as ConfigProviderCc;
 use ParadoxLabs\TokenBase\Api\Data\CardInterface;
@@ -105,7 +106,7 @@ class BackendRequest extends AbstractRequestHandler
 
         $profileId = $gateway->createCustomerProfile();
 
-        if ($this->request->getParam('source') !== 'paymentinfo') {
+        if ($this->request->getParam('source') !== 'paymentinfo' && $payment instanceof QuotePayment) {
             $payment->setAdditionalInformation('profile_id', $profileId);
             $this->paymentResource->save($payment);
         } else {

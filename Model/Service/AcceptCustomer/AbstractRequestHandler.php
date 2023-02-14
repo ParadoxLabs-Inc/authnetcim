@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Paradox Labs, Inc.
  * http://www.paradoxlabs.com
@@ -133,6 +133,8 @@ abstract class AbstractRequestHandler
      *
      * @throws \Magento\Framework\Exception\InputException
      * @throws \Magento\Framework\Exception\StateException
+     * @throws \Magento\Payment\Gateway\Command\CommandException
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getToken(): string
     {

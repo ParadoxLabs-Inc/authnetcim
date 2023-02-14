@@ -31,7 +31,7 @@ class GetProfileParams extends Action implements CsrfAwareActionInterface, HttpP
     protected $hostedForm;
 
     /**
-     * GetParams constructor.
+     * GetProfileParams constructor.
      *
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey

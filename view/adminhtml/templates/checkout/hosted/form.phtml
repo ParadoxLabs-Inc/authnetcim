@@ -5,6 +5,11 @@
 $code           = $block->escapeHtmlAttr($block->getMethodCode());
 $image          = $block->getBrandingImage();
 $storedCards    = $block->getStoredCards();
+
+$paramUrl = $block->getUrl('authnetcim/hosted/getPaymentParams');
+if ($block->getTokenbaseMethod()->getConfigData('payment_action') === 'order') {
+    $paramUrl = $block->getUrl('authnetcim/hosted/getProfileParams', ['source' => 'checkout']);
+}
 ?>
 <div id="payment_form_<?= $code ?>" class="admin__page-section-item checkout-payment-method" style="display:none" data-mage-init='{
     "tokenbaseForm": {
@@ -14,7 +19,8 @@ $storedCards    = $block->getStoredCards();
     "authnetcimHostedForm": {
         "method": "<?= $code ?>",
         "target": "<?= $code ?>_iframe",
-        "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getPaymentParams')) ?>"
+        "paramUrl": "<?= $block->escapeJs($paramUrl) ?>",
+        "newCardUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getNewCard')) ?>"
     }
 }'>
     <input id="<?= $code ?>-payment-method" type="hidden" name="payment[method]" value="<?= $code ?>" />

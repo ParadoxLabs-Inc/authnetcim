@@ -25,21 +25,21 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      *
      * @var string
      */
-    const SOLUTION_ID = 'A1000133';
+    public const SOLUTION_ID = 'A1000133';
 
     /**
      * Authorize.Net transaction duplicate window
      *
      * @var int
      */
-    const DUPLICATE_WINDOW = 30;
+    public const DUPLICATE_WINDOW = 30;
 
     /**
      * Transaction status codes indicating denial on review
      *
      * @var string[]
      */
-    const DENY_STATUSES = [
+    public const DENY_STATUSES = [
         'declined',
         'expired',
         'failedReview',
@@ -1656,7 +1656,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     }
 
     /**
-     * Get current details for a given transaction ID.
+     * Get current details for a given transaction ID, in Response object form.
      *
      * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
      */

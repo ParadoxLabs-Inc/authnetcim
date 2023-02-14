@@ -14,6 +14,7 @@
 namespace ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer;
 
 use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
+use Magento\Quote\Model\Quote\Payment as QuotePayment;
 use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider as ConfigProviderAch;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider as ConfigProviderCc;
 use ParadoxLabs\TokenBase\Api\Data\CardInterface;
@@ -138,7 +139,7 @@ class GraphQLRequest extends AbstractRequestHandler
         $profileId = $gateway->createCustomerProfile();
 
         // If this is a checkout session, store the profile ID on the payment record.
-        if ($this->graphQlArgs['source'] !== 'paymentinfo') {
+        if ($this->graphQlArgs['source'] !== 'paymentinfo' && $payment instanceof QuotePayment) {
             $payment = $this->getQuote()->getPayment();
             $payment->setAdditionalInformation('profile_id', $profileId);
             $this->paymentResource->save($payment);
@@ -151,7 +152,6 @@ class GraphQLRequest extends AbstractRequestHandler
      * Get the CIM payment ID for the current session/context.
      *
      * @return string|null
-     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getCustomerPaymentId(): ?string
     {

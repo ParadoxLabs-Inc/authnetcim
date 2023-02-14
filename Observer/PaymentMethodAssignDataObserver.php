@@ -13,6 +13,8 @@
 
 namespace ParadoxLabs\Authnetcim\Observer;
 
+use ParadoxLabs\TokenBase\Api\Data\CardInterface;
+
 /**
  * PaymentMethodAssignDataObserver Class
  */
@@ -21,20 +23,20 @@ class PaymentMethodAssignDataObserver extends \ParadoxLabs\TokenBase\Observer\Pa
     /**
      * @var \ParadoxLabs\TokenBase\Model\Method\Factory
      */
-    private $methodFactory;
+    protected $methodFactory;
 
     /**
      * @var \ParadoxLabs\Authnetcim\Model\Service\CustomerProfile
      */
-    private $customerProfileService;
+    protected $customerProfileService;
 
     /**
      * @var \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory
      */
-    private $cardFactory;
+    protected $cardFactory;
 
     /**
-     * PaymentMethodAssignAcceptjsDataObserver constructor.
+     * PaymentMethodAssignDataObserver constructor.
      *
      * @param \ParadoxLabs\TokenBase\Helper\Data $helper
      * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
@@ -107,7 +109,7 @@ class PaymentMethodAssignDataObserver extends \ParadoxLabs\TokenBase\Observer\Pa
     }
 
     /**
-     * Store transaction ID if given and not Accept.js
+     * Process transaction info for a Hosted checkout, if given
      *
      * @param \Magento\Payment\Model\InfoInterface $payment
      * @param \Magento\Framework\DataObject $data
@@ -119,25 +121,60 @@ class PaymentMethodAssignDataObserver extends \ParadoxLabs\TokenBase\Observer\Pa
         \Magento\Framework\DataObject $data,
         \ParadoxLabs\TokenBase\Api\MethodInterface $tokenbaseMethod
     ): void {
-        if ($tokenbaseMethod->isAcceptJsEnabled() === true) {
-            return;
-        }
-
         $transactionId = $data->getData('transaction_id');
+
         if (empty($transactionId)
+            || $tokenbaseMethod->isAcceptJsEnabled() === true
             || $payment->getAdditionalInformation('transaction_id') === $transactionId
             || $payment instanceof \Magento\Quote\Model\Quote\Payment === false) {
             return;
         }
 
-        // TODO: Clean up this method
+        /**
+         * Fetch and validate transaction info
+         */
 
         /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
         $gateway = $tokenbaseMethod->gateway();
         $gateway->setTransactionId($transactionId);
 
         $transactionDetails = $gateway->getTransactionDetailsObject();
+        $this->validateHostedTransaction($transactionDetails, $payment);
 
+        $payment->setAdditionalInformation(
+            array_replace_recursive((array)$payment->getAdditionalInformation(), $transactionDetails->getData())
+        );
+
+        /**
+         * Get/create card from transaction
+         */
+        $card = $this->createCard($payment);
+
+        $this->customerProfileService->setMethod($tokenbaseMethod);
+
+        // Import the transaction payment into a stored card, based on whether it was already saved or not.
+        if ((bool)$data->getData('save') === true) {
+            $card = $this->importSavedPaymentProfile($payment, $card);
+        } else {
+            $card = $this->importNewPaymentProfile($gateway, $payment, $card);
+        }
+
+        $payment->setData('tokenbase_id', $card->getId());
+        $payment->setAdditionalInformation('payment_id', $card->getPaymentId());
+    }
+
+    /**
+     * Validate the transaction details for the given transaction ID
+     *
+     * @param \ParadoxLabs\TokenBase\Model\Gateway\Response $transactionDetails
+     * @param \Magento\Quote\Model\Quote\Payment $payment
+     * @return void
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    protected function validateHostedTransaction(
+        \ParadoxLabs\TokenBase\Model\Gateway\Response $transactionDetails,
+        \Magento\Quote\Model\Quote\Payment $payment
+    ): void {
         if (!in_array((int)$transactionDetails->getResponseCode(), [1, 4], true)) {
             throw new \Magento\Framework\Exception\LocalizedException(__('Transaction was declined.'));
         }
@@ -149,19 +186,23 @@ class PaymentMethodAssignDataObserver extends \ParadoxLabs\TokenBase\Observer\Pa
             throw new \Magento\Framework\Exception\LocalizedException(__('Transaction failed, please try again.'));
         }
 
-        $submitTime = strtotime($transactionDetails->getData('submit_time_utc'));
+        $submitTime = strtotime((string)$transactionDetails->getData('submit_time_utc'));
         $window     = 15 * 60; // Disallow transaction completion after 15 minutes
         if ($submitTime < (time() - $window)) {
             throw new \Magento\Framework\Exception\LocalizedException(__('Transaction expired, please try again.'));
         }
+    }
 
-        $payment->setAdditionalInformation(
-            array_replace_recursive($payment->getAdditionalInformation(), $transactionDetails->getData())
-        );
-
-        /**
-         * Get/create card from transaction
-         */
+    /**
+     * Create a TokenBase Card from the given payment info instance's data.
+     *
+     * @param \Magento\Quote\Model\Quote\Payment $payment
+     * @return \ParadoxLabs\TokenBase\Api\Data\CardInterface
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    protected function createCard(\Magento\Quote\Model\Quote\Payment $payment): CardInterface
+    {
+        $quote = $payment->getQuote();
 
         /** @var \ParadoxLabs\Authnetcim\Model\Card $card */
         $card = $this->cardFactory->create();
@@ -172,49 +213,70 @@ class PaymentMethodAssignDataObserver extends \ParadoxLabs\TokenBase\Observer\Pa
         $card->setProfileId($payment->getAdditionalInformation('profile_id'));
         $card->setAddress($quote->getBillingAddress()->getDataModel());
 
-        $this->customerProfileService->setMethod($tokenbaseMethod);
+        return $card;
+    }
 
-        if ((bool)$data->getData('save') === true) {
+    /**
+     * Import the newest card on the CIM profile to the given CardInterface.
+     *
+     * @param \Magento\Quote\Model\Quote\Payment $payment
+     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterface $card
+     * @return \ParadoxLabs\TokenBase\Api\Data\CardInterface
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Payment\Gateway\Command\CommandException
+     */
+    protected function importSavedPaymentProfile(
+        \Magento\Quote\Model\Quote\Payment $payment,
+        CardInterface $card
+    ): CardInterface {
+        $newestCardProfile = $this->customerProfileService->fetchAddedCard(
+            $payment->getAdditionalInformation('profile_id')
+        );
+
+        $card->setActive($payment->getQuote()->getCustomerId() > 0);
+
+        $card = $this->customerProfileService->importPaymentProfile(
+            $card,
+            $newestCardProfile
+        );
+
+        return $card;
+    }
+
+    /**
+     * Create a CIM payment profile from the transaction, then fetch and import it to the given CardInterface.
+     *
+     * @param \ParadoxLabs\Authnetcim\Model\Gateway $gateway
+     * @param \Magento\Quote\Model\Quote\Payment $payment
+     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterface $card
+     * @return \ParadoxLabs\TokenBase\Api\Data\CardInterface
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    protected function importNewPaymentProfile(
+        \ParadoxLabs\Authnetcim\Model\Gateway $gateway,
+        \Magento\Quote\Model\Quote\Payment $payment,
+        CardInterface $card
+    ): CardInterface {
+        try {
+            $gateway->setParameter('customerProfileId', $payment->getAdditionalInformation('profile_id'));
+            $result = $gateway->createCustomerProfileFromTransaction();
+
+            $card->setPaymentId($result['customerPaymentProfileIdList']['numericString']);
+
+            $card = $this->customerProfileService->updateCardFromPaymentProfile($card);
+        } catch (\Exception $exception) {
             /**
-             * Card was saved to CIM profile at checkout -- find the newest card on the CIM profile and import it.
+             * If CIM payment storage failed, create card without it for processing purposes.
+             * New transactions won't work, but capture/void should.
              */
-
-            $newestCardProfile = $this->customerProfileService->fetchAddedCard(
-                $payment->getAdditionalInformation('profile_id')
+            $this->helper->log(
+                \ParadoxLabs\Authnetcim\Model\ConfigProvider::CODE,
+                'CIM Payment Profile creation failed: ' . $exception->getMessage()
             );
 
-            $card->setActive($quote->getCustomerId() > 0);
-
-            $card = $this->customerProfileService->importPaymentProfile(
-                $card,
-                $newestCardProfile
-            );
-        } else {
-            /**
-             * Card was not saved to profile at checkout -- we need to save it from the transaction, then import it.
-             */
-            try {
-                $gateway->setParameter('customerProfileId', $payment->getAdditionalInformation('profile_id'));
-                $result = $gateway->createCustomerProfileFromTransaction();
-
-                $card->setPaymentId($result['customerPaymentProfileIdList']['numericString']);
-
-                $card = $this->customerProfileService->updateCardFromPaymentProfile($card);
-            } catch (\Exception $exception) {
-                /**
-                 * If CIM payment storage failed, create card without it for processing purposes.
-                 * New transactions won't work, but capture/void will.
-                 */
-                $this->helper->log(
-                    \ParadoxLabs\Authnetcim\Model\ConfigProvider::CODE,
-                    'CIM Payment Profile creation failed: ' . $exception->getMessage()
-                );
-
-                $this->cardRepository->save($card);
-            }
+            $this->cardRepository->save($card);
         }
 
-        $payment->setData('tokenbase_id', $card->getId());
-        $payment->setAdditionalInformation('payment_id', $card->getPaymentId());
+        return $card;
     }
 }

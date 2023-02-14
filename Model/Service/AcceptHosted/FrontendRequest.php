@@ -13,6 +13,7 @@
 
 namespace ParadoxLabs\Authnetcim\Model\Service\AcceptHosted;
 
+use Magento\Quote\Api\Data\AddressInterface;
 use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider as ConfigProviderAch;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider as ConfigProviderCc;
 
@@ -155,5 +156,33 @@ class FrontendRequest extends AbstractRequestHandler
         }
 
         return ConfigProviderCc::CODE;
+    }
+
+    /**
+     * Set billing address parameters on the Gateway
+     *
+     * @param \ParadoxLabs\Authnetcim\Model\Gateway $gateway
+     * @return void
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    protected function setBillingParams(\ParadoxLabs\Authnetcim\Model\Gateway $gateway): void
+    {
+        // Use billing params over quote data, if given
+        $post = $this->request->getPostValue('billing');
+        if (!empty($post)) {
+            $post['country_id']  = $post['country_id'] ?? $post['countryId'] ?? null;
+            $post['region_id']   = $post['region_id'] ?? $post['regionId'] ?? null;
+            $post['region_code'] = $post['region_code'] ?? $post['regionCode'] ?? null;
+
+            $address = $this->addressHelper->buildAddressFromInput($post);
+            $gateway->setBillTo($address);
+
+            return;
+        }
+
+        $billing = $this->getQuote()->getBillingAddress();
+        if ($billing instanceof AddressInterface) {
+            $gateway->setBillTo($billing->getDataModel());
+        }
     }
 }

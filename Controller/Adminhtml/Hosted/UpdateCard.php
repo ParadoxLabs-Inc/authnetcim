@@ -14,6 +14,7 @@
 namespace ParadoxLabs\Authnetcim\Controller\Adminhtml\Hosted;
 
 use Magento\Backend\App\Action;
+use Magento\Customer\Api\Data\CustomerInterface;
 
 class UpdateCard extends GetNewCard
 {
@@ -70,9 +71,9 @@ class UpdateCard extends GetNewCard
      *
      * @return \Magento\Customer\Api\Data\CustomerInterface
      */
-    protected function getCustomer()
+    protected function getCustomer(): CustomerInterface
     {
-        if ($this->registry->registry('current_customer')) {
+        if ($this->registry->registry('current_customer') instanceof CustomerInterface) {
             return $this->registry->registry('current_customer');
         }
 

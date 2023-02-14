@@ -14,6 +14,7 @@
 namespace ParadoxLabs\Authnetcim\Model\Service\AcceptHosted;
 
 use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
+use Magento\Quote\Api\Data\AddressInterface;
 use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider as ConfigProviderAch;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider as ConfigProviderCc;
 use ParadoxLabs\TokenBase\Api\Data\CardInterface;
@@ -183,30 +184,6 @@ class GraphQLRequest extends AbstractRequestHandler
     }
 
     /**
-     * Get the stored card from the request's card_id card hash, or null if none.
-     *
-     * @return CardInterface|null
-     */
-    protected function getCardModel(): ?CardInterface
-    {
-        if (empty($this->graphQlArgs['cardId'])) {
-            return null;
-        }
-
-        try {
-            $card = $this->cardRepository->getByHash($this->graphQlArgs['cardId']);
-
-            if ($card->hasOwner((int)$this->getCustomerId()) === false) {
-                return null;
-            }
-
-            return $card;
-        } catch (\Exception $exception) {
-            return null;
-        }
-    }
-
-    /**
      * Get the current store ID, for config loading.
      *
      * @return int
@@ -266,6 +243,21 @@ class GraphQLRequest extends AbstractRequestHandler
             throw new \Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException(
                 __('Invalid iframeSessionId')
             );
+        }
+    }
+
+    /**
+     * Set billing address parameters on the Gateway
+     *
+     * @param \ParadoxLabs\Authnetcim\Model\Gateway $gateway
+     * @return void
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    protected function setBillingParams(\ParadoxLabs\Authnetcim\Model\Gateway $gateway): void
+    {
+        $billing = $this->getQuote()->getBillingAddress();
+        if ($billing instanceof AddressInterface) {
+            $gateway->setBillTo($billing->getDataModel());
         }
     }
 }

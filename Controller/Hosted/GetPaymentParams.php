@@ -31,7 +31,7 @@ class GetPaymentParams extends Action implements CsrfAwareActionInterface, HttpP
     protected $acceptHosted;
 
     /**
-     * GetParams constructor.
+     * GetPaymentParams constructor.
      *
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey

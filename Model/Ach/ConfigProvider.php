@@ -18,7 +18,7 @@ namespace ParadoxLabs\Authnetcim\Model\Ach;
  */
 class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
 {
-    const CODE = 'authnetcim_ach';
+    public const CODE = 'authnetcim_ach';
 
     /**
      * Get checkout config.
@@ -64,7 +64,8 @@ class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
             'achAccountTypes'           => $this->getAchAccountTypes(),
             'requireCcv'                => false,
             'formType'                  => $this->methods[static::CODE]->getConfigData('form_type'),
-            'paramUrl'                  => $this->urlBuilder->getUrl('authnetcim/hosted/getPaymentParams'),
+            'paramUrl'                  => $this->getParamUrl(),
+            'newCardUrl'                => $this->getNewCardUrl(),
         ];
 
         return $config;

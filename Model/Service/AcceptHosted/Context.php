@@ -26,16 +26,6 @@ class Context
     private $methodFactory;
 
     /**
-     * @var \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory
-     */
-    private $cardFactory;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Api\CardRepositoryInterface
-     */
-    private $cardRepository;
-
-    /**
      * @var \ParadoxLabs\Authnetcim\Helper\Data
      */
     private $helper;
@@ -55,8 +45,6 @@ class Context
      *
      * @param \Magento\Framework\Url $urlBuilder
      * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
-     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory
-     * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
      * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
      * @param \Magento\Quote\Api\CartRepositoryInterface $quoteRepository
      * @param \ParadoxLabs\TokenBase\Helper\Address $addressHelper
@@ -64,17 +52,12 @@ class Context
     public function __construct(
         \Magento\Framework\Url $urlBuilder,
         \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
-        \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory,
-        \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
         \ParadoxLabs\Authnetcim\Helper\Data $helper,
         \Magento\Quote\Api\CartRepositoryInterface $quoteRepository,
         \ParadoxLabs\TokenBase\Helper\Address $addressHelper
     ) {
-        // TODO: Check for unused vars
         $this->urlBuilder = $urlBuilder;
         $this->methodFactory = $methodFactory;
-        $this->cardFactory = $cardFactory;
-        $this->cardRepository = $cardRepository;
         $this->helper = $helper;
         $this->quoteRepository = $quoteRepository;
         $this->addressHelper = $addressHelper;
@@ -98,26 +81,6 @@ class Context
     public function getMethodFactory()
     {
         return $this->methodFactory;
-    }
-
-    /**
-     * Get cardFactory
-     *
-     * @return \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory
-     */
-    public function getCardFactory()
-    {
-        return $this->cardFactory;
-    }
-
-    /**
-     * Get cardRepository
-     *
-     * @return \ParadoxLabs\TokenBase\Api\CardRepositoryInterface
-     */
-    public function getCardRepository()
-    {
-        return $this->cardRepository;
     }
 
     /**

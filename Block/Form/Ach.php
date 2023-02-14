@@ -24,7 +24,7 @@ class Ach extends \ParadoxLabs\TokenBase\Block\Form\Ach
     protected $brandingImage = 'ParadoxLabs_Authnetcim::images/logo.png';
 
     /**
-     * Swap form template for Accept Hosted vs Accept.js
+     * Swap form template for Accept Hosted vs inline
      *
      * @return string
      */
