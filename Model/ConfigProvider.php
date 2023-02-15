@@ -23,6 +23,10 @@ class ConfigProvider extends CcGenericConfigProvider
 {
     public const CODE = 'authnetcim';
 
+    public const FORM_HOSTED = 'hosted';
+    public const FORM_ACCEPTJS = 'acceptjs';
+    public const FORM_INLINE = 'inline';
+
     /**
      * @var \Magento\Checkout\Model\Session
      */
@@ -229,7 +233,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function getClientKey()
     {
-        if ($this->methods[static::CODE]->getConfigData('acceptjs')) {
+        if ($this->methods[static::CODE]->getConfigData('form_type') === self::FORM_ACCEPTJS) {
             return $this->methods[static::CODE]->getConfigData('client_key');
         }
 
@@ -293,6 +297,10 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function getParamUrl(): string
     {
+        if ($this->methods[static::CODE]->getConfigData('form_type') !== self::FORM_HOSTED) {
+            return '';
+        }
+
         if ($this->methods[static::CODE]->getConfigData('payment_action') === 'order') {
             return $this->urlBuilder->getUrl('authnetcim/hosted/getProfileParams', ['source' => 'checkout']);
         }
@@ -307,6 +315,10 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function getNewCardUrl(): string
     {
+        if ($this->methods[static::CODE]->getConfigData('form_type') !== self::FORM_HOSTED) {
+            return '';
+        }
+
         return $this->urlBuilder->getUrl('authnetcim/hosted/getNewCard');
     }
 }

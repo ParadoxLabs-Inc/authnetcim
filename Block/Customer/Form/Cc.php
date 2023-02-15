@@ -13,6 +13,8 @@
 
 namespace ParadoxLabs\Authnetcim\Block\Customer\Form;
 
+use ParadoxLabs\Authnetcim\Model\ConfigProvider;
+
 class Cc extends \ParadoxLabs\TokenBase\Block\Customer\Form
 {
     /**
@@ -28,7 +30,7 @@ class Cc extends \ParadoxLabs\TokenBase\Block\Customer\Form
     protected function _toHtml()
     {
         $method = $this->getMethod();
-        if ((bool)$method->getConfigData('acceptjs') === false) {
+        if ($method->getConfigData('form_type') === ConfigProvider::FORM_HOSTED) {
             $this->_template = 'ParadoxLabs_Authnetcim::customer/form/hosted.phtml';
         }
 

@@ -13,6 +13,8 @@
 
 namespace ParadoxLabs\Authnetcim\Gateway\Validator;
 
+use ParadoxLabs\Authnetcim\Model\ConfigProvider;
+
 class StoredCard extends \ParadoxLabs\TokenBase\Gateway\Validator\StoredCard
 {
     /**
@@ -52,7 +54,7 @@ class StoredCard extends \ParadoxLabs\TokenBase\Gateway\Validator\StoredCard
     public function validate(array $validationSubject)
     {
         // If Accept.js is enabled, kick to standard CC validator
-        if ((int)$this->config->getValue('acceptjs') === 1) {
+        if ((int)$this->config->getValue('form_type') === ConfigProvider::FORM_ACCEPTJS) {
             return parent::validate($validationSubject);
         }
 

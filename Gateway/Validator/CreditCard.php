@@ -15,6 +15,7 @@ namespace ParadoxLabs\Authnetcim\Gateway\Validator;
 
 use Magento\Quote\Model\Quote\Payment as QuotePayment;
 use Magento\Sales\Model\Order\Payment as OrderPayment;
+use ParadoxLabs\Authnetcim\Model\ConfigProvider;
 
 /**
  * CreditCard Class
@@ -103,7 +104,7 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
     {
         $clientKey = $this->config->getValue('client_key');
 
-        if ($this->config->getValue('acceptjs') == 1 && !empty($clientKey)) {
+        if ($this->config->getValue('form_type') === ConfigProvider::FORM_ACCEPTJS && !empty($clientKey)) {
             return true;
         }
 
@@ -143,9 +144,7 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
      */
     protected function validateHostedTransaction(\Magento\Payment\Model\InfoInterface $payment, int $storeId): void
     {
-        // TODO: Add differentiation between AcceptJS disabled and Hosted enabled
-        //  (does that mean not removing raw CC processing yet?)
-        if ($this->isAcceptJsEnabled() === true
+        if ($this->config->getValue('form_type') !== ConfigProvider::FORM_HOSTED
             || $payment instanceof OrderPayment === false
             || empty($payment->getAdditionalInformation('transaction_id'))) {
             return;

@@ -27,7 +27,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
     {
         $clientKey = $this->getConfigData('client_key');
 
-        if ($this->getConfigData('acceptjs') == 1 && !empty($clientKey)) {
+        if ($this->getConfigData('form_type') === ConfigProvider::FORM_ACCEPTJS && !empty($clientKey)) {
             return true;
         }
 

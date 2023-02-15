@@ -13,6 +13,8 @@
 
 namespace ParadoxLabs\Authnetcim\Block\Form;
 
+use ParadoxLabs\Authnetcim\Model\ConfigProvider;
+
 /**
  * Credit card input form on checkout
  */
@@ -36,7 +38,7 @@ class Cc extends \ParadoxLabs\TokenBase\Block\Form\Cc
     protected function _toHtml()
     {
         $method = $this->getTokenbaseMethod();
-        if ((bool)$method->getConfigData('acceptjs') === false) {
+        if ($method->getConfigData('form_type') === ConfigProvider::FORM_HOSTED) {
             $this->_template = 'ParadoxLabs_Authnetcim::checkout/hosted/form.phtml';
         }
 
