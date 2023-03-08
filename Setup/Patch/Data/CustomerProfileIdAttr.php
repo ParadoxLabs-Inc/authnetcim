@@ -112,7 +112,7 @@ class CustomerProfileIdAttr implements DataPatchInterface, PatchRevertableInterf
      * @return void
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Magento\Framework\Exception\StateException
-     * @throws \Zend_Validate_Exception
+     * @throws \Exception
      */
     public function addAttribute(\Magento\Customer\Setup\CustomerSetup $customerSetup): void
     {

@@ -48,23 +48,36 @@ class RestClient
     protected $moduleDir;
 
     /**
+     * @var \ParadoxLabs\Authnetcim\Model\Service\RestClient\CurlFactory
+     */
+    protected $curlClientFactory;
+
+    /**
      * RestClient constructor.
      *
      * @param \ParadoxLabs\TokenBase\Helper\Operation $helper
      * @param \ParadoxLabs\Authnetcim\Model\ConfigProvider $config
      * @param \Magento\Framework\HTTP\ZendClientFactory $httpClientFactory
      * @param \Magento\Framework\Module\Dir $moduleDir
+     * @param \ParadoxLabs\Authnetcim\Model\Service\RestClient\CurlFactory|null $curlClientFactory
      */
     public function __construct(
         \ParadoxLabs\TokenBase\Helper\Operation $helper,
         ConfigProvider $config,
         \Magento\Framework\HTTP\ZendClientFactory $httpClientFactory,
-        \Magento\Framework\Module\Dir $moduleDir
+        \Magento\Framework\Module\Dir $moduleDir,
+        \ParadoxLabs\Authnetcim\Model\Service\RestClient\CurlFactory $curlClientFactory = null
     ) {
         $this->helper = $helper;
         $this->config = $config;
         $this->httpClientFactory = $httpClientFactory;
         $this->moduleDir = $moduleDir;
+
+        // BC preservation -- argument added in 4.5.1
+        $om = \Magento\Framework\App\ObjectManager::getInstance();
+        $this->curlClientFactory = $curlClientFactory ?? $om->get(
+            \ParadoxLabs\Authnetcim\Model\Service\RestClient\CurlFactory::class
+        );
     }
 
     /**
@@ -105,14 +118,14 @@ class RestClient
     {
         $this->helper->log(ConfigProvider::CODE, 'DELETE ' . $path, true);
 
-        $client = $this->getHttpClient($path);
-        $clientResult = $client->request('DELETE');
+        $client = $this->getHttpClient();
+        $client->delete($this->getRestEndpoint() . $path);
 
-        if ($clientResult && strpos($clientResult->getBody(), 'NOT_FOUND') !== false) {
+        if (strpos($client->getBody(), 'NOT_FOUND') !== false) {
             return;
         }
 
-        $this->checkErrors($clientResult);
+        $this->checkErrors($client);
     }
 
     /**
@@ -127,13 +140,12 @@ class RestClient
     {
         $this->helper->log(ConfigProvider::CODE, 'POST ' . $path . ': ' . json_encode($params), true);
 
-        $client = $this->getHttpClient($path);
-        $client->setRawData(json_encode($params));
-        $clientResult = $client->request('POST');
+        $client = $this->getHttpClient();
+        $client->post($this->getRestEndpoint() . $path, json_encode($params));
 
-        $this->checkErrors($clientResult);
+        $this->checkErrors($client);
 
-        return json_decode((string)$clientResult->getBody(), true) ?? [];
+        return json_decode((string)$client->getBody(), true) ?? [];
     }
 
     /**
@@ -148,13 +160,12 @@ class RestClient
     {
         $this->helper->log(ConfigProvider::CODE, 'PUT ' . $path . ': ' . http_build_query($params), true);
 
-        $client = $this->getHttpClient($path);
-        $client->setRawData(json_encode($params));
-        $clientResult = $client->request('PUT');
+        $client = $this->getHttpClient();
+        $client->put($this->getRestEndpoint() . $path, json_encode($params));
 
-        $this->checkErrors($clientResult);
+        $this->checkErrors($client);
 
-        return json_decode((string)$clientResult->getBody(), true) ?? [];
+        return json_decode((string)$client->getBody(), true) ?? [];
     }
 
     /**
@@ -171,18 +182,18 @@ class RestClient
 
         $this->helper->log(ConfigProvider::CODE, 'GET ' . $path . '?' . $paramString, true);
 
-        $client = $this->getHttpClient($path . '?' . $paramString);
-        $clientResult = $client->request('GET');
+        $client = $this->getHttpClient();
+        $client->get($this->getRestEndpoint() . $path . '?' . $paramString);
 
-        $this->checkErrors($clientResult);
+        $this->checkErrors($client);
 
-        return json_decode((string)$clientResult->getBody(), true) ?? [];
+        return json_decode((string)$client->getBody(), true) ?? [];
     }
 
     /**
      * Validate response, throw exception on invalid or error result
      *
-     * @param \Zend_Http_Response $response
+     * @param \ParadoxLabs\Authnetcim\Model\Service\RestClient\Curl $response
      * @return void
      * @throws \Magento\Framework\Exception\LocalizedException
      */
@@ -224,35 +235,24 @@ class RestClient
     /**
      * Get an HTTP client for REST
      *
-     * @param string $path
-     * @return \Magento\Framework\HTTP\ZendClient
+     * @return \ParadoxLabs\Authnetcim\Model\Service\RestClient\Curl
      */
-    protected function getHttpClient($path): \Magento\Framework\HTTP\ZendClient
+    protected function getHttpClient(): \ParadoxLabs\Authnetcim\Model\Service\RestClient\Curl
     {
-        $headers = [
-            'Content-Type: application/json',
-            'Authorization: ' . $this->getAuthHeader(),
-        ];
+        /** @var \ParadoxLabs\Authnetcim\Model\Service\RestClient\Curl $communicator */
+        $communicator = $this->curlClientFactory->create();
 
-        $clientConfig = [
-            'adapter'     => \Zend_Http_Client_Adapter_Curl::class,
-            'timeout'     => 15,
-            'verifypeer' => true,
-            'verifyhost' => 2,
-            'curloptions' => [
-                CURLOPT_SSL_VERIFYPEER => true,
-                CURLOPT_SSL_VERIFYHOST => 2,
-                CURLOPT_CAINFO => $this->moduleDir->getDir('ParadoxLabs_Authnetcim') . '/authorizenet-cert.pem',
-            ],
-        ];
+        $communicator->setTimeout(15);
 
-        /** @var \Magento\Framework\HTTP\ZendClient $httpClient */
-        $httpClient = $this->httpClientFactory->create();
-        $httpClient->setUri($this->getRestEndpoint() . $path);
-        $httpClient->setConfig($clientConfig);
-        $httpClient->setHeaders($headers);
+        $certificatePath = $this->moduleDir->getDir('ParadoxLabs_Authnetcim') . '/authorizenet-cert.pem';
+        $communicator->setOption(\CURLOPT_SSL_VERIFYPEER, true);
+        $communicator->setOption(\CURLOPT_SSL_VERIFYHOST, 2);
+        $communicator->setOption(\CURLOPT_CAINFO, $certificatePath);
 
-        return $httpClient;
+        $communicator->addHeader('Content-Type', 'application/json');
+        $communicator->addHeader('Authorization', $this->getAuthHeader());
+
+        return $communicator;
     }
 
     /**

@@ -202,6 +202,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      * @param \Magento\Framework\Module\Dir $moduleDir
      * @param \Magento\Framework\Registry $registry
      * @param array $data
+     * @param \Magento\Framework\HTTP\ClientInterfaceFactory|null $communicatorFactory
      */
     public function __construct(
         \ParadoxLabs\TokenBase\Helper\Data $helper,
@@ -210,7 +211,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         \Magento\Framework\HTTP\ZendClientFactory $httpClientFactory,
         \Magento\Framework\Module\Dir $moduleDir,
         \Magento\Framework\Registry $registry,
-        array $data = []
+        array $data = [],
+        \Magento\Framework\HTTP\ClientInterfaceFactory $communicatorFactory = null
     ) {
         $this->moduleDir = $moduleDir;
         $this->registry = $registry;
@@ -220,7 +222,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $xml,
             $responseFactory,
             $httpClientFactory,
-            $data
+            $data,
+            $communicatorFactory
         );
     }
 
@@ -266,43 +269,34 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         $this->lastRequest = $xml;
 
-        /** @var \Magento\Framework\HTTP\ZendClient $httpClient */
-        $httpClient = $this->httpClientFactory->create();
-
-        $clientConfig = [
-            'adapter'     => \Zend_Http_Client_Adapter_Curl::class,
-            'timeout'     => 900,
-            'curloptions' => [
-                CURLOPT_CAINFO         => $this->moduleDir->getDir('ParadoxLabs_Authnetcim') . '/authorizenet-cert.pem',
-                CURLOPT_SSL_VERIFYPEER => false,
-            ],
-            'verifypeer' => false,
-            'verifyhost' => 0,
-        ];
+        /** @var \Magento\Framework\HTTP\Client\Curl|\Magento\Framework\HTTP\Client\Socket $communicator */
+        $communicator = $this->communicatorFactory->create();
 
         // If we are running a money transaction, we don't want to cut it off even if it takes too long.
         // Override that 900 second timeout only if this is a non-critical transaction.
+        $communicator->setTimeout(900);
         if (!in_array($request, ['createTransactionRequest', 'createCustomerProfileTransactionRequest'])) {
-            $clientConfig['timeout'] = 15;
+            $communicator->setTimeout(15);
         }
 
+        $communicator->setOption(\CURLOPT_SSL_VERIFYPEER, false);
+        $communicator->setOption(\CURLOPT_SSL_VERIFYHOST, 0);
         if ($this->verifySsl === true) {
-            $clientConfig['curloptions'][CURLOPT_SSL_VERIFYPEER] = true;
-            $clientConfig['curloptions'][CURLOPT_SSL_VERIFYHOST] = 2;
-            $clientConfig['verifypeer'] = true;
-            $clientConfig['verifyhost'] = 2;
+            $certificatePath = $this->moduleDir->getDir('ParadoxLabs_Authnetcim') . '/authorizenet-cert.pem';
+
+            $communicator->setOption(\CURLOPT_SSL_VERIFYPEER, true);
+            $communicator->setOption(\CURLOPT_SSL_VERIFYHOST, 2);
+            $communicator->setOption(\CURLOPT_CAINFO, $certificatePath);
         }
 
-        $httpClient->setUri($this->endpoint);
-        $httpClient->setConfig($clientConfig);
-        $httpClient->setRawData($xml, 'text/xml');
+        $communicator->addHeader('Content-Type', 'text/xml');
 
         try {
-            $response = $httpClient->request(\Zend_Http_Client::POST);
+            $communicator->post($this->endpoint, $xml);
 
-            $this->lastResponse = $response->getBody();
+            $this->lastResponse = $communicator->getBody();
 
-            if ($response->isSuccessful() && !empty($this->lastResponse)) {
+            if (!empty($this->lastResponse)) {
                 $this->log .= 'REQUEST: ' . $this->sanitizeLog($xml) . "\n";
                 $this->log .= 'RESPONSE: ' . $this->sanitizeLog($this->lastResponse) . "\n";
 
@@ -320,39 +314,29 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 $this->helper->log(
                     $this->code,
                     sprintf(
-                        "CURL Connection error: %s (%s)\nREQUEST: %s",
-                        $httpClient->getAdapter()->getError(),
-                        $httpClient->getAdapter()->getErrno(),
+                        "Connection failed, empty response\nREQUEST: %s",
                         $this->sanitizeLog($xml)
                     )
                 );
 
                 throw new CommandException(
-                    __(sprintf(
-                        'Authorize.Net CIM Gateway Connection error: %s (%s)',
-                        $httpClient->getAdapter()->getError(),
-                        $httpClient->getAdapter()->getErrno()
-                    ))
+                    __('Authorize.Net CIM Gateway Connection failed')
                 );
             }
-        } catch (\Zend_Http_Exception $e) {
+        } catch (\Exception $e) {
             $this->helper->log(
                 $this->code,
                 sprintf(
-                    "CURL Connection error: %s. %s (%s)\nREQUEST: %s",
+                    "CURL Connection error: %s\nREQUEST: %s",
                     $e->getMessage(),
-                    $httpClient->getAdapter()->getError(),
-                    $httpClient->getAdapter()->getErrno(),
                     $this->sanitizeLog($xml)
                 )
             );
 
             throw new CommandException(
                 __(sprintf(
-                    'Authorize.Net CIM Gateway Connection error: %s. %s (%s)',
-                    $e->getMessage(),
-                    $httpClient->getAdapter()->getError(),
-                    $httpClient->getAdapter()->getErrno()
+                    'Authorize.Net CIM Gateway Connection error: %s',
+                    $e->getMessage()
                 ))
             );
         }
@@ -363,7 +347,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Mask certain values in the XML for secure logging purposes.
      *
-     * @param $string
+     * @param string $string
      * @return mixed
      */
     protected function sanitizeLog($string)
