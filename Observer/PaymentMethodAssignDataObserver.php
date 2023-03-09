@@ -184,7 +184,7 @@ class PaymentMethodAssignDataObserver extends \ParadoxLabs\TokenBase\Observer\Pa
         }
 
         $quote = $payment->getQuote();
-        if ($transactionDetails->getData('customer_email') !== $quote->getCustomerEmail()
+        if ($transactionDetails->getData('customer_email') !== $quote->getBillingAddress()->getEmail()
             || $transactionDetails->getData('invoice_number') !== (string)$quote->getReservedOrderId()
             || $transactionDetails->getData('amount') < $quote->getBaseGrandTotal()) {
             throw new \Magento\Framework\Exception\LocalizedException(__('Transaction failed, please try again.'));

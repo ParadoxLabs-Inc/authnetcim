@@ -135,6 +135,7 @@ abstract class AbstractRequestHandler
         $communicatorUrl = $this->urlBuilder->getUrl('authnetcim/hosted/communicator');
         $gateway->setParameter('hostedProfileIFrameCommunicatorUrl', $communicatorUrl);
         $gateway->setParameter('hostedProfileHeadingBgColor', $method->getConfigData('accent_color'));
+        $gateway->setParameter('hostedPaymentAddProfile', (bool)$method->getConfigData('allow_unsaved'));
         $gateway->setParameter('hostedPaymentValidateCaptcha', (bool)$method->getConfigData('enable_hosted_captcha'));
         $gateway->setParameter('customerProfileId', $this->getCustomerProfileId());
 

@@ -123,7 +123,6 @@ define(
             checkReinitHostedForm: function() {
                 if (this.iframeInitialized === false
                     && (this.selectedCard() === null || this.selectedCard() === undefined)
-                    && this.storedCards().length > 0
                     && additionalValidators.validate() === true) {
                     // The initialized flag is to debounce and ensure we don't reinit unless absolutely necessary.
                     this.iframeInitialized = true;
@@ -190,6 +189,11 @@ define(
                 this.communicatorActive(false);
                 setTimeout(this.checkCommunicator.bind(this), 20*1000);
 
+                // There's an awkward break between 400-750px; set max width to avoid scrolling.
+                if (iframe.width() > 400 && iframe.width() < 750) {
+                    iframe.css('max-width', '400px');
+                }
+
                 iframe.trigger('processStop');
             },
 
@@ -211,6 +215,7 @@ define(
 
                 $('#' + this.getCode() + '_iframe').trigger('processStop');
                 this.processingSave = false;
+                this.transactionId(null);
 
                 try {
                     alert({
@@ -478,7 +483,18 @@ define(
                         'transaction_id': this.transactionId()
                     }
                 };
-            }
+            },
+
+            /**
+             * @override
+             */
+            handleFailedOrder: function (response) {
+                this.transactionId(null);
+                this.iframeInitialized = false;
+                this.checkReinitHostedForm();
+
+                this._super(response);
+            },
         });
     }
 );

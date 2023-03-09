@@ -112,11 +112,13 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'email'                     => ['maxLength' => 255],
         'emailCustomer'             => ['enum' => ['true', 'false']],
         'expirationDate'            => ['maxLength' => 7],
+        'hostedPaymentAddProfile'               => ['enum' => [true, false]],
         'hostedPaymentCancelText'               => ['maxLength' => 31],
         'hostedPaymentPayButtonText'            => ['maxLength' => 31],
         'hostedPaymentCardCodeRequired'         => ['enum' => [true, false]],
         'hostedPaymentShowCreditCard'           => ['enum' => [true, false]],
         'hostedPaymentShowBankAccount'          => ['enum' => [true, false]],
+        'hostedPaymentShowMerchantName'         => ['enum' => [true, false]],
         'hostedPaymentValidateCaptcha'          => ['enum' => [true, false]],
         'hostedProfileSaveButtonText'           => ['maxLength' => 32, 'noSymbols' => true],
         'hostedProfilePageBorderVisible'        => ['enum' => [true, false]],
@@ -1509,9 +1511,15 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                         ]),
                     ],
                     [
+                        'settingName' => 'hostedPaymentCustomerOptions',
+                        'settingValue' => json_encode([
+                            'addPaymentProfile' => $this->getParameter('hostedPaymentAddProfile', true),
+                        ]),
+                    ],
+                    [
                         'settingName' => 'hostedPaymentOrderOptions',
                         'settingValue' => json_encode([
-                            'show' => false,
+                            'show' => $this->getParameter('hostedPaymentShowMerchantName', false),
                         ]),
                     ],
                     [
