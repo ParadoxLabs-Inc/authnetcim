@@ -105,6 +105,10 @@ class PaymentMethodAssignDataObserver extends \ParadoxLabs\TokenBase\Observer\Pa
             if ($tokenbaseMethod->getConfigData('can_store_bin') == 1) {
                 $payment->setAdditionalInformation('cc_bin', $data->getData('cc_bin'));
             }
+
+            if (empty($data->getData('card_id'))) {
+                $payment->setData('tokenbase_id', null);
+            }
         }
     }
 
