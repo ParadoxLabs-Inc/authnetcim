@@ -765,6 +765,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $this->setParameter('amount', $amount);
         $this->setParameter('invoiceNumber', $payment->getOrder()->getIncrementId());
 
+        // Send CC last4 for verification of CC refunds
+        if ($payment->getMethod() === ConfigProvider::CODE) {
+            $this->setParameter('cardNumber', $payment->getCcLast4());
+        }
+
         if ($payment->getCreditmemo() instanceof \Magento\Sales\Api\Data\CreditmemoInterface) {
             if ($payment->getCreditmemo()->getBaseTaxAmount()) {
                 $this->setParameter('taxAmount', $payment->getCreditmemo()->getBaseTaxAmount());
@@ -1252,12 +1257,21 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $params = $this->createTransactionAddTransactionInfo($params, $type, $isNewTxn);
 
         // Most of the data does not matter for follow-ups (capture, void, refund).
-        if ($isNewTxn === true || $isRefund === true) {
+        if ($isNewTxn === true) {
             /**
              * Add payment info.
              */
             $params = $this->createTransactionAddPaymentInfo($params, $type, $isNewCard);
+        }
 
+        if ($isRefund === true) {
+            /**
+             * Add refund payment info.
+             */
+            $params = $this->createTransactionAddRefundInfo($params);
+        }
+
+        if ($isNewTxn === true || $isRefund === true) {
             /**
              * Add order info.
              */
@@ -2213,6 +2227,28 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             if ($this->hasParameter('customerShippingAddressId')) {
                 $params['profile']['shippingProfileId'] = $this->hasParameter('customerShippingAddressId');
             }
+        }
+
+        return $params;
+    }
+
+    /**
+     * Add refund payment info to a createTransaction API request's parameters.
+     *
+     * Split out to reduce that method's cyclomatic complexity.
+     *
+     * @param array $params
+     * @return array
+     */
+    protected function createTransactionAddRefundInfo($params)
+    {
+        if ($this->hasParameter('cardNumber')) {
+            $params['payment'] = [
+                'creditCard' => [
+                    'cardNumber' => substr((string)$this->getParameter('cardNumber'), -4),
+                    'expirationDate' => 'XXXX',
+                ],
+            ];
         }
 
         return $params;
