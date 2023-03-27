@@ -7,7 +7,7 @@
     },
     "type": "magento2-module",
     "version": "4.6.0",
-    "time": "2023-03-09",
+    "time": "2023-03-27",
     "license": "proprietary",
     "autoload": {
         "files": [ "registration.php" ],
