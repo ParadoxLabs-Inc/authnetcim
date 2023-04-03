@@ -3,7 +3,7 @@
     <!-- Payment Method Facade -->
     <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualFacade" type="Magento\Payment\Model\Method\Adapter" shared="false">
         <arguments>
-            <argument name="code" xsi:type="const">\ParadoxLabs\Authnetcim\Model\ConfigProvider::CODE</argument>
+            <argument name="code" xsi:type="string">authnetcim</argument>
             <argument name="formBlockType" xsi:type="string">ParadoxLabs\Authnetcim\Block\Form\Cc</argument>
             <argument name="infoBlockType" xsi:type="string">ParadoxLabs\Authnetcim\Block\Info\Cc</argument>
             <argument name="valueHandlerPool" xsi:type="object">ParadoxLabs\Authnetcim\Gateway\VirtualValueHandlerPool</argument>
@@ -14,7 +14,7 @@
 
     <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualFacade" type="Magento\Payment\Model\Method\Adapter" shared="false">
         <arguments>
-            <argument name="code" xsi:type="const">\ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider::CODE</argument>
+            <argument name="code" xsi:type="string">authnetcim_ach</argument>
             <argument name="formBlockType" xsi:type="string">ParadoxLabs\Authnetcim\Block\Form\Ach</argument>
             <argument name="infoBlockType" xsi:type="string">ParadoxLabs\Authnetcim\Block\Info\Ach</argument>
             <argument name="valueHandlerPool" xsi:type="object">ParadoxLabs\Authnetcim\Gateway\Ach\VirtualValueHandlerPool</argument>
@@ -54,13 +54,13 @@
 
     <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualConfig" type="Magento\Payment\Gateway\Config\Config">
         <arguments>
-            <argument name="methodCode" xsi:type="const">\ParadoxLabs\Authnetcim\Model\ConfigProvider::CODE</argument>
+            <argument name="methodCode" xsi:type="string">authnetcim</argument>
         </arguments>
     </virtualType>
 
     <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualConfig" type="Magento\Payment\Gateway\Config\Config">
         <arguments>
-            <argument name="methodCode" xsi:type="const">\ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider::CODE</argument>
+            <argument name="methodCode" xsi:type="string">authnetcim_ach</argument>
         </arguments>
     </virtualType>
 
@@ -93,7 +93,7 @@
             <argument name="gateway" xsi:type="object">ParadoxLabs\Authnetcim\Model\Gateway</argument>
             <argument name="cardFactory" xsi:type="object">ParadoxLabs\Authnetcim\Model\CardFactoryVirtualType</argument>
             <argument name="config" xsi:type="object">ParadoxLabs\Authnetcim\Gateway\VirtualConfig</argument>
-            <argument name="methodCode" xsi:type="const">\ParadoxLabs\Authnetcim\Model\ConfigProvider::CODE</argument>
+            <argument name="methodCode" xsi:type="string">authnetcim</argument>
         </arguments>
     </type>
 
@@ -102,7 +102,7 @@
             <argument name="gateway" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\Gateway</argument>
             <argument name="cardFactory" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\CardFactoryVirtualType</argument>
             <argument name="config" xsi:type="object">ParadoxLabs\Authnetcim\Gateway\Ach\VirtualConfig</argument>
-            <argument name="methodCode" xsi:type="const">\ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider::CODE</argument>
+            <argument name="methodCode" xsi:type="string">authnetcim_ach</argument>
         </arguments>
     </type>
 
