@@ -8,7 +8,7 @@
     "type": "magento2-module",
     "version": "4.6.0",
     "time": "2023-03-27",
-    "license": "proprietary",
+    "license": "Apache-2.0",
     "autoload": {
         "files": [ "registration.php" ],
         "psr-4": {
