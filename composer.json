@@ -9,6 +9,18 @@
     "version": "4.5.1",
     "time": "2023-03-08",
     "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "Ryan Hoerr",
+            "email": "ryan@paradoxlabs.com"
+        }
+    ],
+    "archive": {
+        "exclude": [
+            ".github",
+            "README.md"
+        ]
+    },
     "autoload": {
         "files": [ "registration.php" ],
         "psr-4": {

@@ -79,7 +79,7 @@ Support
 
 This module is provided free and without support of any kind. You may report issues you've found in the module, and we will address them as we are able, but **no support will be provided here.**
 
-**DO NOT include any api keys, credentials, or customer-identifying in issues, pull requests, or comments. Any personally identifying information will be deleted on sight.**
+**DO NOT include any API keys, credentials, or customer-identifying in issues, pull requests, or comments. Any personally identifying information will be deleted on sight.**
 
 If you need personal support services, please [buy an extension support plan from ParadoxLabs](https://store.paradoxlabs.com/support-renewal.html), then open a ticket at [support.paradoxlabs.com](https://support.paradoxlabs.com).
 
