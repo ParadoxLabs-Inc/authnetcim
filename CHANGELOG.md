@@ -1,5 +1,10 @@
 # ParadoxLabs_Authnetcim Changelog
 
+## 4.5.2 - May 11, 2023
+- Changed license from proprietary to Apache 2.0. Issues and contributions are welcome on GitHub.
+- Fixed hyphenated transaction IDs possibly being sent to payment gateway on refund.
+- Fixed possible Cloud deploy pipeline error from DI constants.
+
 ## 4.5.1 - March 10, 2023
 - Added compatibility for Magento 2.4.6.
 - Added UnionPay support.
