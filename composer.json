@@ -6,8 +6,8 @@
         "paradoxlabs/tokenbase": "~4.5.4"
     },
     "type": "magento2-module",
-    "version": "4.6.0",
-    "time": "2023-03-27",
+    "version": "4.6.0-beta3",
+    "time": "2023-06-02",
     "license": "Apache-2.0",
     "autoload": {
         "files": [ "registration.php" ],

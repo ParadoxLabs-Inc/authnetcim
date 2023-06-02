@@ -1,45 +1,49 @@
 <?php /** @var \Magento\Framework\View\Element\Template $block */ ?>
-
-<script type="text/javascript">
-    function communicateAuthnetResponse(message)
-    {
-        if (message && message.length > 0 && window.parent && window.parent.parent) {
-            window.parent.parent.postMessage(
-                parseQueryString(message),
-                window.self.origin
-            );
-        }
-    }
-
-    function receiveAuthnetMessage(event)
-    {
-        if (event && event.data) {
-            if (event.origin === 'https://test.authorize.net'
-                || event.origin === 'https://accept.authorize.net') {
-                communicateAuthnetResponse(event.data);
-            } else {
-                console.error('Ignored untrusted message from ' + event.origin);
+<!DOCTYPE html>
+<html lang="en">
+    <body>
+        <script type="text/javascript">
+            function communicateAuthnetResponse(message)
+            {
+                if (message && message.length > 0 && window.parent && window.parent.parent) {
+                    window.parent.parent.postMessage(
+                        parseQueryString(message),
+                        window.self.origin
+                    );
+                }
             }
-        }
-    }
 
-    function parseQueryString(str) {
-        var vars = [];
-        var arr  = str.split('&');
-        var pair;
-        for (var i = 0; i < arr.length; i++) {
-            pair = arr[i].split('=');
-            vars.push(pair[0]);
-            vars[pair[0]] = unescape(pair[1]);
-        }
-        return vars;
-    }
+            function receiveAuthnetMessage(event)
+            {
+                if (event && event.data) {
+                    if (event.origin === 'https://test.authorize.net'
+                        || event.origin === 'https://accept.authorize.net') {
+                        communicateAuthnetResponse(event.data);
+                    } else {
+                        console.error('Ignored untrusted message from ' + event.origin);
+                    }
+                }
+            }
 
-    window.addEventListener('message', receiveAuthnetMessage, false);
+            function parseQueryString(str) {
+                var vars = [];
+                var arr  = str.split('&');
+                var pair;
+                for (var i = 0; i < arr.length; i++) {
+                    pair = arr[i].split('=');
+                    vars.push(pair[0]);
+                    vars[pair[0]] = unescape(pair[1]);
+                }
+                return vars;
+            }
 
-    if (window.location.hash && window.location.hash.length > 1) {
-        communicateAuthnetResponse(window.location.hash.substring(1));
-    } else {
-        communicateAuthnetResponse('action=ping');
-    }
-</script>
+            window.addEventListener('message', receiveAuthnetMessage, false);
+
+            if (window.location.hash && window.location.hash.length > 1) {
+                communicateAuthnetResponse(window.location.hash.substring(1));
+            } else {
+                communicateAuthnetResponse('action=ping');
+            }
+        </script>
+    </body>
+</html>

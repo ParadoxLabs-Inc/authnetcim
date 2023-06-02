@@ -32,7 +32,7 @@ class Communicator extends Action implements \Magento\Framework\App\Action\HttpG
     public function execute()
     {
         /** @var \Magento\Framework\View\Result\Page $result */
-        $result = $this->resultFactory->create(\Magento\Framework\Controller\ResultFactory::TYPE_PAGE);
+        $result = $this->resultFactory->create(\Magento\Framework\Controller\ResultFactory::TYPE_LAYOUT);
 
         return $result;
     }
