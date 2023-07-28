@@ -317,8 +317,6 @@ define([
             } else {
                 this.element.closest('form').submit();
             }
-
-            this.iframeInitialized = false;
         },
 
         /**

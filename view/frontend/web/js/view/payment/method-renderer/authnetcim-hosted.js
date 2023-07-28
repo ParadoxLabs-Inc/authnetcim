@@ -250,7 +250,10 @@ define(
              * Throw an error if the communicator has not connected after 30 seconds (bad)
              */
             checkCommunicator: function() {
-                if (this.communicatorActive() || !this.showIframe()) {
+                if (this.communicatorActive()
+                    || !this.showIframe()
+                    || this.iframeInitialized === false
+                    || $('#' + this.getCode() + '_iframe').is(':visible') === false) {
                     return;
                 }
 
