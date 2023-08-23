@@ -60,6 +60,11 @@ abstract class AbstractRequestHandler
     protected $method;
 
     /**
+     * @var \ParadoxLabs\Authnetcim\Model\Service\CustomerProfile
+     */
+    protected $customerProfileService;
+
+    /**
      * AbstractRequestHandler constructor.
      *
      * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\Context $context

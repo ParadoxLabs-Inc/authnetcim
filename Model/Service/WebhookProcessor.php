@@ -71,6 +71,10 @@ class WebhookProcessor
      */
     protected $txnCollectionFactory;
     /**
+     * @var \Magento\Sales\Api\CreditmemoManagementInterface
+     */
+    protected $creditmemoService;
+    /**
      * @var \Magento\Sales\Model\Order\CreditmemoFactory
      */
     protected $creditmemoFactory;
