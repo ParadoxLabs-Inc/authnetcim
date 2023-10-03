@@ -257,7 +257,7 @@ class CustomerProfile
         }
 
         $paymentData += (array)$card->getAdditional();
-        $card->setData('additional', json_encode($paymentData));
+        $card->setAdditional($paymentData);
 
         return $card;
     }
