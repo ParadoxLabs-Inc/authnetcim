@@ -163,6 +163,7 @@ abstract class AbstractRequestHandler
 
         if ($this->getMethodCode() === \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider::CODE) {
             $gateway->setParameter('hostedProfilePaymentOptions', 'showBankAccount');
+            $gateway->setParameter('hostedProfileCardCodeRequired', false);
         }
 
         $response = $gateway->getHostedProfilePage();

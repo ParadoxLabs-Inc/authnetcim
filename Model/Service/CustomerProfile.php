@@ -240,19 +240,20 @@ class CustomerProfile
                 'cc_last4' => substr((string)$creditCard['cardNumber'], -4),
                 'cc_exp_year' => $yr,
                 'cc_exp_month' => $mo,
-                'cc_bin' => $creditCard['issuerNumber'],
+                'cc_bin' => ($creditCard['issuerNumber'] ?? ''),
             ];
 
             $card->setData('expires', sprintf('%s-%s-%s 23:59:59', $yr, $mo, $day));
         } elseif (isset($paymentProfile['payment']['bankAccount'])) {
             $bankAccount = $paymentProfile['payment']['bankAccount'];
             $paymentData = [
-                'echeck_account_type' => $bankAccount['accountType'],
-                'echeck_account_name' => $bankAccount['nameOnAccount'],
-                'echeck_bank_name' => $bankAccount['bankName'],
-                'echeck_routing_number_last4' => substr((string)$bankAccount['routingNumber'], -4),
-                'echeck_account_number_last4' => substr((string)$bankAccount['accountNumber'], -4),
-                'cc_last4' => substr((string)$bankAccount['accountNumber'], -4),
+                'echeck_account_type' => $bankAccount['accountType'] ?? 'checking',
+                'echeck_account_name' => $bankAccount['nameOnAccount'] ?? '',
+                'echeck_bank_name' => $bankAccount['bankName'] ?? '',
+                'echeck_routing_number_last4' => substr((string)($bankAccount['routingNumber'] ?? ''), -4),
+                'echeck_account_number_last4' => substr((string)($bankAccount['accountNumber'] ?? ''), -4),
+                'echeck_type' => $bankAccount['echeckType'] ?? 'WEB',
+                'cc_last4' => substr((string)($bankAccount['accountNumber'] ?? ''), -4),
             ];
         }
 

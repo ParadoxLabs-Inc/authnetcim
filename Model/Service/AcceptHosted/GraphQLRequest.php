@@ -24,7 +24,6 @@ use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 use Magento\Quote\Api\Data\AddressInterface;
 use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider as ConfigProviderAch;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider as ConfigProviderCc;
-use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 
 class GraphQLRequest extends AbstractRequestHandler
 {
@@ -136,12 +135,9 @@ class GraphQLRequest extends AbstractRequestHandler
 
         $profileId = $gateway->createCustomerProfile();
 
-        // If this is a checkout session, store the profile ID on the payment record.
-        if ($this->graphQlArgs['source'] !== 'paymentinfo') {
-            $payment = $this->getQuote()->getPayment();
-            $payment->setAdditionalInformation('profile_id', $profileId);
-            $this->paymentResource->save($payment);
-        }
+        // Store the profile ID on the payment record.
+        $payment->setAdditionalInformation('profile_id', $profileId);
+        $this->paymentResource->save($payment);
 
         return (string)$profileId;
     }

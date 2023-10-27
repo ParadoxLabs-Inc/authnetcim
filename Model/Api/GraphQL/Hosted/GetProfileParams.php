@@ -38,7 +38,7 @@ if (!interface_exists('\ParadoxLabs\TokenBase\Model\Api\GraphQL\ResolverInterfac
     }
 }
 
-class GetParams implements \ParadoxLabs\TokenBase\Model\Api\GraphQL\ResolverInterface
+class GetProfileParams implements \ParadoxLabs\TokenBase\Model\Api\GraphQL\ResolverInterface
 {
     /**
      * @var \ParadoxLabs\TokenBase\Model\Api\GraphQL

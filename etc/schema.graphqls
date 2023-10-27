@@ -1,12 +1,19 @@
 type Query {
-    authnetcimHostedParams(input: TokenBaseAuthnetcimHostedInput!): TokenBaseAuthnetcimHostedParams @resolver(class: "ParadoxLabs\\Authnetcim\\Model\\Api\\GraphQL\\Hosted\\GetParams") @doc(description: "Get Authnetcim Accept Hosted form URL and parameters for collecting payment data.")
+    authnetcimHostedPaymentFormParams(input: TokenBaseAuthnetcimHostedPaymentFormInput!): TokenBaseAuthnetcimHostedParams @resolver(class: "ParadoxLabs\\Authnetcim\\Model\\Api\\GraphQL\\Hosted\\GetPaymentParams") @doc(description: "Get Authnetcim Accept Hosted form URL and parameters for charging an order.")
+    authnetcimHostedProfileFormParams(input: TokenBaseAuthnetcimHostedProfileFormInput!): TokenBaseAuthnetcimHostedParams @resolver(class: "ParadoxLabs\\Authnetcim\\Model\\Api\\GraphQL\\Hosted\\GetProfileParams") @doc(description: "Get Authnetcim Accept Customer form URL and parameters for collecting payment data.")
 }
 
 type Mutation {
-    authnetcimSyncHostedForm(input: TokenBaseAuthnetcimHostedInput!): TokenBaseAuthnetcimHostedCardResponse @resolver(class: "ParadoxLabs\\Authnetcim\\Model\\Api\\GraphQL\\Hosted\\SyncHostedForm") @doc(description: "Synchronize a card stored via Authorize.net Accept Customer hosted form to Magento.")
+    authnetcimSyncHostedForm(input: TokenBaseAuthnetcimHostedProfileFormInput!): TokenBaseAuthnetcimHostedCardResponse @resolver(class: "ParadoxLabs\\Authnetcim\\Model\\Api\\GraphQL\\Hosted\\SyncHostedForm") @doc(description: "Synchronize a card stored via Authorize.net Accept Customer hosted form to Magento.")
 }
 
-input TokenBaseAuthnetcimHostedInput {
+input TokenBaseAuthnetcimHostedPaymentFormInput {
+    cartId: String
+    method: TokenBaseAuthnetcimHostedMethod!
+    guestEmail: String
+}
+
+input TokenBaseAuthnetcimHostedProfileFormInput {
     cartId: String
     cardId: String
     iframeSessionId: String

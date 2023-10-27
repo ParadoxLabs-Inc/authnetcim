@@ -138,13 +138,19 @@ abstract class AbstractRequestHandler
         /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
         $gateway = $method->gateway();
 
-        // Get CC form token
+        // Get payment form token
         $communicatorUrl = $this->urlBuilder->getUrl('authnetcim/hosted/communicator');
         $gateway->setParameter('hostedProfileIFrameCommunicatorUrl', $communicatorUrl);
         $gateway->setParameter('hostedProfileHeadingBgColor', $method->getConfigData('accent_color'));
         $gateway->setParameter('hostedPaymentAddProfile', (bool)$method->getConfigData('allow_unsaved'));
         $gateway->setParameter('hostedPaymentValidateCaptcha', (bool)$method->getConfigData('enable_hosted_captcha'));
         $gateway->setParameter('customerProfileId', $this->getCustomerProfileId());
+
+        if ($this->getMethodCode() === \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider::CODE) {
+            $gateway->setParameter('hostedPaymentCardCodeRequired', false);
+            $gateway->setParameter('hostedPaymentShowCreditCard', false);
+            $gateway->setParameter('hostedPaymentShowBankAccount', true);
+        }
 
         /** @var \Magento\Quote\Model\Quote $quote */
         $quote = $this->getQuote();
