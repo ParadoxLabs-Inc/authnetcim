@@ -113,9 +113,12 @@ class PaymentMethodAssignDataObserver extends \ParadoxLabs\TokenBase\Observer\Pa
                 $payment->setAdditionalInformation('cc_bin', $data->getData('cc_bin'));
             }
 
-            if (empty($data->getData('card_id'))) {
-                $payment->setData('tokenbase_id', null);
-            }
+            /**
+             * Since we received payment data, reset any attached stored card.
+             * If this is a card edit, the card ID will be reloaded later.
+             * @see \ParadoxLabs\TokenBase\Observer\PaymentMethodAssignDataObserver::assignTokenbaseData()
+             */
+            $payment->setData('tokenbase_id', null);
         }
     }
 

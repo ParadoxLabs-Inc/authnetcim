@@ -401,6 +401,8 @@ define([
             if (error) {
                 alert({content:error});
             }
+
+            this.form.trigger('processStop');
         }
     });
 
