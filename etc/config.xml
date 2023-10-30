@@ -58,7 +58,7 @@
                 <is_gateway>0</is_gateway>
                 <is_offline>0</is_offline>
                 <can_initialize>0</can_initialize>
-                <can_store_bin>0</can_store_bin>
+                <can_store_bin>1</can_store_bin>
                 <can_sync_account_updater>1</can_sync_account_updater>
             </authnetcim>
             <authnetcim_ach>
@@ -105,7 +105,7 @@
                 <is_gateway>0</is_gateway>
                 <is_offline>0</is_offline>
                 <can_initialize>0</can_initialize>
-                <can_store_bin>0</can_store_bin>
+                <can_store_bin>1</can_store_bin>
             </authnetcim_ach>
         </payment>
     </default>
