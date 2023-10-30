@@ -111,6 +111,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'dataDescriptor'            => ['noSymbols' => true],
         'dataValue'                 => ['charMask' => 'a-zA-Z0-9+\/\\='],
         'description'               => ['maxLength' => 255],
+        'deviceType'                => ['charMask' => '\d'],
         'duplicateWindow'           => ['charMask' => '\d'],
         'dutyAmount'                => [],
         'dutyDescription'           => ['maxLength' => 255],
@@ -145,6 +146,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'isSubsequentAuth'          => ['enum' => ['true', 'false']],
         'itemName'                  => ['maxLength' => 31, 'noSymbols' => true],
         'loginId'                   => ['maxLength' => 20],
+        'marketType'                => ['charMask' => '\d'],
         'merchantCustomerId'        => ['maxLength' => 20],
         'nameOnAccount'             => ['maxLength' => 22],
         'profileType'               => ['enum' => ['guest', 'regular']],
@@ -1311,6 +1313,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     'cardholderAuthenticationValue' => urlencode((string)$this->getParameter('centinelAuthValue')),
                 ];
             }
+
+            $params['retail'] = [
+                'marketType' => $this->getParameter('marketType', '0'),
+                'deviceType' => $this->getParameter('deviceType', '8'),
+            ];
 
             // Add misc settings.
             $params['transactionSettings'] = [
