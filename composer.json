@@ -6,8 +6,8 @@
         "paradoxlabs/tokenbase": "~4.5.5"
     },
     "type": "magento2-module",
-    "version": "4.6.0-beta3",
-    "time": "2023-06-02",
+    "version": "5.0.0-beta4",
+    "time": "2023-11-01",
     "license": "Apache-2.0",
     "authors": [
         {
