@@ -1,0 +1,100 @@
+<?php declare(strict_types=1);
+
+use ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\Magewire;
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+
+/** @var Template $block */
+/** @var Magewire $magewire */
+/** @var Escaper $escaper */
+
+?>
+<div class="authnetcim">
+    <iframe name="iframeAuthorizeNet" id="iframeAuthorizeNet" src="about:blank" style="width:100%;min-width:400px;height:500px;" frameborder="0" scrolling="no"></iframe>
+
+    <form method="post" action="<?= $magewire->formUrl ?>" id="authnetcimForm" target="iframeAuthorizeNet" style="display:none;">
+        <input type="hidden" id="popupToken" name="token" value="<?= $magewire->formToken ?>" />
+    </form>
+
+    <!-- Initial form submit once the formToken has been set (too soon to listen for submitForm event fired from Magewire block) -->
+    <?php if($magewire->formToken !== ''): ?>
+        <script>
+            document.getElementById("authnetcimForm").submit();
+        </script>
+    <?php endif; ?>
+
+    <script>
+        if(!window.authnetSubmitFormListenerAttached) {
+            window.addEventListener(
+                'submitForm',
+                submitForm,
+                false
+            );
+            window.authnetSubmitFormListenerAttached = true;
+        }
+
+        if(!window.authnetMessageListenerAttached) {
+            window.addEventListener(
+                'message',
+                handleCommunication,
+                false
+            );
+            window.authnetMessageListenerAttached = true;
+        }
+
+        if(!window.authnetPaymentDataSetListenerAttached) {
+            window.addEventListener(
+                'paymentDataSet',
+                placeMagentoOrder,
+                false
+            );
+            window.authnetPaymentDataSetListenerAttached = true;
+        }
+
+        if(!window.corePlaceOrderButtonListenerAttached) {
+            window.addEventListener('checkout:payment:method-activate', (event) => {
+                let method = event.detail? event.detail.method : undefined;
+                if(method == 'authnetcim') {
+                hideCorePlaceOrderButton();
+            } else {
+                showCorePlaceOrderButton();
+            }
+        });
+            window.authnetCorePlaceOrderButtonListenerAttached = true;
+        }
+
+        function submitForm()
+        {
+            document.getElementById("authnetcimForm").submit();
+        }
+
+        function handleCommunication(event) {
+            const data = event.data;
+
+            switch (data.action) {
+                case "cancel":
+                    Magewire.emit('resetIframe');
+                    break;
+                case "transactResponse":
+                    var response = JSON.parse(data.response);
+                    Magewire.emit('setPaymentData', {value: response.transId});
+                    break;
+            }
+        }
+
+        function placeMagentoOrder()
+        {
+            hyvaCheckout.main.getWireComponent().placeOrder();
+        }
+
+        function hideCorePlaceOrderButton()
+        {
+            document.querySelector('.btn-primary[x-bind="buttonPlaceOrder()"]').style.display = 'none';
+        }
+
+        function showCorePlaceOrderButton()
+        {
+            document.querySelector('.btn-primary[x-bind="buttonPlaceOrder()"]').style.display = 'block';
+        }
+    </script>
+</div>
