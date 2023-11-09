@@ -1,5 +1,11 @@
 # ParadoxLabs_Authnetcim Changelog
 
+## 4.5.3 - Nov 9, 2023
+- Changed CC BIN storage to enabled by default.
+- Fixed payment info incorrectly persisting and preventing new card entry after a payment decline or admin reorder.
+- Fixed PHP 8.2 compatibility.
+- Fixed possible infinite spinner upon failure in virtual checkout.
+
 ## 4.5.2 - May 11, 2023
 - Changed license from proprietary to Apache 2.0. Issues and contributions are welcome on GitHub.
 - Fixed hyphenated transaction IDs possibly being sent to payment gateway on refund.

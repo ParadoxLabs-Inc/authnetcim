@@ -1,10 +1,9 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
     <!--
-        Note: We only update this version number when we require database setup to run, per best practices.
-        See composer.json or the admin settings for your current version number.
+        Note: See composer.json or the admin settings page for your current version number.
     -->
-    <module name="ParadoxLabs_Authnetcim" setup_version="4.3.0">
+    <module name="ParadoxLabs_Authnetcim">
         <sequence>
             <module name="ParadoxLabs_TokenBase" />
             <module name="Magento_Payment" />
