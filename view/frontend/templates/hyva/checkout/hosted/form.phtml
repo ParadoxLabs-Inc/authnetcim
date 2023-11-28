@@ -8,93 +8,268 @@ use Magento\Framework\View\Element\Template;
 /** @var Magewire $magewire */
 /** @var Escaper $escaper */
 
+$method         = $magewire->getMethod();
+$formBlock      = $magewire->getFormBlock();
+$code           = $escaper->escapeHtmlAttr($method->getCode());
+$image          = $formBlock->getBrandingImage();
+$storedCards    = $formBlock->getStoredCards();
 ?>
-<div class="authnetcim">
-    <iframe name="iframeAuthorizeNet" id="iframeAuthorizeNet" src="about:blank" style="width:100%;min-width:400px;height:500px;" frameborder="0" scrolling="no"></iframe>
-
-    <form method="post" action="<?= $magewire->formUrl ?>" id="authnetcimForm" target="iframeAuthorizeNet" style="display:none;">
-        <input type="hidden" id="popupToken" name="token" value="<?= $magewire->formToken ?>" />
-    </form>
-
-    <!-- Initial form submit once the formToken has been set (too soon to listen for submitForm event fired from Magewire block) -->
-    <?php if($magewire->formToken !== ''): ?>
-        <script>
-            document.getElementById("authnetcimForm").submit();
-        </script>
+<div class="<?= $code ?>"
+     x-data="<?= $code ?>PaymentForm($el, $wire)"
+     x-init="init()"
+>
+    <?php if ($image): ?>
+        <div class="flex justify-end mb-2">
+            <img src="<?= $escaper->escapeUrl($image); ?>" alt="<?= $escaper->escapeHtmlAttr($method->getTitle()) ?>" />
+        </div>
     <?php endif; ?>
 
+    <?php if ($formBlock->haveStoredCards()): ?>
+        <div class="field">
+            <label for="<?= $code ?>-card-id" class="block font-medium text-gray-700">
+                <?= $escaper->escapeHtml(__('Payment Information')) ?>
+            </label>
+            <select id="<?= $code ?>-card-id"
+                    name="payment[card_id]"
+                    class="block w-full shadow-sm border-gray-300 rounded-md"
+                    wire:model.defer="selectedCard"
+                    wire:select.debounce.blur
+                    @input="changeSelectedCard($event)"
+                    x-model="selectedCard"
+                    <?php if ($magewire->hasError('selectedCard')): ?>
+                        aria-invalid="true" aria-errormessage="selected-card"
+                    <?php endif ?>
+            >
+                <?php /** @var \ParadoxLabs\TokenBase\Model\Card $card */ ?>
+                <?php foreach ($storedCards as $card): ?>
+                    <?php $card = $card->getTypeInstance(); ?>
+                    <option value="<?= $escaper->escapeHtmlAttr($card->getHash()) ?>" data-type="<?= $escaper->escapeHtmlAttr($card->getType()) ?>">
+                        <?= $escaper->escapeHtml($card->getLabel()) ?>
+                    </option>
+                <?php endforeach; ?>
+                <option value=''><?= $escaper->escapeHtml(__('Add new card')) ?></option>
+            </select>
+
+            <?php if ($magewire->hasError('selectedCard')): ?>
+                <span class="text-red-800" id="selected-card">
+                    <?= $escaper->escapeHtml($magewire->getError('selectedCard')) ?>
+                </span>
+            <?php endif ?>
+        </div>
+    <?php endif; ?>
+
+    <div class="card p-0" x-show="showHostedForm">
+        <iframe src="about:blank" id="<?= $code ?>_iframe" name="<?= $code ?>_iframe"></iframe>
+    </div>
+
+    <!-- TODO: The 'save this card' option showed on the hosted form during guest checkout! -->
+    <!-- TODO: Add error message if form type is not Hosted -->
+
+    <?php if (!$formBlock->isGuestCheckout() && (bool)$method->getConfigData('allow_unsaved') === false): ?>
+        <div x-show="showHostedForm" x-cloak>
+            <p class="text-secondary mt-4 text-sm"><?= $escaper->escapeHtml(__('For your convenience, this data will be stored securely by our payment processor.')) ?></p>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($formBlock->hasVerification() && $method->getConfigData('require_ccv')): ?>
+        <div class="" x-show="!showHostedForm" x-cloak>
+            <label for="<?= $code ?>-cc-cid">
+                <?= $escaper->escapeHtml(__('Card Verification Number')) ?>
+            </label>
+            <input type="text"
+                   title="<?= $escaper->escapeHtmlAttr(__('Card Verification Number')) ?>"
+                   class="block w-32 shadow-sm border-gray-300 rounded-md"
+                   id="<?= $code ?>-cc-cid"
+                   name="payment[cc_cid]"
+                   wire:model.debounce="paymentCcCid"
+                   value=""
+                   autocomplete="cc-csc"
+                   maxlength="4"
+                    <?php if ($magewire->hasError('paymentCcCid')): ?>
+                        aria-invalid="true" aria-errormessage="payment-cc-cid"
+                    <?php endif ?>
+            />
+
+            <?php if ($magewire->hasError('paymentCcCid')): ?>
+                <span class="text-red-800" id="payment-cc-cid">
+                    <?= $escaper->escapeHtml($magewire->getError('paymentCcCid')) ?>
+                </span>
+            <?php endif ?>
+        </div>
+    <?php endif; ?>
+
+    <?= $block->getChildHtml(); ?>
+
+    <style>
+        #<?= $code ?>_iframe {
+            width: 100%;
+            min-width: 300px;
+            height: 400px;
+        }
+    </style>
     <script>
-        if(!window.authnetSubmitFormListenerAttached) {
-            window.addEventListener(
-                'submitForm',
-                submitForm,
-                false
-            );
-            window.authnetSubmitFormListenerAttached = true;
-        }
+        'use strict';
 
-        if(!window.authnetMessageListenerAttached) {
-            window.addEventListener(
-                'message',
-                handleCommunication,
-                false
-            );
-            window.authnetMessageListenerAttached = true;
-        }
+        const <?= $code ?>PaymentForm = ($el, $wire) => {
+            return {
+                selectedCard: $wire.entangle('selectedCard'),
+                communicatorActive: false,
+                iframeInitialized: false,
+                showHostedForm: true,
+                componentInitialized: false,
+                init: function() {
+                    if (this.componentInitialized) {
+                        return;
+                    }
 
-        if(!window.authnetPaymentDataSetListenerAttached) {
-            window.addEventListener(
-                'paymentDataSet',
-                placeMagentoOrder,
-                false
-            );
-            window.authnetPaymentDataSetListenerAttached = true;
-        }
+                    console.log('initializing authnetcim component', $el, $wire);
 
-        if(!window.corePlaceOrderButtonListenerAttached) {
-            window.addEventListener('checkout:payment:method-activate', (event) => {
-                let method = event.detail? event.detail.method : undefined;
-                if(method == 'authnetcim') {
-                hideCorePlaceOrderButton();
-            } else {
-                showCorePlaceOrderButton();
+                    window.addEventListener('message', this.handleCommunication.bind(this));
+                    document.addEventListener('checkout:payment:method-activate', this.toggleOrderButton.bind(this));
+                    document.addEventListener('<?= $code ?>InitHostedForm', this.loadHostedForm.bind(this));
+
+                    this.changeSelectedCard();
+
+                    this.componentInitialized = true;
+                },
+                changeSelectedCard: function() {
+                    this.showHostedForm = this.selectedCard === '';
+
+                    if (this.iframeInitialized === false && this.showHostedForm === true) {
+                        // The initialized flag is to debounce and ensure we don't reinit unless absolutely necessary.
+                        this.resetHostedForm();
+                    }
+
+                    this.toggleOrderButton();
+                },
+                resetHostedForm: function() {
+                    console.log('called resetHostedForm');
+                    $wire.call('initHostedForm');
+                },
+                toggleOrderButton: function(event) {
+                    let method = event && event.detail
+                                 ? event.detail.method
+                                 : document.querySelector('input[name="payment-method-option"]:checked').value;
+
+                    if (method === '<?= $code ?>' && this.showHostedForm) {
+                        document.querySelector('.btn-primary[x-bind="buttonPlaceOrder()"]').style.display = 'none';
+                    } else {
+                        document.querySelector('.btn-primary[x-bind="buttonPlaceOrder()"]').style.display = 'block';
+                    }
+                },
+                loadHostedForm: function(event) {
+                    let data = event.detail;
+                    console.log('called loadHostedForm', event, data);
+
+                    var iframe = $el.querySelector('iframe');
+                    // iframe.contentWindow.name = iframe.name;
+
+                    var form = document.createElement('form');
+                    form.target = iframe.name;
+                    form.method = 'post';
+                    form.action = data.iframeAction;
+
+                    for (let fieldKey in data.iframeParams) {
+                        var input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = fieldKey;
+                        input.value = data.iframeParams[fieldKey];
+                        form.appendChild(input);
+                    }
+
+                    $el.appendChild(form);
+                    form.submit();
+
+                    // Reload the hosted form when it expires
+                    setTimeout(this.reloadExpiredHostedForm.bind(this), 15*60*1000);
+
+                    // Verify communicator connected
+                    this.communicatorActive = false;
+                    setTimeout(this.checkCommunicator.bind(this), 20*1000);
+
+                    // There's an awkward break between 400-750px; set max width to avoid scrolling.
+                    if (iframe.innerWidth > 400 && iframe.innerWidth < 750) {
+                        iframe.style.maxWidth = '400px';
+                    }
+
+                    this.iframeInitialized = true;
+                },
+                reloadExpiredHostedForm: function() {
+                    if (this.iframeInitialized === true) {
+                        // If form has expired (15 minutes), and is still being displayed, force reload it.
+                        this.resetHostedForm();
+                    }
+                },
+                checkCommunicator: function() {
+                    if (this.communicatorActive
+                        || !this.showHostedForm
+                        || this.iframeInitialized === false) {
+                        return;
+                    }
+
+                    var message = "<?= $escaper->escapeJs(__('Payment gateway failed to connect. Please reload and try again. If the problem continues, please seek support.')) ?>";
+
+                    console.error('No message received from communicator.', message);
+                    window.alert(message);
+                },
+                handleCommunication: function(event) {
+                    if (!event.data
+                        || !event.data.action
+                        || this.showHostedForm === false) {
+                        return;
+                    }
+
+                    if (typeof location.origin === 'undefined') {
+                        location.origin = location.protocol + '//' + location.host;
+                    }
+
+                    if (event.origin !== location.origin) {
+                        console.error('Ignored untrusted message from ' + event.origin);
+                        return;
+                    }
+
+                    console.log('authnetcim communication', event.data);
+
+                    this.communicatorActive = true;
+
+                    switch (event.data.action) {
+                        case 'cancel':
+                            this.resetHostedForm();
+                            break;
+                        case 'transactResponse':
+                            this.handleResponse(JSON.parse(event.data.response));
+                            break;
+                        case 'successfulSave':
+                            this.handleSave(event.data);
+                            break;
+                        case 'resizeWindow':
+                            var height = Math.ceil(parseFloat(event.data.height)) + 80;
+                            $el.querySelector('iframe').style.height = height + 'px';
+                            break;
+                    }
+                },
+                handleResponse: function(response) {
+                    if (response.createPaymentProfileResponse !== undefined
+                        && response.createPaymentProfileResponse.success === 'true') {
+                        $wire.set('saveCard', true, true);
+                    } else {
+                        $wire.set('saveCard', false, true);
+                    }
+
+                    /**
+                     * NOTE: To split iframe submission from Place Order (for steps after payment), nullify
+                     * the functionality of this.toggleOrderButton() and this.placeMagentoOrder().
+                     */
+                    $wire.set('transactionId', response.transId, true);
+                    $wire.call('submitTransaction')
+                         .then(this.placeOrder.bind(this));
+
+                    this.iframeInitialized = false;
+                },
+                placeOrder: function() {
+                    hyvaCheckout.main.getWireComponent().placeOrder();
+                },
             }
-        });
-            window.authnetCorePlaceOrderButtonListenerAttached = true;
-        }
-
-        function submitForm()
-        {
-            document.getElementById("authnetcimForm").submit();
-        }
-
-        function handleCommunication(event) {
-            const data = event.data;
-
-            switch (data.action) {
-                case "cancel":
-                    Magewire.emit('resetIframe');
-                    break;
-                case "transactResponse":
-                    var response = JSON.parse(data.response);
-                    Magewire.emit('setPaymentData', {value: response.transId});
-                    break;
-            }
-        }
-
-        function placeMagentoOrder()
-        {
-            hyvaCheckout.main.getWireComponent().placeOrder();
-        }
-
-        function hideCorePlaceOrderButton()
-        {
-            document.querySelector('.btn-primary[x-bind="buttonPlaceOrder()"]').style.display = 'none';
-        }
-
-        function showCorePlaceOrderButton()
-        {
-            document.querySelector('.btn-primary[x-bind="buttonPlaceOrder()"]').style.display = 'block';
         }
     </script>
 </div>
