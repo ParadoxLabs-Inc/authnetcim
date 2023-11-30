@@ -62,7 +62,10 @@ $image          = $formBlock->getBrandingImage();
         </div>
     </template>
 
-    <div class="card p-0" x-show="showHostedForm">
+    <div class="card p-0"
+         x-show="showHostedForm"
+         wire:ignore
+    >
         <iframe src="about:blank" id="<?= $code ?>_iframe" name="<?= $code ?>_iframe"></iframe>
     </div>
 
@@ -73,7 +76,10 @@ $image          = $formBlock->getBrandingImage();
     <?php endif; ?>
 
     <?php if ($formBlock->hasVerification() && $method->getConfigData('require_ccv')): ?>
-        <div class="" x-show="!showHostedForm" x-cloak>
+        <div class=""
+             x-show="!showHostedForm"
+             x-cloak
+        >
             <label for="<?= $code ?>-cc-cid" class="block font-medium text-gray-700">
                 <?= $escaper->escapeHtml(__('Card Verification Number')) ?>
             </label>
@@ -127,8 +133,6 @@ $image          = $formBlock->getBrandingImage();
                         return;
                     }
 
-                    console.log('initializing authnetcim component', $el, $wire);
-
                     window.addEventListener('message', this.handleCommunication.bind(this));
                     document.addEventListener('checkout:payment:method-activate', this.toggleOrderButton.bind(this));
                     document.addEventListener('<?= $code ?>InitHostedForm', this.loadHostedForm.bind(this));
@@ -141,8 +145,6 @@ $image          = $formBlock->getBrandingImage();
                 changeSelectedCard: function() {
                     this.showHostedForm = this.selectedCard === '';
 
-                    console.log({'card': this.selectedCard, 'iframe': this.iframeInitialized, 'show': this.showHostedForm});
-
                     if (this.iframeInitialized === false && this.showHostedForm === true) {
                         // The initialized flag is to debounce and ensure we don't reinit unless absolutely necessary.
                         this.resetHostedForm();
@@ -152,7 +154,6 @@ $image          = $formBlock->getBrandingImage();
                 },
                 resetHostedForm: function() {
                     // TODO: Trigger agreement validation before loading form
-                    console.log('called resetHostedForm');
                     $wire.call('initHostedForm');
                 },
                 toggleOrderButton: function(event) {
@@ -168,10 +169,8 @@ $image          = $formBlock->getBrandingImage();
                 },
                 loadHostedForm: function(event) {
                     let data = event.detail;
-                    console.log('called loadHostedForm', event, data);
 
                     var iframe = $el.querySelector('iframe');
-                    // iframe.contentWindow.name = iframe.name;
 
                     var form = document.createElement('form');
                     form.target = iframe.name;
@@ -235,8 +234,6 @@ $image          = $formBlock->getBrandingImage();
                         return;
                     }
 
-                    console.log('authnetcim communication', event.data);
-
                     this.communicatorActive = true;
 
                     switch (event.data.action) {
@@ -275,7 +272,6 @@ $image          = $formBlock->getBrandingImage();
                 },
                 handleSave: function(data) {
                     if (this.processingSave) {
-                        console.log('Ignored duplicate handleSave');
                         return;
                     }
 
