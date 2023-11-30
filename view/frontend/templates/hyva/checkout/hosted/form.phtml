@@ -12,7 +12,6 @@ $method         = $magewire->getMethod();
 $formBlock      = $magewire->getFormBlock();
 $code           = $escaper->escapeHtmlAttr($method->getCode());
 $image          = $formBlock->getBrandingImage();
-$storedCards    = $formBlock->getStoredCards();
 ?>
 <div class="<?= $code ?>"
      x-data="<?= $code ?>PaymentForm($el, $wire)"
@@ -30,7 +29,7 @@ $storedCards    = $formBlock->getStoredCards();
         </p>
     <?php endif; ?>
 
-    <?php if ($formBlock->haveStoredCards()): ?>
+    <template x-if="storedCards">
         <div class="field mb-2">
             <label for="<?= $code ?>-card-id" class="block font-medium text-gray-700">
                 <?= $escaper->escapeHtml(__('Payment Information')) ?>
@@ -45,16 +44,13 @@ $storedCards    = $formBlock->getStoredCards();
                         aria-invalid="true" aria-errormessage="selected-card-error"
                     <?php endif ?>
             >
-                <?php /** @var \ParadoxLabs\TokenBase\Model\Card $card */ ?>
-                <?php foreach ($storedCards as $card): ?>
-                    <?php $card = $card->getTypeInstance(); ?>
-                    <option value="<?= $escaper->escapeHtmlAttr($card->getHash()) ?>"
-                            data-type="<?= $escaper->escapeHtmlAttr($card->getType()) ?>"
-                            <?php if ($card->getHash() === $magewire->selectedCard): ?>selected<?php endif; ?>
-                    >
-                        <?= $escaper->escapeHtml($card->getLabel()) ?>
+                <template x-for="storedCard in storedCards" :key="storedCard.hash">
+                    <option :value="storedCard.hash"
+                            :data-type="storedCard.type"
+                            :selected="storedCard.hash === selectedCard"
+                            x-text="storedCard.label">
                     </option>
-                <?php endforeach; ?>
+                </template>
                 <option value=''><?= $escaper->escapeHtml(__('Add new card')) ?></option>
             </select>
 
@@ -64,7 +60,7 @@ $storedCards    = $formBlock->getStoredCards();
                 </span>
             <?php endif ?>
         </div>
-    <?php endif; ?>
+    </template>
 
     <div class="card p-0" x-show="showHostedForm">
         <iframe src="about:blank" id="<?= $code ?>_iframe" name="<?= $code ?>_iframe"></iframe>
@@ -86,9 +82,10 @@ $storedCards    = $formBlock->getStoredCards();
                    class="block w-16 shadow-sm border-gray-300 rounded-md"
                    id="<?= $code ?>-cc-cid"
                    name="payment[cc_cid]"
-                   wire:model.debounce="paymentCcCid"
+                   wire:model.debounce.1500ms.blur="paymentCcCid"
                    value=""
                    autocomplete="cc-csc"
+                   minlength="3"
                    maxlength="4"
                     <?php if ($magewire->hasError('paymentCcCid')): ?>
                         aria-invalid="true" aria-errormessage="payment-cc-cid-error"
@@ -113,15 +110,18 @@ $storedCards    = $formBlock->getStoredCards();
         }
     </style>
     <script>
+        // TODO: Handle script init on magewire update
         'use strict';
 
         const <?= $code ?>PaymentForm = ($el, $wire) => {
             return {
+                storedCards: $wire.entangle('storedCards'),
                 selectedCard: $wire.entangle('selectedCard'),
                 communicatorActive: false,
                 iframeInitialized: false,
                 showHostedForm: true,
                 componentInitialized: false,
+                processingSave: false,
                 init: function() {
                     if (this.componentInitialized) {
                         return;
@@ -151,6 +151,7 @@ $storedCards    = $formBlock->getStoredCards();
                     this.toggleOrderButton();
                 },
                 resetHostedForm: function() {
+                    // TODO: Trigger agreement validation before loading form
                     console.log('called resetHostedForm');
                     $wire.call('initHostedForm');
                 },
@@ -215,10 +216,8 @@ $storedCards    = $formBlock->getStoredCards();
                         return;
                     }
 
-                    var message = "<?= $escaper->escapeJs(__('Payment gateway failed to connect. Please reload and try again. If the problem continues, please seek support.')) ?>";
-
                     console.error('No message received from communicator.', message);
-                    window.alert(message);
+                    $wire.call('notifyCommunicatorFailure');
                 },
                 handleCommunication: function(event) {
                     if (!event.data
@@ -273,6 +272,25 @@ $storedCards    = $formBlock->getStoredCards();
                          .then(this.placeOrder.bind(this));
 
                     this.iframeInitialized = false;
+                },
+                handleSave: function(data) {
+                    if (this.processingSave) {
+                        console.log('Ignored duplicate handleSave');
+                        return;
+                    }
+
+                    this.processingSave = true;
+
+                    $wire.call('getNewCard', data)
+                         .then(this.afterAddCard.bind(this));
+                },
+                afterAddCard: function(data) {
+                    this.iframeInitialized = false;
+                    this.processingSave = false;
+
+                    <?php if ($formBlock->hasVerification() && $method->getConfigData('require_ccv')): ?>
+                        $el.querySelector('#<?= $code ?>-cc-cid').focus();
+                    <?php endif; ?>
                 },
                 placeOrder: function() {
                     hyvaCheckout.main.getWireComponent().placeOrder();

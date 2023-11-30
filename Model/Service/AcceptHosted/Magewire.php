@@ -31,6 +31,7 @@ use Magento\Quote\Api\Data\CartInterface;
 use Magento\Quote\Model\ResourceModel\Quote\Payment;
 use Magewirephp\Magewire\Component\Form;
 use ParadoxLabs\Authnetcim\Block\Form\Cc;
+use ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\FrontendRequest as AcceptCustomerService;
 use ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\FrontendRequest as AcceptHostedService;
 use ParadoxLabs\TokenBase\Api\CardRepositoryInterface;
 use ParadoxLabs\TokenBase\Helper\Data;
@@ -43,13 +44,22 @@ class Magewire extends Form implements EvaluationInterface
     /**
      * @var bool
      */
-    // TODO: Situational loaders
-    protected $loader = false;
+    protected $loader = [
+        'billing_address_activated' => 'Loading payment form',
+        'billing_address_saved' => 'Loading payment form',
+        'billing_address_submitted' => 'Loading payment form',
+        'getNewCard' => 'Updating payment data',
+        'initHostedForm' => 'Loading payment form',
+        'paymentCcCid' => 'Updating payment data',
+        'selectedCard' => 'Updating payment selection',
+        'submitTransaction' => 'Processing payment',
+    ];
 
     /**
      * @var string[]
      */
     protected $listeners = [
+        'billing_address_activated' => 'initHostedForm',
         'billing_address_saved' => 'initHostedForm',
         'billing_address_submitted' => 'initHostedForm',
     ];
@@ -59,9 +69,11 @@ class Magewire extends Form implements EvaluationInterface
     public $paymentCcCid = '';
     public $transactionId = '';
     public $saveCard = false;
+    public $storedCards;
 
     /* Protected property validation rule map */
     protected $rules = [
+        'storedCards' => 'array',
         'selectedCard' => 'alpha_num',
         'paymentCcCid' => 'numeric|digits_between:3,4',
         'transactionId' => 'alpha_num',
@@ -72,6 +84,11 @@ class Magewire extends Form implements EvaluationInterface
      * @var CheckoutSession
      */
     protected $checkoutSession;
+
+    /**
+     * @var \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\FrontendRequest
+     */
+    protected $acceptCustomerService;
 
     /**
      * @var AcceptHostedService
@@ -104,7 +121,9 @@ class Magewire extends Form implements EvaluationInterface
     protected $paymentResource;
 
     /**
+     * @param \Rakit\Validation\Validator $validator
      * @param CheckoutSession $checkoutSession
+     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\FrontendRequest $acceptCustomerService
      * @param AcceptHostedService $acceptHostedService
      * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
      * @param \ParadoxLabs\TokenBase\Helper\Data $helper
@@ -114,20 +133,22 @@ class Magewire extends Form implements EvaluationInterface
     public function __construct(
         Validator $validator,
         CheckoutSession $checkoutSession,
+        AcceptCustomerService $acceptCustomerService,
         AcceptHostedService $acceptHostedService,
         CardRepositoryInterface $cardRepository,
         Data $helper,
         LayoutInterface $layout,
         Payment $paymentResource
     ) {
+        parent::__construct($validator);
+
         $this->checkoutSession = $checkoutSession;
         $this->acceptHostedService = $acceptHostedService;
         $this->cardRepository = $cardRepository;
         $this->helper = $helper;
         $this->layout = $layout;
         $this->paymentResource = $paymentResource;
-
-        parent::__construct($validator);
+        $this->acceptCustomerService = $acceptCustomerService;
     }
 
     /**
@@ -138,6 +159,15 @@ class Magewire extends Form implements EvaluationInterface
     public function boot(): void
     {
         $this->loadSelectedCard();
+    }
+
+    /**
+     * @return void
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function mount(): void
+    {
+        $this->loadStoredCards();
     }
 
     /**
@@ -153,6 +183,8 @@ class Magewire extends Form implements EvaluationInterface
         if ($payment->getData('tokenbase_id') !== null) {
             $card = $this->cardRepository->getById($payment->getData('tokenbase_id'));
             $this->selectedCard = $card->getHash();
+        } else {
+            $this->selectedCard = '';
         }
     }
 
@@ -164,7 +196,11 @@ class Magewire extends Form implements EvaluationInterface
      */
     public function initHostedForm(): void
     {
-        $params = $this->acceptHostedService->getParams();
+        if ($this->getMethod()->getConfigData('payment_action') === 'order') {
+            $params = $this->acceptCustomerService->getParams();
+        } else {
+            $params = $this->acceptHostedService->getParams();
+        }
 
         $this->dispatchBrowserEvent(
             self::METHOD_CODE . 'InitHostedForm',
@@ -190,9 +226,8 @@ class Magewire extends Form implements EvaluationInterface
      * @param string|null $value
      * @return mixed
      */
-    public function updatingSelectedCard($value)
+    public function updatedSelectedCard($value)
     {
-        // TODO: Test with invalid and unauthorized card hash
         $this->validate();
         $this->setPaymentData([
             'card_id' => $value,
@@ -208,7 +243,7 @@ class Magewire extends Form implements EvaluationInterface
      * @param string|null $value
      * @return mixed
      */
-    public function updatingPaymentCcCid($value)
+    public function updatedPaymentCcCid($value)
     {
         $this->validate();
         $this->setPaymentData([
@@ -225,7 +260,7 @@ class Magewire extends Form implements EvaluationInterface
      * @param string|null $value
      * @return mixed
      */
-    public function updatingSaveCard($value)
+    public function updatedSaveCard($value)
     {
         $this->validate();
 
@@ -238,7 +273,7 @@ class Magewire extends Form implements EvaluationInterface
      * @param string|null $value
      * @return mixed
      */
-    public function updatingTransactionId($value)
+    public function updatedTransactionId($value)
     {
         $this->validate();
 
@@ -247,7 +282,6 @@ class Magewire extends Form implements EvaluationInterface
 
     public function submitTransaction(): void
     {
-        // TODO: Ensure this happens after deferred values are updated
         $this->setPaymentData([
             'transaction_id' => $this->transactionId,
             'save' => $this->saveCard,
@@ -265,8 +299,10 @@ class Magewire extends Form implements EvaluationInterface
         $params['method'] = self::METHOD_CODE;
 
         // Assign data to the quote payment object
+        /** @var \Magento\Quote\Model\Quote\Payment $payment */
         $payment = $this->getQuote()->getPayment();
         $payment->importData($params);
+        $payment->getMethodInstance()->validate();
 
         $this->checkoutSession->setStepData('payment', 'cc_cid', $params['cc_cid'] ?? null);
 
@@ -327,7 +363,7 @@ class Magewire extends Form implements EvaluationInterface
      * @return bool
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    private function isRequiredDataPresent(): bool
+    protected function isRequiredDataPresent(): bool
     {
         // Stored card payment
         if (!empty($this->selectedCard)) {
@@ -343,5 +379,57 @@ class Magewire extends Form implements EvaluationInterface
         }
 
         return false;
+    }
+
+    /**
+     * @return void
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    protected function loadStoredCards(): void
+    {
+        $this->storedCards = [];
+
+        /** @var \ParadoxLabs\TokenBase\Model\Card $card */
+        foreach ($this->getFormBlock()->getStoredCards() as $card) {
+            $card = $card->getTypeInstance();
+
+            $this->storedCards[] = [
+                'hash' => $card->getHash(),
+                'label' => $card->getLabel(),
+                'type' => $card->getType(),
+            ];
+        }
+    }
+
+    /**
+     * @return void
+     */
+    public function notifyCommunicatorFailure(): void
+    {
+        $this->helper->log(self::METHOD_CODE, 'ERROR: User failed to load hosted form communicator');
+
+        $this->dispatchErrorMessage(
+            __(
+                'Payment gateway failed to connect. Please reload and try again. '
+                . 'If the problem continues, please seek support.'
+            )
+        );
+    }
+
+    /**
+     * @param array $data
+     * @return void
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function getNewCard($data = []): void
+    {
+        // Import new card
+        $newCard = $this->acceptCustomerService->getCard();
+
+        $this->selectedCard = $newCard->getHash();
+        $this->updatedSelectedCard($this->selectedCard);
+
+        // Update stored cards list
+        $this->loadStoredCards();
     }
 }
