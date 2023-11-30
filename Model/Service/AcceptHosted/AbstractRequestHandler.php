@@ -140,9 +140,10 @@ abstract class AbstractRequestHandler
 
         // Get payment form token
         $communicatorUrl = $this->urlBuilder->getUrl('authnetcim/hosted/communicator');
+        $allowSaveOptIn  = !empty($this->getCustomerId()) ? (bool)$method->getConfigData('allow_unsaved') : false;
         $gateway->setParameter('hostedProfileIFrameCommunicatorUrl', $communicatorUrl);
         $gateway->setParameter('hostedProfileHeadingBgColor', $method->getConfigData('accent_color'));
-        $gateway->setParameter('hostedPaymentAddProfile', (bool)$method->getConfigData('allow_unsaved'));
+        $gateway->setParameter('hostedPaymentAddProfile', $allowSaveOptIn);
         $gateway->setParameter('hostedPaymentValidateCaptcha', (bool)$method->getConfigData('enable_hosted_captcha'));
         $gateway->setParameter('customerProfileId', $this->getCustomerProfileId());
 

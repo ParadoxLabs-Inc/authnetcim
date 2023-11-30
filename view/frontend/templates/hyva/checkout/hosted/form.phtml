@@ -70,8 +70,6 @@ $storedCards    = $formBlock->getStoredCards();
         <iframe src="about:blank" id="<?= $code ?>_iframe" name="<?= $code ?>_iframe"></iframe>
     </div>
 
-    <!-- TODO: The 'save this card' option showed on the hosted form during guest checkout! -->
-
     <?php if (!$formBlock->isGuestCheckout() && (bool)$method->getConfigData('allow_unsaved') === false): ?>
         <div x-show="showHostedForm" x-cloak>
             <p class="text-secondary mt-4 text-sm"><?= $escaper->escapeHtml(__('For your convenience, this data will be stored securely by our payment processor.')) ?></p>
