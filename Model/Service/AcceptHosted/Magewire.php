@@ -43,7 +43,8 @@ class Magewire extends Form implements EvaluationInterface
     /**
      * @var bool
      */
-    protected $loader = true;
+    // TODO: Situational loaders
+    protected $loader = false;
 
     /**
      * @var string[]
@@ -134,7 +135,7 @@ class Magewire extends Form implements EvaluationInterface
      *
      * @return void
      */
-    public function booted(): void
+    public function boot(): void
     {
         $this->loadSelectedCard();
     }
@@ -267,8 +268,11 @@ class Magewire extends Form implements EvaluationInterface
         $payment = $this->getQuote()->getPayment();
         $payment->importData($params);
 
+        $this->checkoutSession->setStepData('payment', 'cc_cid', $params['cc_cid'] ?? null);
+
         // Save the quote payment
         if ($payment->hasDataChanges()) {
+            $payment->setUpdatedAt(date('c'));
             $this->paymentResource->save($payment);
         }
     }

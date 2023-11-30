@@ -24,8 +24,14 @@ $storedCards    = $formBlock->getStoredCards();
         </div>
     <?php endif; ?>
 
+    <?php if ($method->getConfigData('form_type') !== \ParadoxLabs\Authnetcim\Model\ConfigProvider::FORM_HOSTED): ?>
+        <p class="message error my-8">
+            <?= $escaper->escapeHtml(__('This payment method only supports Accept Hosted for Hyva Checkout. Please change the "Payment Form Type" to "Accept Hosted" in the payment method settings.')) ?>
+        </p>
+    <?php endif; ?>
+
     <?php if ($formBlock->haveStoredCards()): ?>
-        <div class="field">
+        <div class="field mb-2">
             <label for="<?= $code ?>-card-id" class="block font-medium text-gray-700">
                 <?= $escaper->escapeHtml(__('Payment Information')) ?>
             </label>
@@ -33,17 +39,19 @@ $storedCards    = $formBlock->getStoredCards();
                     name="payment[card_id]"
                     class="block w-full shadow-sm border-gray-300 rounded-md"
                     wire:model.defer="selectedCard"
-                    wire:select.debounce.blur
-                    @input="changeSelectedCard($event)"
+                    wire:select.debounce.300ms.blur
                     x-model="selectedCard"
                     <?php if ($magewire->hasError('selectedCard')): ?>
-                        aria-invalid="true" aria-errormessage="selected-card"
+                        aria-invalid="true" aria-errormessage="selected-card-error"
                     <?php endif ?>
             >
                 <?php /** @var \ParadoxLabs\TokenBase\Model\Card $card */ ?>
                 <?php foreach ($storedCards as $card): ?>
                     <?php $card = $card->getTypeInstance(); ?>
-                    <option value="<?= $escaper->escapeHtmlAttr($card->getHash()) ?>" data-type="<?= $escaper->escapeHtmlAttr($card->getType()) ?>">
+                    <option value="<?= $escaper->escapeHtmlAttr($card->getHash()) ?>"
+                            data-type="<?= $escaper->escapeHtmlAttr($card->getType()) ?>"
+                            <?php if ($card->getHash() === $magewire->selectedCard): ?>selected<?php endif; ?>
+                    >
                         <?= $escaper->escapeHtml($card->getLabel()) ?>
                     </option>
                 <?php endforeach; ?>
@@ -51,7 +59,7 @@ $storedCards    = $formBlock->getStoredCards();
             </select>
 
             <?php if ($magewire->hasError('selectedCard')): ?>
-                <span class="text-red-800" id="selected-card">
+                <span class="text-red-800" id="selected-card-error">
                     <?= $escaper->escapeHtml($magewire->getError('selectedCard')) ?>
                 </span>
             <?php endif ?>
@@ -63,7 +71,6 @@ $storedCards    = $formBlock->getStoredCards();
     </div>
 
     <!-- TODO: The 'save this card' option showed on the hosted form during guest checkout! -->
-    <!-- TODO: Add error message if form type is not Hosted -->
 
     <?php if (!$formBlock->isGuestCheckout() && (bool)$method->getConfigData('allow_unsaved') === false): ?>
         <div x-show="showHostedForm" x-cloak>
@@ -73,12 +80,12 @@ $storedCards    = $formBlock->getStoredCards();
 
     <?php if ($formBlock->hasVerification() && $method->getConfigData('require_ccv')): ?>
         <div class="" x-show="!showHostedForm" x-cloak>
-            <label for="<?= $code ?>-cc-cid">
+            <label for="<?= $code ?>-cc-cid" class="block font-medium text-gray-700">
                 <?= $escaper->escapeHtml(__('Card Verification Number')) ?>
             </label>
             <input type="text"
                    title="<?= $escaper->escapeHtmlAttr(__('Card Verification Number')) ?>"
-                   class="block w-32 shadow-sm border-gray-300 rounded-md"
+                   class="block w-16 shadow-sm border-gray-300 rounded-md"
                    id="<?= $code ?>-cc-cid"
                    name="payment[cc_cid]"
                    wire:model.debounce="paymentCcCid"
@@ -86,12 +93,12 @@ $storedCards    = $formBlock->getStoredCards();
                    autocomplete="cc-csc"
                    maxlength="4"
                     <?php if ($magewire->hasError('paymentCcCid')): ?>
-                        aria-invalid="true" aria-errormessage="payment-cc-cid"
+                        aria-invalid="true" aria-errormessage="payment-cc-cid-error"
                     <?php endif ?>
             />
 
             <?php if ($magewire->hasError('paymentCcCid')): ?>
-                <span class="text-red-800" id="payment-cc-cid">
+                <span class="text-red-800" id="payment-cc-cid-error">
                     <?= $escaper->escapeHtml($magewire->getError('paymentCcCid')) ?>
                 </span>
             <?php endif ?>
@@ -127,6 +134,7 @@ $storedCards    = $formBlock->getStoredCards();
                     window.addEventListener('message', this.handleCommunication.bind(this));
                     document.addEventListener('checkout:payment:method-activate', this.toggleOrderButton.bind(this));
                     document.addEventListener('<?= $code ?>InitHostedForm', this.loadHostedForm.bind(this));
+                    this.$watch('selectedCard', this.changeSelectedCard.bind(this));
 
                     this.changeSelectedCard();
 
@@ -134,6 +142,8 @@ $storedCards    = $formBlock->getStoredCards();
                 },
                 changeSelectedCard: function() {
                     this.showHostedForm = this.selectedCard === '';
+
+                    console.log({'card': this.selectedCard, 'iframe': this.iframeInitialized, 'show': this.showHostedForm});
 
                     if (this.iframeInitialized === false && this.showHostedForm === true) {
                         // The initialized flag is to debounce and ensure we don't reinit unless absolutely necessary.
