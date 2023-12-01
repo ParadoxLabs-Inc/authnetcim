@@ -17,7 +17,4 @@
         <observer name="authnetcim_failure_clear_acceptjs" instance="ParadoxLabs\Authnetcim\Observer\CheckoutFailureClearAcceptjsObserver" />
         <observer name="authnetcim_failure_clear_profileid" instance="ParadoxLabs\Authnetcim\Observer\CheckoutFailureClearProfileIdObserver" />
     </event>
-    <event name="checkout_quote_destroy">
-        <observer name="authnetcim_success_clear_cc_cid" instance="ParadoxLabs\Authnetcim\Observer\CheckoutSuccessClearCcCidObserver" />
-    </event>
 </config>
