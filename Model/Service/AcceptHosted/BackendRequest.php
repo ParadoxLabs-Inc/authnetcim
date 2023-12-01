@@ -148,7 +148,7 @@ class BackendRequest extends AbstractRequestHandler
      */
     protected function getMethodCode(): string
     {
-        $methodCode = $this->request->getParam('method');
+        $methodCode = $this->methodCode ?? $this->request->getParam('method');
 
         if (in_array($methodCode, [ConfigProviderCc::CODE, ConfigProviderAch::CODE], true)) {
             return $methodCode;

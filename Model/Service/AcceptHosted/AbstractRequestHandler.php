@@ -60,6 +60,11 @@ abstract class AbstractRequestHandler
     protected $addressHelper;
 
     /**
+     * @var string
+     */
+    protected $methodCode;
+
+    /**
      * AbstractRequestHandler constructor.
      *
      * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\Context $context
@@ -216,6 +221,15 @@ abstract class AbstractRequestHandler
             $gateway->setParameter('shipAmount', $quote->getShippingAddress()->getBaseShippingAmount());
             $gateway->setParameter('taxAmount', $quote->getShippingAddress()->getBaseTaxAmount());
         }
+    }
+
+    /**
+     * @param string $methodCode
+     * @return void
+     */
+    public function setMethodCode(string $methodCode): void
+    {
+        $this->methodCode = $methodCode;
     }
 
     /**

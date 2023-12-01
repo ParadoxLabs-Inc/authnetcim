@@ -65,6 +65,11 @@ abstract class AbstractRequestHandler
     protected $customerProfileService;
 
     /**
+     * @var string
+     */
+    protected $methodCode;
+
+    /**
      * AbstractRequestHandler constructor.
      *
      * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\Context $context
@@ -225,6 +230,15 @@ abstract class AbstractRequestHandler
         }
 
         return $card;
+    }
+
+    /**
+     * @param string $methodCode
+     * @return void
+     */
+    public function setMethodCode(string $methodCode): void
+    {
+        $this->methodCode = $methodCode;
     }
 
     /**

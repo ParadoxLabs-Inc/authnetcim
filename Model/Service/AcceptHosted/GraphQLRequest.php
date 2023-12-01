@@ -203,7 +203,7 @@ class GraphQLRequest extends AbstractRequestHandler
      */
     protected function getMethodCode(): string
     {
-        $methodCode = $this->graphQlArgs['method'];
+        $methodCode = $this->methodCode ?? $this->graphQlArgs['method'];
 
         if (in_array($methodCode, [ConfigProviderCc::CODE, ConfigProviderAch::CODE], true)) {
             return $methodCode;
