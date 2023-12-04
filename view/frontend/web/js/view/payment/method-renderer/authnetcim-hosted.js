@@ -135,6 +135,14 @@ define(
                     this.iframeInitialized = true;
                     this.initHostedForm();
                 }
+
+                // Ensure place order button does not appear when iframe is visible (EG One-Step Checkouts)
+                var placeOrderButton = $('#' + this.getCode() + '-submit');
+                if (this.iframeInitialized && !this.selectedCard()) {
+                    placeOrderButton.css('visibility', 'hidden');
+                } else {
+                    placeOrderButton.css('visibility', 'visible');
+                }
             },
 
             /**
