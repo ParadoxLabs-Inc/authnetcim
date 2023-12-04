@@ -180,7 +180,10 @@ define(
              */
             loadForm: function(data) {
                 var iframe = $('#' + this.getCode() + '_iframe');
-                iframe[0].contentWindow.name = iframe.attr('name');
+
+                // Ensure iframe has targetable name
+                iframe[0].name = iframe.attr('name');
+                iframe[0].replaceWith(iframe[0]);
 
                 var form = document.createElement('form');
                 form.target = iframe.attr('name');
