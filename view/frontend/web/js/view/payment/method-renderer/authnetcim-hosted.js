@@ -68,6 +68,7 @@ define(
 
                 quote.billingAddress.subscribe(this.syncBillingAddress.bind(this));
                 quote.paymentMethod.subscribe(this.syncBillingAddress.bind(this));
+                quote.totals.subscribe(this.syncBillingAddress.bind(this))
                 this.billingAddressLine.subscribe(this.initHostedForm.bind(this));
                 this.selectedCard.subscribe(this.checkReinitHostedForm.bind(this));
 
@@ -121,7 +122,7 @@ define(
                     return;
                 }
 
-                this.billingAddressLine(this.getAddressLine(quote.billingAddress()));
+                this.billingAddressLine(this.getAddressLine(quote.billingAddress()) + '|' + quote.totals().grand_total);
             },
 
             /**
