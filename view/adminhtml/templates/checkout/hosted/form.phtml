@@ -1,0 +1,94 @@
+<?php
+/** @var \ParadoxLabs\Authnetcim\Block\Form\Cc $block */
+// @codingStandardsIgnoreFile
+
+$code           = $block->escapeHtmlAttr($block->getMethodCode());
+$image          = $block->getBrandingImage();
+$storedCards    = $block->getStoredCards();
+
+$paramUrl = $block->getUrl('authnetcim/hosted/getPaymentParams');
+if ($block->getTokenbaseMethod()->getConfigData('payment_action') === 'order') {
+    $paramUrl = $block->getUrl('authnetcim/hosted/getProfileParams', ['source' => 'checkout']);
+}
+?>
+<div id="payment_form_<?= $code ?>" class="admin__page-section-item checkout-payment-method" style="display:none" data-mage-init='{
+    "tokenbaseForm": {
+        "code":"<?= $code ?>",
+        "validateForm": false
+    },
+    "authnetcimHostedForm": {
+        "method": "<?= $code ?>",
+        "target": "<?= $code ?>_iframe",
+        "paramUrl": "<?= $block->escapeJs($paramUrl) ?>",
+        "newCardUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getNewCard')) ?>"
+    }
+}'>
+    <input id="<?= $code ?>-payment-method" type="hidden" name="payment[method]" value="<?= $code ?>" />
+    <input id="<?= $code ?>-transaction-id" type="hidden" name="payment[transaction_id]" value="" />
+    <?= $block->getBlockHtml('formkey') ?>
+
+    <fieldset class="admin__fieldset payment items ccard">
+        <?php if ($image): ?>
+            <div class="page-actions">
+                <img src="<?= $block->escapeUrl($image); ?>" />
+            </div>
+        <?php endif; ?>
+
+        <div class="admin__field">
+            <div class="admin__field-control control">
+                <select id="<?= $code ?>-card-id" name="payment[card_id]" class="select admin__control-select">
+                    <option value='' <?php if (count($storedCards) > 1 && $block->getInfoData('tokenbase_id') == ''): ?>selected="selected"<?php endif; ?>><?= $block->escapeHtml(__('Add new card')) ?></option>
+                    <?php /** @var \ParadoxLabs\TokenBase\Model\Card $card */ ?>
+                    <?php foreach ($storedCards as $card): ?>
+                        <?php $card = $card->getTypeInstance(); ?>
+                        <option value="<?= $block->escapeHtmlAttr($card->getHash()) ?>"
+                                data-cc_bin="<?= $block->escapeHtmlAttr($card->getAdditional('cc_bin')) ?>"
+                                data-cc_last4="<?= $block->escapeHtmlAttr($card->getAdditional('cc_last4')) ?>"
+                                data-new="false"
+                                data-type="<?= $block->escapeHtmlAttr($card->getType()) ?>"
+                                <?php if ($card->getId() == $block->getInfoData('tokenbase_id') || count($storedCards) == 1): ?>selected="selected"<?php endif; ?>>
+                            <?= $block->escapeHtml($card->getLabel()) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+
+        <div class="admin__field _required card hide-if-card-selected">
+            <div class="admin__field-control control">
+                <p><?= $block->escapeHtml(__('Please complete all fields before clicking Place Order.')) ?></p>
+                <iframe src="about:blank" frameborder="0" id="<?= $code ?>_iframe" name="<?= $code ?>_iframe" style="width:100%;min-width:300px;max-width:550px;height:400px;"></iframe>
+                <p id="<?= $code ?>_warning" class="message message-error" style="display:none"></p>
+            </div>
+        </div>
+
+        <?= $block->getChildHtml() ?>
+
+        <?php if ($block->hasVerification() && $block->getMethod()->getConfigData('require_ccv')): ?>
+            <div class="admin__field _required cvv">
+                <label class="label admin__field-label" for="<?= $code ?>-cc-cid" ><span><?= $block->escapeHtml(__('Card Verification Number')) ?></span></label>
+                <div class="admin__field-control control">
+                    <div class="v-fix">
+                        <input type="hidden" name="payment[cc_type]" id="<?= $code ?>-cc-type" value="" />
+                        <input type="text" title="<?= $block->escapeHtmlAttr(__('Card Verification Number')) ?>" class="input-text admin__control-text cvv required-entry" id="<?= $code ?>-cc-cid" name="payment[cc_cid]" value="<?= $block->escapeHtmlAttr($block->getInfoData('cc_cid')); ?>" data-validate='{"required-number":true}' autocomplete="cc-csc" />
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!$block->isGuestCheckout()): ?>
+            <div class="admin__field save">
+                <div class="admin__field-control control">
+                    <?php if ($block->getMethod()->getConfigData('allow_unsaved')): ?>
+                        <input type="hidden" name="payment[save]" value="0" />
+                        <input type="checkbox" title="<?= $block->escapeHtmlAttr(__('Save for next time')) ?>" class="input-checkbox" id="<?= $code ?>-save" name="payment[save]" value="1" <?php if ($block->getMethod()->getConfigData('savecard_opt_out') && $block->getInfoData('save') !== 0): ?>checked="checked"<?php endif; ?> />
+                        <label for="<?= $code ?>-save"><?= $block->escapeHtml(__('Save for next time')) ?></label>
+                    <?php else: ?>
+                        <input type="hidden" name="payment[save]" value="1" />
+                        <label class="label admin__field-label" for="<?= $code ?>-save"><?= $block->escapeHtml(__('For your convenience, this data will be stored securely by our payment processor.')) ?></label>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+    </fieldset>
+</div>

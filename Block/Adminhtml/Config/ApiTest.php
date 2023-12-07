@@ -20,6 +20,8 @@
 
 namespace ParadoxLabs\Authnetcim\Block\Adminhtml\Config;
 
+use ParadoxLabs\Authnetcim\Model\ConfigProvider;
+
 /**
  * ApiTest Class
  */
@@ -55,7 +57,8 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
             return __('Please re-enter your API Login ID and Transaction Key. They may be corrupted.');
         }
 
-        if ($method->getConfigData('acceptjs') == 1 && $method->getConfigData('client_key') == '') {
+        if ($method->getConfigData('form_type') === ConfigProvider::FORM_ACCEPTJS
+            && empty($method->getConfigData('client_key'))) {
             return __('Accept.js is enabled, but you have not entered your Client Key.');
         }
 

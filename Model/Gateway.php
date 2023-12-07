@@ -32,21 +32,21 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      *
      * @var string
      */
-    const SOLUTION_ID = 'A1000133';
+    public const SOLUTION_ID = 'A1000133';
 
     /**
      * Authorize.Net transaction duplicate window
      *
      * @var int
      */
-    const DUPLICATE_WINDOW = 30;
+    public const DUPLICATE_WINDOW = 30;
 
     /**
      * Transaction status codes indicating denial on review
      *
      * @var string[]
      */
-    const DENY_STATUSES = [
+    public const DENY_STATUSES = [
         'declined',
         'expired',
         'failedReview',
@@ -111,6 +111,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'dataDescriptor'            => ['noSymbols' => true],
         'dataValue'                 => ['charMask' => 'a-zA-Z0-9+\/\\='],
         'description'               => ['maxLength' => 255],
+        'deviceType'                => ['charMask' => '\d'],
         'duplicateWindow'           => ['charMask' => '\d'],
         'dutyAmount'                => [],
         'dutyDescription'           => ['maxLength' => 255],
@@ -119,6 +120,24 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'email'                     => ['maxLength' => 255],
         'emailCustomer'             => ['enum' => ['true', 'false']],
         'expirationDate'            => ['maxLength' => 7],
+        'hostedPaymentAddProfile'               => ['enum' => [true, false]],
+        'hostedPaymentCancelText'               => ['maxLength' => 31],
+        'hostedPaymentPayButtonText'            => ['maxLength' => 31],
+        'hostedPaymentCardCodeRequired'         => ['enum' => [true, false]],
+        'hostedPaymentShowCreditCard'           => ['enum' => [true, false]],
+        'hostedPaymentShowBankAccount'          => ['enum' => [true, false]],
+        'hostedPaymentShowMerchantName'         => ['enum' => [true, false]],
+        'hostedPaymentValidateCaptcha'          => ['enum' => [true, false]],
+        'hostedProfileSaveButtonText'           => ['maxLength' => 32, 'noSymbols' => true],
+        'hostedProfilePageBorderVisible'        => ['enum' => [true, false]],
+        'hostedProfileHeadingBgColor'           => ['maxLength' => 7, 'charMask' => 'a-zA-Z0-9#'],
+        'hostedProfileIFrameCommunicatorUrl'    => [],
+        'hostedProfilePaymentOptions'           => ['enum' => ['showAll', 'showCreditCard', 'showBankAccount']],
+        'hostedProfileValidationMode'           => ['enum' => ['liveMode', 'testMode']],
+        'hostedProfileBillingAddressRequired'   => ['enum' => [true, false]],
+        'hostedProfileCardCodeRequired'         => ['enum' => [true, false]],
+        'hostedProfileBillingAddressOptions'    => ['enum' => ['showBillingAddress', 'showNone']],
+        'hostedProfileManageOptions'            => ['enum' => ['showAll', 'showPayment', 'showShipping']],
         'includeIssuerInfo'         => ['enum' => ['true', 'false']],
         'invoiceNumber'             => ['maxLength' => 20, 'noSymbols' => true],
         'isFirstRecurringPayment'   => ['enum' => ['true', 'false']],
@@ -127,8 +146,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'isSubsequentAuth'          => ['enum' => ['true', 'false']],
         'itemName'                  => ['maxLength' => 31, 'noSymbols' => true],
         'loginId'                   => ['maxLength' => 20],
+        'marketType'                => ['charMask' => '\d'],
         'merchantCustomerId'        => ['maxLength' => 20],
         'nameOnAccount'             => ['maxLength' => 22],
+        'profileType'               => ['enum' => ['guest', 'regular']],
         'purchaseOrderNumber'       => ['maxLength' => 25, 'noSymbols' => true],
         'recurringBilling'          => ['enum' => ['true', 'false']],
         'refId'                     => ['maxLength' => 20],
@@ -525,6 +546,52 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     }
 
     /**
+     * Set billing address params from Address object
+     *
+     * @param \Magento\Customer\Api\Data\AddressInterface $address
+     * @return $this
+     */
+    public function setBillTo(\Magento\Customer\Api\Data\AddressInterface $address)
+    {
+        $region = $address->getRegion()->getRegionCode() ?: $address->getRegion()->getRegion();
+
+        $this->setParameter('billToFirstName', $address->getFirstname());
+        $this->setParameter('billToLastName', $address->getLastname());
+        $this->setParameter('billToCompany', $address->getCompany());
+        $this->setParameter('billToAddress', implode(', ', $address->getStreet() ?: []));
+        $this->setParameter('billToCity', $address->getCity());
+        $this->setParameter('billToState', $region);
+        $this->setParameter('billToZip', $address->getPostcode());
+        $this->setParameter('billToCountry', $address->getCountryId());
+        $this->setParameter('billToPhoneNumber', $address->getTelephone());
+        $this->setParameter('billToFaxNumber', $address->getFax());
+
+        return $this;
+    }
+
+    /**
+     * Set shipping address params from Address object
+     *
+     * @param \Magento\Customer\Api\Data\AddressInterface $address
+     * @return $this
+     */
+    public function setShipTo(\Magento\Customer\Api\Data\AddressInterface $address)
+    {
+        $region = $address->getRegion()->getRegionCode() ?: $address->getRegion()->getRegion();
+
+        $this->setParameter('shipToFirstName', $address->getFirstname());
+        $this->setParameter('shipToLastName', $address->getLastname());
+        $this->setParameter('shipToCompany', $address->getCompany());
+        $this->setParameter('shipToAddress', implode(', ', $address->getStreet() ?: []));
+        $this->setParameter('shipToCity', $address->getCity());
+        $this->setParameter('shipToState', $region);
+        $this->setParameter('shipToZip', $address->getPostcode());
+        $this->setParameter('shipToCountry', $address->getCountryId());
+
+        return $this;
+    }
+
+    /**
      * These should be implemented by the child gateway.
      *
      * @param \ParadoxLabs\TokenBase\Api\Data\CardInterface $card
@@ -553,6 +620,23 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     public function authorize(\Magento\Payment\Model\InfoInterface $payment, $amount)
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
+
+        /**
+         * Short circuit if prior hosted transaction
+         */
+        if ($payment->getAdditionalInformation('transaction_status') === 'authorizedPendingCapture'
+            && !empty($payment->getAdditionalInformation('transaction_id'))
+            && $this->getHaveAuthorized() !== true) {
+            /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
+            $response = $this->responseFactory->create();
+            $response->setData($payment->getAdditionalInformation());
+
+            if ((int)$response->getResponseCode() === 4) {
+                $response->setIsFraud(true);
+            }
+
+            return $response;
+        }
 
         $this->setParameter('transactionType', 'authOnlyTransaction');
         $this->setParameter('amount', $amount);
@@ -606,6 +690,16 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
 
+        /**
+         * Adjust transaction flow if there was a prior hosted transaction
+         */
+        if ($payment->getAdditionalInformation('transaction_status') === 'authorizedPendingCapture'
+            && !empty($payment->getAdditionalInformation('transaction_id'))
+            && $this->getHaveAuthorized() !== true) {
+            $transactionId = $payment->getAdditionalInformation('transaction_id');
+            $this->setHaveAuthorized(true);
+        }
+
         if ($this->getHaveAuthorized()) {
             $this->setParameter('transactionType', 'priorAuthCaptureTransaction');
 
@@ -655,6 +749,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                  ->setHaveAuthorized(false)
                  ->setCard($this->getData('card'));
 
+            $payment->setAdditionalInformation('transaction_id', null);
+
             $response = $this->capture($payment, $amount, '');
         }
 
@@ -677,6 +773,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $this->setParameter('transactionType', 'refundTransaction');
         $this->setParameter('amount', $amount);
         $this->setParameter('invoiceNumber', $payment->getOrder()->getIncrementId());
+
+        // Send CC last4 for verification of CC refunds
+        if ($payment->getMethod() === ConfigProvider::CODE) {
+            $this->setParameter('cardNumber', $payment->getCcLast4());
+        }
 
         if ($payment->getCreditmemo() instanceof \Magento\Sales\Api\Data\CreditmemoInterface) {
             if ($payment->getCreditmemo()->getBaseTaxAmount()) {
@@ -1121,6 +1222,22 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     }
 
     /**
+     * Create CIM profiles from a transaction
+     *
+     * @return array Transaction result
+     */
+    public function createCustomerProfileFromTransaction()
+    {
+        $params = [
+            'transId' => $this->getParameter('transId'),
+            'customerProfileId' => $this->getParameter('customerProfileId'),
+            'profileType' => $this->getParameter('profileType', 'regular'),
+        ];
+
+        return $this->runTransaction('createCustomerProfileFromTransactionRequest', $params);
+    }
+
+    /**
      * Run an actual transaction with Authorize.Net with stored data.
      *
      * Implements the new generic API method (createTransactionRequest), as opposed
@@ -1149,12 +1266,21 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $params = $this->createTransactionAddTransactionInfo($params, $type, $isNewTxn);
 
         // Most of the data does not matter for follow-ups (capture, void, refund).
-        if ($isNewTxn === true || $isRefund === true) {
+        if ($isNewTxn === true) {
             /**
              * Add payment info.
              */
             $params = $this->createTransactionAddPaymentInfo($params, $type, $isNewCard);
+        }
 
+        if ($isRefund === true) {
+            /**
+             * Add refund payment info.
+             */
+            $params = $this->createTransactionAddRefundInfo($params);
+        }
+
+        if ($isNewTxn === true || $isRefund === true) {
             /**
              * Add order info.
              */
@@ -1187,6 +1313,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     'cardholderAuthenticationValue' => urlencode((string)$this->getParameter('centinelAuthValue')),
                 ];
             }
+
+            $params['retail'] = [
+                'marketType' => $this->getParameter('marketType', '0'),
+                'deviceType' => $this->getParameter('deviceType', '8'),
+            ];
 
             // Add misc settings.
             $params['transactionSettings'] = [
@@ -1339,6 +1470,196 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     }
 
     /**
+     * Get the token for an Accept Hosted payment form page
+     *
+     * @return array
+     * @throws \Magento\Payment\Gateway\Command\CommandException
+     */
+    public function getHostedPaymentPage(): array
+    {
+        $params = [
+            'transactionRequest' => [
+                'transactionType' => $this->getParameter('transactionType', 'authOnlyTransaction'),
+                'amount' => static::formatAmount($this->getParameter('amount')),
+                'profile' => [
+                    'customerProfileId' => $this->getParameter('customerProfileId'),
+                ],
+                'solution' => [
+                    'id' => self::SOLUTION_ID,
+                ],
+                'order' => [
+                    'invoiceNumber' => $this->getParameter('invoiceNumber'),
+                ],
+            ],
+            'hostedPaymentSettings' => [
+                'setting' => [
+                    [
+                        'settingName' => 'hostedPaymentReturnOptions',
+                        'settingValue' => json_encode([
+                            'showReceipt' => false,
+                            'cancelUrlText' => $this->getParameter('hostedPaymentCancelText', 'Reset'),
+                        ]),
+                    ],
+                    [
+                        'settingName' => 'hostedPaymentButtonOptions',
+                        'settingValue' => json_encode([
+                            'text' => $this->getParameter('hostedPaymentPayButtonText', 'Place Order'),
+                        ]),
+                    ],
+                    [
+                        'settingName' => 'hostedPaymentStyleOptions',
+                        'settingValue' => json_encode([
+                            'bgColor' => $this->getParameter('hostedProfileHeadingBgColor', '#1979C3'),
+                        ]),
+                    ],
+                    [
+                        'settingName' => 'hostedPaymentPaymentOptions',
+                        'settingValue' => json_encode([
+                            'cardCodeRequired' => $this->getParameter('hostedPaymentCardCodeRequired', true),
+                            'showCreditCard' => $this->getParameter('hostedPaymentShowCreditCard', true),
+                            'showBankAccount' => $this->getParameter('hostedPaymentShowBankAccount', false),
+                        ]),
+                    ],
+                    [
+                        'settingName' => 'hostedPaymentSecurityOptions',
+                        'settingValue' => json_encode([
+                            'captcha' => $this->getParameter('hostedPaymentValidateCaptcha', true),
+                        ]),
+                    ],
+                    [
+                        'settingName' => 'hostedPaymentShippingAddressOptions',
+                        'settingValue' => json_encode([
+                            'show' => false,
+                        ]),
+                    ],
+                    [
+                        'settingName' => 'hostedPaymentBillingAddressOptions',
+                        'settingValue' => json_encode([
+                            'show' => false,
+                        ]),
+                    ],
+                    [
+                        'settingName' => 'hostedPaymentCustomerOptions',
+                        'settingValue' => json_encode([
+                            'addPaymentProfile' => $this->getParameter('hostedPaymentAddProfile', true),
+                        ]),
+                    ],
+                    [
+                        'settingName' => 'hostedPaymentOrderOptions',
+                        'settingValue' => json_encode([
+                            'show' => $this->getParameter('hostedPaymentShowMerchantName', false),
+                        ]),
+                    ],
+                    [
+                        'settingName' => 'hostedPaymentIFrameCommunicatorUrl',
+                        'settingValue' => json_encode([
+                            'url' => $this->getParameter('hostedProfileIFrameCommunicatorUrl'),
+                        ]),
+                    ],
+                ],
+            ],
+        ];
+
+        $params['transactionRequest'] += $this->createTransactionAddItemInfo([]);
+        $params['transactionRequest'] += $this->createTransactionAddAmounts([]);
+
+        if (empty($this->getParameter('customerProfileId'))) {
+            unset($params['transactionRequest']['profile']);
+        }
+
+        if ($this->getParameter('email') !== null || $this->getParameter('customerId') !== null) {
+            $params['transactionRequest']['customer'] = [
+                'id' => $this->getParameter('customerId'),
+                'email' => $this->getParameter('email'),
+            ];
+        }
+
+        if ($this->getParameter('billToFirstName') !== null) {
+            $params['transactionRequest']['billTo'] = [
+                'firstName'   => $this->getParameter('billToFirstName'),
+                'lastName'    => $this->getParameter('billToLastName'),
+                'company'     => $this->getParameter('billToCompany'),
+                'address'     => $this->getParameter('billToAddress'),
+                'city'        => $this->getParameter('billToCity'),
+                'state'       => $this->getParameter('billToState'),
+                'zip'         => $this->getParameter('billToZip'),
+                'country'     => $this->getParameter('billToCountry'),
+                'phoneNumber' => $this->getParameter('billToPhoneNumber'),
+                'faxNumber'   => $this->getParameter('billToFaxNumber'),
+            ];
+        }
+        if ($this->getParameter('shipToFirstName') !== null) {
+            $params['transactionRequest']['shipTo'] = [
+                'firstName'   => $this->getParameter('shipToFirstName'),
+                'lastName'    => $this->getParameter('shipToLastName'),
+                'company'     => $this->getParameter('shipToCompany'),
+                'address'     => $this->getParameter('shipToAddress'),
+                'city'        => $this->getParameter('shipToCity'),
+                'state'       => $this->getParameter('shipToState'),
+                'zip'         => $this->getParameter('shipToZip'),
+                'country'     => $this->getParameter('shipToCountry'),
+            ];
+        }
+
+        return $this->runTransaction('getHostedPaymentPageRequest', $params);
+    }
+
+    /**
+     * Get the token for an Accept Customer hosted profile form page
+     *
+     * @return array
+     * @throws \Magento\Payment\Gateway\Command\CommandException
+     */
+    public function getHostedProfilePage(): array
+    {
+        $params = [
+            'customerProfileId' => $this->getParameter('customerProfileId'),
+            'hostedProfileSettings' => [
+                'setting' => [
+                    [
+                        'settingName' => 'hostedProfileSaveButtonText',
+                        'settingValue' => $this->getParameter('hostedProfileSaveButtonText', __('Continue')),
+                    ],
+                    [
+                        'settingName' => 'hostedProfilePageBorderVisible',
+                        'settingValue' => $this->getParameter('hostedProfilePageBorderVisible', false),
+                    ],
+                    [
+                        'settingName' => 'hostedProfileHeadingBgColor',
+                        'settingValue' => $this->getParameter('hostedProfileHeadingBgColor', '#1979C3'),
+                    ],
+                    [
+                        'settingName' => 'hostedProfileIFrameCommunicatorUrl',
+                        'settingValue' => $this->getParameter('hostedProfileIFrameCommunicatorUrl'),
+                    ],
+                    [
+                        'settingName' => 'hostedProfilePaymentOptions',
+                        'settingValue' => $this->getParameter('hostedProfilePaymentOptions', 'showCreditCard'),
+                    ],
+                    [
+                        'settingName' => 'hostedProfileValidationMode',
+                        'settingValue' => $this->getParameter('hostedProfileValidationMode', 'testMode'),
+                    ],
+                    [
+                        'settingName' => 'hostedProfileBillingAddressRequired',
+                        'settingValue' => $this->getParameter('hostedProfileBillingAddressRequired', false),
+                    ],
+                    [
+                        'settingName' => 'hostedProfileCardCodeRequired',
+                        'settingValue' => $this->getParameter('hostedProfileCardCodeRequired', false),
+                    ],
+                    [
+                        'settingName' => 'hostedProfileBillingAddressOptions',
+                        'settingValue' => $this->getParameter('hostedProfileBillingAddressOptions', 'showNone'),
+                    ],
+                ],
+            ],
+        ];
+
+        return $this->runTransaction('getHostedProfilePageRequest', $params);
+    }
+
+    /**
      * Get current details for a given transaction ID.
      *
      * @return array
@@ -1352,6 +1673,22 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $details = $this->runTransaction('getTransactionDetailsRequest', $params);
 
         return $this->mapTransactionDetails($details);
+    }
+
+    /**
+     * Get current details for a given transaction ID, in Response object form.
+     *
+     * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
+     */
+    public function getTransactionDetailsObject(): \ParadoxLabs\TokenBase\Model\Gateway\Response
+    {
+        $data = $this->getTransactionDetails();
+
+        /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
+        $response = $this->responseFactory->create();
+        $response->setData($data);
+
+        return $response;
     }
 
     /**
@@ -1910,6 +2247,28 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     }
 
     /**
+     * Add refund payment info to a createTransaction API request's parameters.
+     *
+     * Split out to reduce that method's cyclomatic complexity.
+     *
+     * @param array $params
+     * @return array
+     */
+    protected function createTransactionAddRefundInfo($params)
+    {
+        if ($this->hasParameter('cardNumber')) {
+            $params['payment'] = [
+                'creditCard' => [
+                    'cardNumber' => substr((string)$this->getParameter('cardNumber'), -4),
+                    'expirationDate' => 'XXXX',
+                ],
+            ];
+        }
+
+        return $params;
+    }
+
+    /**
      * Add order info to a createTransaction API request's parameters.
      *
      * Split out to reduce that method's cyclomatic complexity.
@@ -2014,6 +2373,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             'name'      => !empty($name) ? $name : $sku,
             'quantity'  => static::formatAmount($qty),
             'unitPrice' => static::formatAmount($unitPrice),
+            'taxable'   => $item->getData('tax_amount') > 0 ? 'true' : 'false',
         ];
 
         return $itemData;

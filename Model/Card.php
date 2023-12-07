@@ -163,6 +163,14 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             }
         }
 
+        // If this is a new card, set its active state to the given value (if any)
+        $payment = $this->getInfoInstance();
+        if ($payment instanceof \Magento\Payment\Model\InfoInterface
+            && $payment->getAdditionalInformation('save') !== null
+            && $this->getOrigData('last_use') === null) {
+            $this->setActive((bool)$payment->getAdditionalInformation('save') ? 1 : 0);
+        }
+
         parent::beforeSave();
 
         return $this;
@@ -327,22 +335,9 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
          */
         if ($this->getPaymentId() == '') {
             $address = $this->getAddressObject();
-
-            $region  = $address->getRegion()->getRegionCode() ?: $address->getRegion()->getRegion();
+            $gateway->setBillTo($address);
 
             $gateway->setParameter('customerProfileId', $this->getProfileId());
-
-            $gateway->setParameter('billToFirstName', $address->getFirstname());
-            $gateway->setParameter('billToLastName', $address->getLastname());
-            $gateway->setParameter('billToCompany', $address->getCompany());
-            $gateway->setParameter('billToAddress', implode(', ', $address->getStreet() ?: []));
-            $gateway->setParameter('billToCity', $address->getCity());
-            $gateway->setParameter('billToState', $region);
-            $gateway->setParameter('billToZip', $address->getPostcode());
-            $gateway->setParameter('billToCountry', $address->getCountryId());
-            $gateway->setParameter('billToPhoneNumber', $address->getTelephone());
-            $gateway->setParameter('billToFaxNumber', $address->getFax());
-
             $gateway->setParameter('validationMode', $this->getMethodInstance()->getConfigData('validation_mode'));
 
             $this->setPaymentInfoOnCreate($gateway);
@@ -353,22 +348,10 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
              * If it does exist, update CIM.
              */
             $address = $this->getAddressObject();
-
-            $region  = $address->getRegion()->getRegionCode() ?: $address->getRegion()->getRegion();
+            $gateway->setBillTo($address);
 
             $gateway->setParameter('customerProfileId', $this->getProfileId());
             $gateway->setParameter('customerPaymentProfileId', $this->getPaymentId());
-
-            $gateway->setParameter('billToFirstName', $address->getFirstname());
-            $gateway->setParameter('billToLastName', $address->getLastname());
-            $gateway->setParameter('billToCompany', $address->getCompany());
-            $gateway->setParameter('billToAddress', implode(', ', $address->getStreet() ?: []));
-            $gateway->setParameter('billToCity', $address->getCity());
-            $gateway->setParameter('billToState', $region);
-            $gateway->setParameter('billToZip', $address->getPostcode());
-            $gateway->setParameter('billToCountry', $address->getCountryId());
-            $gateway->setParameter('billToPhoneNumber', $address->getTelephone());
-            $gateway->setParameter('billToFaxNumber', $address->getFax());
 
             $gateway->setParameter(
                 'validationMode',
@@ -477,18 +460,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
         $gateway = $this->getMethodInstance()->gateway();
         $address = $this->getAddressObject();
 
-        $region  = $address->getRegion()->getRegionCode() ?: $address->getRegion()->getRegion();
-
-        $gateway->setParameter('billToFirstName', $address->getFirstname());
-        $gateway->setParameter('billToLastName', $address->getLastname());
-        $gateway->setParameter('billToCompany', $address->getCompany());
-        $gateway->setParameter('billToAddress', implode(', ', $address->getStreet() ?: []));
-        $gateway->setParameter('billToCity', $address->getCity());
-        $gateway->setParameter('billToState', $region);
-        $gateway->setParameter('billToZip', $address->getPostcode());
-        $gateway->setParameter('billToCountry', $address->getCountryId());
-        $gateway->setParameter('billToPhoneNumber', $address->getTelephone());
-        $gateway->setParameter('billToFaxNumber', $address->getFax());
+        $gateway->setBillTo($address);
 
         $this->setPaymentInfoOnCreate($gateway);
 

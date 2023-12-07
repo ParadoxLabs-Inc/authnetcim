@@ -162,7 +162,7 @@
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualStoredCardValidator" type="ParadoxLabs\TokenBase\Gateway\Validator\StoredCard">
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualStoredCardValidator" type="ParadoxLabs\Authnetcim\Gateway\Validator\StoredCard">
         <arguments>
             <argument name="ccValidator" xsi:type="object">ParadoxLabs\Authnetcim\Gateway\VirtualCreditCardValidator</argument>
             <argument name="config" xsi:type="object">ParadoxLabs\Authnetcim\Gateway\VirtualConfig</argument>
@@ -177,7 +177,11 @@
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualNewAchValidator" type="ParadoxLabs\TokenBase\Gateway\Validator\NewAch" />
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualNewAchValidator" type="ParadoxLabs\Authnetcim\Gateway\Validator\NewAch">
+        <arguments>
+            <argument name="config" xsi:type="object">ParadoxLabs\Authnetcim\Gateway\Ach\VirtualConfig</argument>
+        </arguments>
+    </virtualType>
 
     <!-- Commands -->
     <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualCommandPool" type="Magento\Payment\Gateway\Command\CommandPool" shared="false">
@@ -354,6 +358,28 @@
     <type name="ParadoxLabs\Authnetcim\Model\Method">
         <arguments>
             <argument name="addressHelper" xsi:type="object">ParadoxLabs\TokenBase\Helper\Address\Proxy</argument>
+        </arguments>
+    </type>
+    <type name="ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\BackendRequest">
+        <arguments>
+            <argument name="backendSession" xsi:type="object">Magento\Backend\Model\Session\Quote\Proxy</argument>
+        </arguments>
+    </type>
+    <type name="ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\FrontendRequest">
+        <arguments>
+            <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session\Proxy</argument>
+            <argument name="customerSession" xsi:type="object">Magento\Customer\Model\Session\Proxy</argument>
+        </arguments>
+    </type>
+    <type name="ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\BackendRequest">
+        <arguments>
+            <argument name="backendSession" xsi:type="object">Magento\Backend\Model\Session\Quote\Proxy</argument>
+        </arguments>
+    </type>
+    <type name="ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\FrontendRequest">
+        <arguments>
+            <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session\Proxy</argument>
+            <argument name="customerSession" xsi:type="object">Magento\Customer\Model\Session\Proxy</argument>
         </arguments>
     </type>
 </config>

@@ -25,7 +25,7 @@ namespace ParadoxLabs\Authnetcim\Model\Ach;
  */
 class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
 {
-    const CODE = 'authnetcim_ach';
+    public const CODE = 'authnetcim_ach';
 
     /**
      * Get checkout config.
@@ -45,10 +45,16 @@ class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
 
         /** @var \ParadoxLabs\TokenBase\Model\Card $card */
         foreach ($cards as $card) {
+            $card = $card->getTypeInstance();
+
             $storedCardOptions[]    = [
                 'id'       => $card->getHash(),
                 'label'    => $card->getLabel(),
                 'selected' => false,
+                'new'      => $card->getLastUse() === null,
+                'type'     => $card->getType(),
+                'cc_bin'   => $card->getAdditional('cc_bin'),
+                'cc_last4' => $card->getAdditional('cc_last4'),
             ];
 
             $selected               = $card->getHash();
@@ -63,6 +69,10 @@ class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
             'logoImage'                 => $this->getLogoImage(),
             'achImage'                  => $this->getAchImage(),
             'achAccountTypes'           => $this->getAchAccountTypes(),
+            'requireCcv'                => false,
+            'formType'                  => $this->methods[static::CODE]->getConfigData('form_type'),
+            'paramUrl'                  => $this->getParamUrl(),
+            'newCardUrl'                => $this->getNewCardUrl(),
         ];
 
         return $config;

@@ -34,7 +34,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
     {
         $clientKey = $this->getConfigData('client_key');
 
-        if ($this->getConfigData('acceptjs') == 1 && !empty($clientKey)) {
+        if ($this->getConfigData('form_type') === ConfigProvider::FORM_ACCEPTJS && !empty($clientKey)) {
             return true;
         }
 
@@ -217,19 +217,22 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
         \ParadoxLabs\TokenBase\Model\Gateway\Response $response
     ) {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
-        if ($payment->getData('cc_avs_status') == '' && $response->getData('avs_result_code') != '') {
+        if (empty($payment->getData('cc_avs_status'))
+            && !empty($response->getData('avs_result_code'))) {
             $payment->setData('cc_avs_status', $response->getData('avs_result_code'));
         }
 
-        if ($payment->getData('cc_cid_status') == '' && $response->getData('card_code_response_code') != '') {
+        if (empty($payment->getData('cc_cid_status'))
+            && !empty($response->getData('card_code_response_code'))) {
             $payment->setData('cc_cid_status', $response->getData('card_code_response_code'));
         }
 
-        if ($payment->getData('cc_status') == '' && $response->getData('cavv_response_code') != '') {
+        if (empty($payment->getData('cc_status'))
+            && !empty($response->getData('cavv_response_code'))) {
             $payment->setData('cc_status', $response->getData('cavv_response_code'));
         }
 
-        if ($response->getData('auth_code') != '') {
+        if (!empty($response->getData('auth_code'))) {
             $payment->setData('cc_approval', $response->getData('auth_code'));
         }
 

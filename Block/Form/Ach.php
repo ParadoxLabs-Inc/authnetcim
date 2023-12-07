@@ -20,6 +20,8 @@
 
 namespace ParadoxLabs\Authnetcim\Block\Form;
 
+use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider;
+
 /**
  * ACH input form on checkout
  */
@@ -29,4 +31,29 @@ class Ach extends \ParadoxLabs\TokenBase\Block\Form\Ach
      * @var string
      */
     protected $brandingImage = 'ParadoxLabs_Authnetcim::images/logo.png';
+
+    /**
+     * Swap form template for Accept Hosted vs inline
+     *
+     * @return string
+     */
+    protected function _toHtml()
+    {
+        $method = $this->getTokenbaseMethod();
+        if ($method->getConfigData('form_type') === ConfigProvider::FORM_HOSTED) {
+            $this->_template = 'ParadoxLabs_Authnetcim::checkout/hosted/form.phtml';
+        }
+
+        return parent::_toHtml();
+    }
+
+    /**
+     * Retrieve has verification configuration
+     *
+     * @return bool
+     */
+    public function hasVerification()
+    {
+        return false;
+    }
 }

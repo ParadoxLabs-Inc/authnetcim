@@ -28,7 +28,11 @@ use Magento\Payment\Model\CcGenericConfigProvider;
  */
 class ConfigProvider extends CcGenericConfigProvider
 {
-    const CODE = 'authnetcim';
+    public const CODE = 'authnetcim';
+
+    public const FORM_HOSTED = 'hosted';
+    public const FORM_ACCEPTJS = 'acceptjs';
+    public const FORM_INLINE = 'inline';
 
     /**
      * @var \Magento\Checkout\Model\Session
@@ -56,12 +60,18 @@ class ConfigProvider extends CcGenericConfigProvider
     protected $paymentConfig;
 
     /**
+     * @var \Magento\Framework\UrlInterface
+     */
+    protected $urlBuilder;
+
+    /**
      * @param CcConfig $ccConfig
      * @param \Magento\Payment\Helper\Data $paymentHelper
      * @param \Magento\Checkout\Model\Session $checkoutSession *Proxy
      * @param \Magento\Customer\Model\Session $customerSession *Proxy
      * @param \Magento\Payment\Model\Config $paymentConfig
      * @param \ParadoxLabs\Authnetcim\Helper\Data $dataHelper
+     * @param \Magento\Framework\UrlInterface $urlBuilder
      * @param array $methodCodes
      */
     public function __construct(
@@ -71,6 +81,7 @@ class ConfigProvider extends CcGenericConfigProvider
         \Magento\Customer\Model\Session $customerSession,
         \Magento\Payment\Model\Config $paymentConfig,
         \ParadoxLabs\Authnetcim\Helper\Data $dataHelper,
+        \Magento\Framework\UrlInterface $urlBuilder,
         array $methodCodes = []
     ) {
         $this->paymentHelper    = $paymentHelper;
@@ -78,6 +89,7 @@ class ConfigProvider extends CcGenericConfigProvider
         $this->customerSession  = $customerSession;
         $this->dataHelper       = $dataHelper;
         $this->paymentConfig    = $paymentConfig;
+        $this->urlBuilder       = $urlBuilder;
 
         parent::__construct($ccConfig, $paymentHelper, [static::CODE]);
     }
@@ -132,7 +144,10 @@ class ConfigProvider extends CcGenericConfigProvider
                     'id'       => $card->getHash(),
                     'label'    => $card->getLabel(),
                     'selected' => false,
+                    'new'      => $card->getLastUse() === null,
                     'type'     => $card->getType(),
+                    'cc_bin'   => $card->getAdditional('cc_bin'),
+                    'cc_last4' => $card->getAdditional('cc_last4'),
                 ];
 
                 $selected               = $card->getHash();
@@ -155,6 +170,8 @@ class ConfigProvider extends CcGenericConfigProvider
                     'clientKey'               => $this->getClientKey(),
                     'sandbox'                 => $this->getSandbox(),
                     'canStoreBin'             => $this->getCanStoreBin(),
+                    'paramUrl'                => $this->getParamUrl(),
+                    'newCardUrl'              => $this->getNewCardUrl(),
                 ],
             ],
         ]);
@@ -223,7 +240,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function getClientKey()
     {
-        if ($this->methods[static::CODE]->getConfigData('acceptjs')) {
+        if ($this->methods[static::CODE]->getConfigData('form_type') === self::FORM_ACCEPTJS) {
             return $this->methods[static::CODE]->getConfigData('client_key');
         }
 
@@ -278,5 +295,37 @@ class ConfigProvider extends CcGenericConfigProvider
     public function getCode(): string
     {
         return static::CODE;
+    }
+
+    /**
+     * Get hosted form parameter URL
+     *
+     * @return string
+     */
+    public function getParamUrl(): string
+    {
+        if ($this->methods[static::CODE]->getConfigData('form_type') !== self::FORM_HOSTED) {
+            return '';
+        }
+
+        if ($this->methods[static::CODE]->getConfigData('payment_action') === 'order') {
+            return $this->urlBuilder->getUrl('authnetcim/hosted/getProfileParams', ['source' => 'checkout']);
+        }
+
+        return $this->urlBuilder->getUrl('authnetcim/hosted/getPaymentParams');
+    }
+
+    /**
+     * Get Accept Customer hosted form new-card URL
+     *
+     * @return string
+     */
+    public function getNewCardUrl(): string
+    {
+        if ($this->methods[static::CODE]->getConfigData('form_type') !== self::FORM_HOSTED) {
+            return '';
+        }
+
+        return $this->urlBuilder->getUrl('authnetcim/hosted/getNewCard');
     }
 }

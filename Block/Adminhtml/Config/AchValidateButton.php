@@ -22,15 +22,5 @@ namespace ParadoxLabs\Authnetcim\Block\Adminhtml\Config;
 
 class AchValidateButton extends ValidateButton
 {
-    protected $buttonId = 'authnetcim_ach_validate_button';
-
-    /**
-     * Return ajax url for collect button
-     *
-     * @return string
-     */
-    public function getAjaxUrl()
-    {
-        return $this->getUrl('authnetcim/system_config/initWebhooks', ['method' => 'authnetcim_ach']);
-    }
+    protected $groupCode = 'authnetcim_ach';
 }

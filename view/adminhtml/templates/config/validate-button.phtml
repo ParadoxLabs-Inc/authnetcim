@@ -1,4 +1,5 @@
 <?php /** @var $block \ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ValidateButton */ ?>
+<?php $code = $block->escapeJsQuote($block->getGroupCode()) ?>
 
 <script>
     require([
@@ -12,11 +13,11 @@
             $.post({
                 url: '<?= $block->escapeUrl($block->getAjaxUrl()) ?>',
                 data: {
-                    apiLoginId: $('input[name="groups[authnetcim][fields][login][value]"]').val(),
-                    transactionKey: $('input[name="groups[authnetcim][fields][trans_key][value]"]').val(),
-                    signatureKey: $('input[name="groups[authnetcim][fields][signature_key][value]"]').val(),
-                    sandbox: $('select[name="groups[authnetcim][fields][test][value]"]').val(),
-                    webhooks: $('select[name="groups[authnetcim][fields][webhooks][value]"]').val(),
+                    apiLoginId: $('input[name="groups[<?= $code ?>][fields][login][value]"]').val(),
+                    transactionKey: $('input[name="groups[<?= $code ?>][fields][trans_key][value]"]').val(),
+                    signatureKey: $('input[name="groups[<?= $code ?>][fields][signature_key][value]"]').val(),
+                    sandbox: $('select[name="groups[<?= $code ?>][fields][test][value]"]').val(),
+                    webhooks: $('select[name="groups[<?= $code ?>][fields][webhooks][value]"]').val(),
                     website: <?= (int)$block->getRequest()->getParam('website') ?: 'null' ?>,
                     store: <?= (int)$block->getRequest()->getParam('store') ?: 'null' ?>
                 },

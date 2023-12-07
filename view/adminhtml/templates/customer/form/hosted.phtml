@@ -1,0 +1,184 @@
+<?php
+/** @var \ParadoxLabs\TokenBase\Block\Adminhtml\Customer\Form $block */
+// @codingStandardsIgnoreFile
+?>
+<?php $code = $block->escapeHtmlAttr($block->getCode()); ?>
+
+<div class="block-title">
+    <h2>
+        <?php if ($block->isEdit()): ?>
+            <?= $block->escapeHtml(__('Editing %1', $block->getCard()->getLabel())) ?>
+        <?php else: ?>
+            <?= $block->escapeHtml(__($block->getData('default_title'))) ?>
+        <?php endif; ?>
+    </h2>
+</div>
+
+<form action="<?= $block->escapeUrl($block->getAction()) ?>" method="post" onsubmit="return false;" id="<?= $code ?>-form-validate" class="checkout-payment-method" data-hasrequired="<?= $block->escapeHtmlAttr(__('* Required Fields')) ?>" data-mage-init='{
+    "tokenbaseCardFormatter": {
+        "ccTypeSelector": "#<?= $code ?>-cc-type",
+        "ccTypeContainer": ".credit-card-types"
+    },
+    "authnetcimHostedPaymentInfo": {
+        "method": "<?= $code ?>",
+        "target": "<?= $code ?>_iframe",
+        "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getProfileParams', ['id' => $this->getRequest()->getParam('id'), 'method' => $code])) ?>",
+        "updateCardUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/updateCard', ['id' => $this->getRequest()->getParam('id'), 'method' => $code])) ?>",
+        "fieldPrefix": "#<?= $code ?>-"
+    }
+}'>
+    <?= $block->getBlockHtml('formkey') ?>
+    <input type="hidden" name="card_id" value="<?= $block->getCard()->getId() ? $block->escapeHtmlAttr($block->getCard()->getHash()) : '' ?>" />
+    <input type="hidden" name="method" value="<?= $code ?>" />
+    <input type="hidden" name="source" value="paymentinfo" />
+    <fieldset class="admin__fieldset address">
+        <div class="admin__fieldset-wrapper-title">
+            <strong class="title">
+                <span><?= $block->escapeHtml(__('Cardholder Information')) ?></span>
+            </strong>
+        </div>
+        <div class="admin__field field-name-firstname _required">
+            <label class="admin__field-label" for="<?= $code ?>-firstname"><span><?= $block->escapeHtml(__('First Name')) ?></span></label>
+            <div class="admin__field-control">
+                <input type="text" name="billing[firstname]" id="<?= $code ?>-firstname" title="<?= $block->escapeHtmlAttr(__('First Name')) ?>" value="<?= $block->escapeHtmlAttr($block->getAddress()->getFirstname()) ?>" class="admin__control-text input-text <?= $block->escapeHtmlAttr($this->helper(\Magento\Customer\Helper\Address::class)->getAttributeValidationClass('firstname')) ?>" data-validate='{required:true}'>
+            </div>
+        </div>
+        <div class="admin__field field-name-lastname _required">
+            <label class="admin__field-label" for="<?= $code ?>-lastname"><span><?= $block->escapeHtml(__('Last Name')) ?></span></label>
+            <div class="admin__field-control">
+                <input type="text" name="billing[lastname]" id="<?= $code ?>-lastname" title="<?= $block->escapeHtmlAttr(__('Last Name')) ?>" value="<?= $block->escapeHtmlAttr($block->getAddress()->getLastname()) ?>" class="admin__control-text input-text <?= $block->escapeHtmlAttr($this->helper(\Magento\Customer\Helper\Address::class)->getAttributeValidationClass('lastname')) ?>" data-validate='{required:true}'>
+            </div>
+        </div>
+        <div class="admin__field company">
+            <label class="admin__field-label" for="<?= $code ?>-company"><span><?= $block->escapeHtml(__('Company')) ?></span></label>
+            <div class="admin__field-control">
+                <input type="text" name="billing[company]" id="<?= $code ?>-company" title="<?= $block->escapeHtmlAttr(__('Company')) ?>" value="<?= $block->escapeHtmlAttr($block->getAddress()->getCompany()) ?>" class="admin__control-text input-text <?= $block->escapeHtmlAttr($this->helper(\Magento\Customer\Helper\Address::class)->getAttributeValidationClass('company')) ?>">
+            </div>
+        </div>
+        <?php $phoneValidation = $this->helper(\Magento\Customer\Helper\Address::class)->getAttributeValidationClass('telephone'); ?>
+        <div class="admin__field telephone<?php if (strpos((string)$phoneValidation, 'required') !== false): ?> _required<?php endif; ?>">
+            <label class="admin__field-label" for="<?= $code ?>-telephone"><span><?= $block->escapeHtml(__('Phone Number')) ?></span></label>
+            <div class="admin__field-control">
+                <input type="text" name="billing[telephone]" value="<?= $block->escapeHtmlAttr($block->getAddress()->getTelephone()) ?>" title="<?= $block->escapeHtmlAttr(__('Phone Number')) ?>" class="admin__control-text input-text <?= $block->escapeHtmlAttr($phoneValidation) ?>" id="<?= $code ?>-telephone" data-validate='{required:true}'>
+            </div>
+        </div>
+    </fieldset>
+    <fieldset class="admin__fieldset address">
+        <div class="admin__fieldset-wrapper-title">
+            <strong class="title">
+                <span><?= $block->escapeHtml(__('Cardholder Address')) ?></span>
+            </strong>
+        </div>
+        <?php $_streetValidationClass = $block->escapeHtmlAttr($this->helper(\Magento\Customer\Helper\Address::class)->getAttributeValidationClass('street')); ?>
+        <div class="admin__field street _required">
+            <label for="<?= $code ?>-street" class="admin__field-label"><span><?= $block->escapeHtml(__('Street')) ?></span></label>
+            <div class="admin__field-control">
+                <input type="text" name="billing[street][]" value="<?= $block->escapeHtmlAttr($block->getStreetLine(1)) ?>" title="<?= $block->escapeHtmlAttr(__('Street Address')) ?>" id="<?= $code ?>-street" class="admin__control-text input-text <?= $_streetValidationClass ?>" data-validate='{required:true}' />
+                <div class="nested">
+                    <?php $_streetValidationClass = trim(str_replace('required-entry', '', $_streetValidationClass)); ?>
+                    <?php /** NB: Secure Acceptance only supports 2 street lines according to documentation */ ?>
+                    <?php for ($_i = 1, $_n = min(2, $this->helper(\Magento\Customer\Helper\Address::class)->getStreetLines()); $_i < $_n; $_i++): ?>
+                        <?php $lineNo = (int)($_i + 1); ?>
+                        <div class="admin__field additional">
+                            <label class="admin__field-label" for="<?= $code ?>-street_<?= $lineNo ?>">
+                                <span><?= $block->escapeHtml(__('Street Address %1', $lineNo)) ?></span>
+                            </label>
+                            <div class="admin__field-control">
+                                <input type="text" name="billing[street][]" value="<?= $block->escapeHtmlAttr($block->getStreetLine($lineNo)) ?>" title="<?= $block->escapeHtmlAttr(__('Street Address %1', $lineNo)) ?>" id="<?= $code ?>-street_<?= $lineNo ?>" class="admin__control-text input-text <?= $_streetValidationClass ?>">
+                            </div>
+                        </div>
+                    <?php endfor; ?>
+                </div>
+            </div>
+        </div>
+        <div class="admin__field city _required">
+            <label class="admin__field-label" for="<?= $code ?>-city"><span><?= $block->escapeHtml(__('City')) ?></span></label>
+            <div class="admin__field-control">
+                <input type="text" name="billing[city]" value="<?= $block->escapeHtmlAttr($block->getAddress()->getCity()) ?>" title="<?= $block->escapeHtmlAttr(__('City')) ?>" class="admin__control-text input-text <?= $block->escapeHtmlAttr($this->helper(\Magento\Customer\Helper\Address::class)->getAttributeValidationClass('city')) ?>" id="<?= $code ?>-city" data-validate='{required:true}'>
+            </div>
+        </div>
+        <div class="admin__field region _required">
+            <label class="admin__field-label" for="<?= $code ?>-region-id"><span><?= $block->escapeHtml(__('State/Province')) ?></span></label>
+            <div class="admin__field-control">
+                <select id="<?= $code ?>-region-id" name="billing[region_id]" title="<?= $block->escapeHtmlAttr(__('State/Province')) ?>" class="admin__control-select validate-select" <?=(!$block->getConfig('general/region/display_all')) ? ' disabled="disabled"' : '' ?>>
+                    <option value=""><?= $block->escapeHtml(__('Please select a region, state or province.')) ?></option>
+                </select>
+                <input type="text" id="<?= $code ?>-region" name="billing[region]" value="<?= $block->escapeHtmlAttr($block->getRegion()) ?>" title="<?= $block->escapeHtmlAttr(__('State/Province')) ?>" class="admin__control-text input-text <?= $block->escapeHtmlAttr($this->helper(\Magento\Customer\Helper\Address::class)->getAttributeValidationClass('region')) ?>"<?=(!$block->getConfig('general/region/display_all')) ? ' disabled="disabled"' : '' ?>/>
+            </div>
+        </div>
+        <div class="admin__field zip _required">
+            <label class="admin__field-label" for="<?= $code ?>-zip"><span><?= $block->escapeHtml(__('Zip/Postal Code')) ?></span></label>
+            <div class="admin__field-control">
+                <input type="text" name="billing[postcode]" value="<?= $block->escapeHtmlAttr($block->getAddress()->getPostcode()) ?>" title="<?= $block->escapeHtmlAttr(__('Zip/Postal Code')) ?>" id="<?= $code ?>-zip" class="admin__control-text input-text validate-zip-international <?= $block->escapeHtmlAttr($this->helper(\Magento\Customer\Helper\Address::class)->getAttributeValidationClass('postcode')) ?>">
+            </div>
+        </div>
+        <div class="admin__field country _required">
+            <label class="admin__field-label" for="<?= $code ?>-country"><span><?= $block->escapeHtml(__('Country')) ?></span></label>
+            <div class="admin__field-control">
+                <?= str_replace('class="', 'class="admin__control-select ', $block->getCountryHtmlSelect($block->getAddress()->getCountryId(), 'billing[country_id]', $code . '-country')) ?>
+            </div>
+        </div>
+    </fieldset>
+    <div class="actions-toolbar address">
+        <div class="primary">
+            <button type="button" class="action primary" id="submit-address">
+                <span><?= $block->escapeHtml(__('Confirm Address')) ?></span>
+            </button>
+        </div>
+    </div>
+    <fieldset class="admin__fieldset address">
+        <div class="admin__fieldset-wrapper-title">
+            <strong class="title">
+                <span><?= $block->escapeHtml(__('Payment Information')) ?></span>
+            </strong>
+        </div>
+
+        <div class="admin__field">
+            <div class="admin__field-control">
+                <p><?= $block->escapeHtml(__('Please confirm your address to enter payment info.')) ?></p>
+            </div>
+        </div>
+    </fieldset>
+    <fieldset class="admin__fieldset payment" style="display:none">
+        <div class="admin__fieldset-wrapper-title">
+            <strong class="title">
+                <span><?= $block->escapeHtml(__('Cardholder Information')) ?></span>
+            </strong>
+        </div>
+
+        <div class="admin__field-field" id="<?= $code ?>-address">
+            <div class="admin__field-control">
+                <address></address>
+                <button type="button" class="action" id="edit-address">
+                    <span><?= $block->escapeHtml(__('Edit')) ?></span>
+                </button>
+            </div>
+        </div>
+    </fieldset>
+    <fieldset class="admin__fieldset payment <?= $code ?>" style="display:none">
+        <div class="admin__field type _required">
+            <div class="admin__field-control">
+                <iframe src="about:blank" frameborder="0" id="<?= $code ?>_iframe" name="<?= $code ?>_iframe" style="width:100%;min-width:300px;max-width:550px;height:600px;"></iframe>
+            </div>
+        </div>
+    </fieldset>
+    <div class="actions-toolbar">
+        <div class="secondary">
+            <a class="action-back" href="<?= $block->escapeUrl($block->getBackUrl()) ?>"><span><?= $block->escapeHtml(__('Cancel')) ?></span></a>
+        </div>
+    </div>
+</form>
+<script type="text/javascript">
+    //<![CDATA[
+    <?php /* @see Magento\Customer\Block\Adminhtml\Edit\Renderer\Region::render() */ ?>
+    require(["prototype", "mage/adminhtml/form"], function(){
+        jQuery("#<?= $code ?>-region-id").attr("defaultValue", "<?= (int)$block->getRegionId() ?>");
+        new RegionUpdater("<?= $code ?>-country", "<?= $code ?>-region", "<?= $code ?>-region-id", <?= $this->helper(\Magento\Directory\Helper\Data::class)->getRegionJson() ?> );
+    });
+
+    require(["jquery"], function($) {
+        <?php /** This is necessary for parsing of mage-data-init elements in the AJAX requests */ ?>
+        $('#<?= $code ?>-form-validate').trigger('contentUpdated');
+    });
+    //]]>
+</script>
