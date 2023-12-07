@@ -1,5 +1,15 @@
 # ParadoxLabs_Authnetcim Changelog
 
+## 5.0.0 - Dec 7, 2023
+- Added Hosted Form support (Authorize.net Accept Hosted / Accept Customer) for PCI SAQ A security.
+- Added Hyva Checkout support via Hosted Forms. Please install additional composer package: `paradoxlabs/authnetcim-hyva-checkout`
+- Added payment captcha support via Hosted Forms.
+- Added device type indicator (website) to transaction requests.
+- Added item 'taxable' flag to transaction requests.
+- Changed settings for ease of use.
+- Fixed 10-card profile limit for Hosted Forms by creating a new CIM customer profile per checkout.
+- DEPRECATION NOTICE: Inline credit card form support will be removed in a future release.
+
 ## 4.5.3 - Nov 9, 2023
 - Changed CC BIN storage to enabled by default.
 - Fixed payment info incorrectly persisting and preventing new card entry after a payment decline or admin reorder.
