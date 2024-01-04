@@ -62,6 +62,10 @@
                 <can_initialize>0</can_initialize>
                 <can_store_bin>1</can_store_bin>
                 <can_sync_account_updater>1</can_sync_account_updater>
+                <instant_purchase>
+                    <supported>1</supported>
+                    <tokenFormat>ParadoxLabs\TokenBase\Model\InstantPurchase\TokenFormatter</tokenFormat>
+                </instant_purchase>
             </authnetcim>
             <authnetcim_ach>
                 <version backend_model="ParadoxLabs\Authnetcim\Model\Config\Version" />
@@ -110,6 +114,10 @@
                 <is_offline>0</is_offline>
                 <can_initialize>0</can_initialize>
                 <can_store_bin>1</can_store_bin>
+                <instant_purchase>
+                    <supported>1</supported>
+                    <tokenFormat>ParadoxLabs\TokenBase\Model\InstantPurchase\TokenFormatter</tokenFormat>
+                </instant_purchase>
             </authnetcim_ach>
         </payment>
     </default>
