@@ -153,6 +153,7 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
     {
         if ($this->config->getValue('form_type') !== ConfigProvider::FORM_HOSTED
             || $payment instanceof OrderPayment === false
+            || !empty($payment->getData('tokenbase_id'))
             || empty($payment->getAdditionalInformation('transaction_id'))) {
             return;
         }
