@@ -31,7 +31,7 @@ define(
         'use strict';
 
         var formComponent = 'ParadoxLabs_Authnetcim/js/view/payment/method-renderer/authnetcim-hosted';
-        if (window.checkoutConfig.payment.authnetcim.clientKey.length > 0) {
+        if (window.checkoutConfig.payment.authnetcim.paramUrl.length < 1) {
             formComponent = 'ParadoxLabs_Authnetcim/js/view/payment/method-renderer/authnetcim';
         }
 
