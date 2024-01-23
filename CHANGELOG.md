@@ -1,5 +1,10 @@
 # ParadoxLabs_Authnetcim Changelog
 
+## 5.0.1 - Jan 23, 2024
+- Added Instant Purchase support for customers with active stored cards.
+- Fixed a reported error on subscription rebilling with hosted forms enabled.
+- Fixed the inline form type loading the wrong form component on checkout.
+
 ## 5.0.0 - Dec 7, 2023
 - Added Hosted Form support (Authorize.net Accept Hosted / Accept Customer) for PCI SAQ A security.
 - Added Hyva Checkout support via Hosted Forms. Please install additional composer package: `paradoxlabs/authnetcim-hyva-checkout`
