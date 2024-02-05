@@ -59,6 +59,7 @@ class DefaultFormType implements DataPatchInterface, PatchVersionInterface
     {
         $this->moduleDataSetup->startSetup();
 
+        // CIM ACH: New Install -> hosted; upgrade -> inline
         $this->configResource->saveConfig(
             'payment/authnetcim_ach/form_type',
             '0'
@@ -99,6 +100,6 @@ class DefaultFormType implements DataPatchInterface, PatchVersionInterface
      */
     public static function getVersion()
     {
-        return '4.6.0';
+        return '5.0.0';
     }
 }

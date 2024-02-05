@@ -35,7 +35,7 @@
                 <reauthorize_partial_invoice>1</reauthorize_partial_invoice>
                 <savecard_opt_out>1</savecard_opt_out>
                 <verify_ssl>1</verify_ssl>
-                <form_type>hosted</form_type>
+                <form_type>acceptjs</form_type>
                 <enable_webhooks>0</enable_webhooks>
                 <accent_color>#1979C3</accent_color>
                 <enable_hosted_captcha>1</enable_hosted_captcha>
