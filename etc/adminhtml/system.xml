@@ -202,6 +202,13 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Strongly recommended. Do not disable unless you get SSL errors and your host is unable to fix them.</comment>
                 </field>
+                <field id="hosted_custom_communicator_url" translate="label comment" type="text" sortOrder="5050" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Hosted Communicator URL</label>
+                    <comment>If you are using a PWA/headless frontend with Accept Hosted, you must create a page on your frontend domain to pass messages from the form to your checkout. Enter that URL here. Leave blank to use the standard frontend communicator.</comment>
+                    <depends>
+                        <field id="form_type">hosted</field>
+                    </depends>
+                </field>
             </group>
             <group id="authnetcim_ach" translate="label" type="text" sortOrder="33" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Authorize.net CIM - ACH (eCheck)</label>
@@ -373,6 +380,13 @@
                     <label>Verify SSL</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Strongly recommended. Do not disable unless you get SSL errors and your host is unable to fix them.</comment>
+                </field>
+                <field id="hosted_custom_communicator_url" translate="label comment" type="text" sortOrder="5040" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Hosted Communicator URL</label>
+                    <comment>If you are using a PWA/headless frontend with Accept Hosted, you must create a page on your frontend domain to pass messages from the form to your checkout. Enter that URL here. Leave blank to use the standard frontend communicator.</comment>
+                    <depends>
+                        <field id="form_type">hosted</field>
+                    </depends>
                 </field>
             </group>
         </section>
