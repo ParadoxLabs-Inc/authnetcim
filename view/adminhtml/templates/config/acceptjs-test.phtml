@@ -1,7 +1,8 @@
 <?php /** @var \ParadoxLabs\Authnetcim\Block\Adminhtml\Config\AcceptjsTest $block */ ?>
 
-<div id="authnetcim-accept-test">Testing Accept.js...</div>
-<script type="text/javascript">
+<div id="authnetcim-accept-test"><?= $block->escapeHtml(__('Testing Accept.js...')) ?></div>
+<?php $library = $block->getMethodInstance()->getConfigData('test') ? 'authorizeNetAcceptjsSandbox' : 'authorizeNetAcceptjs'; ?>
+<?php $inlineScript = <<<JS
     var acceptJsTest = {
         errorMap: {
             'E_WC_10': 'API credentials invalid. Please confirm and re-enter your API Login ID.',
@@ -15,11 +16,7 @@
                     'jquery',
                     'mage/translate',
                     'domReady!',
-                    <?php if ($block->getMethodInstance()->getConfigData('test')): ?>
-                    'authorizeNetAcceptjsSandbox'
-                    <?php else: ?>
-                    'authorizeNetAcceptjs'
-                    <?php endif; ?>
+                    '{$library}'
                 ],
                 function() {
                     setTimeout(this.runTest.bind(this), 2000);
@@ -35,13 +32,13 @@
                 {
                     cardData: {
                         cardNumber: '4111111111111111',
-                        month: "<?= $block->escapeJsQuote(date('m'), '"') ?>",
-                        year: "<?= $block->escapeJsQuote(date('Y'), '"') ?>",
+                        month: "{$block->escapeJsQuote(date('m'), '"')}",
+                        year: "{$block->escapeJsQuote(date('Y'), '"')}",
                         cardCode: '900'
                     },
                     authData: {
-                        clientKey: "<?= $block->escapeJsQuote($block->getMethodInstance()->getConfigData('client_key'), '"') ?>",
-                        apiLoginID: "<?= $block->escapeJsQuote($block->getMethodInstance()->getConfigData('login'), '"') ?>"
+                        clientKey: "{$block->escapeJsQuote($block->getMethodInstance()->getConfigData('client_key'), '"')}",
+                        apiLoginID: "{$block->escapeJsQuote($block->getMethodInstance()->getConfigData('login'), '"')}"
                     }
                 },
                 'authnetcim_acceptJs_callback'
@@ -52,7 +49,7 @@
             var element = document.getElementById('authnetcim-accept-test');
 
             if (response.messages.resultCode === 'Ok') {
-                element.innerHTML = '<strong style="color:#0a0;"><?= $block->escapeHtmlAttr(__("Accept.js connected successfully")) ?>.</strong>';
+                element.innerHTML = '<strong class="testSuccess">{$block->escapeHtmlAttr(__("Accept.js connected successfully"))}.</strong>';
             } else {
                 var messages = [];
                 for (var i = 0; i < response.messages.message.length; i++) {
@@ -62,15 +59,31 @@
                     }
 
                     messages.push(
-                        "<?= $block->escapeJsQuote(__('Accept.js Error: %1 (%2)'), '"') ?>"
-                            .replace('<?= $block->escapeJsQuote('%1', '"') ?>', jQuery.mage.__(errorText))
-                            .replace('<?= $block->escapeJsQuote('%2', '"') ?>', response.messages.message[i].code)
+                        "{$block->escapeJsQuote(__('Accept.js Error: %1 (%2)'), '"')}"
+                            .replace('{$block->escapeJsQuote('%1', '"')}', jQuery.mage.__(errorText))
+                            .replace('{$block->escapeJsQuote('%2', '"')}', response.messages.message[i].code)
                     );
                 }
 
-                element.innerHTML = '<strong style="color:#D40707;">' + messages.join("<br />") + '</strong>';
+                element.innerHTML = '<strong class="testFailure">' + messages.join("<br />") + '</strong>';
             }
         },
     };
     acceptJsTest._create();
-</script>
+JS; ?>
+<?php $inlineStyle = <<<CSS
+    .testSuccess {
+        color: #0a0;
+    }
+    .testFailure {
+        color: #D40707;
+    }
+CSS; ?>
+
+<?php if (isset($secureRenderer) && $secureRenderer instanceof \Magento\Framework\View\Helper\SecureHtmlRenderer): ?>
+    <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $inlineScript, false) ?>
+    <?= /* @noEscape */ $secureRenderer->renderTag('style', [], $inlineStyle, false) ?>
+<?php else: ?>
+    <script><?= $inlineScript ?></script>
+    <style><?= $inlineStyle ?></style>
+<?php endif; ?>

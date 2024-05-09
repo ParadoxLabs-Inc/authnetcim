@@ -86,7 +86,9 @@ define([
             }
 
             // Clear and spinner the CC form while we load new params
-            this.element.find('#' + this.options.target).prop('src', 'about:blank')
+            this.element.find('#' + this.options.target)
+                .css('border', '0')
+                .prop('src', 'about:blank')
                 .trigger('processStart');
 
             var payload = this.getFormParams();
@@ -146,6 +148,10 @@ define([
             if (iframe.width() > 400 && iframe.width() < 750) {
                 iframe.css('max-width', '400px');
             }
+            iframe.css('width', '100%');
+            iframe.css('min-width', '300px');
+            iframe.css('height', '400px');
+            iframe.css('border', '0');
 
             iframe.trigger('processStop');
         },

@@ -14,7 +14,7 @@
     </h2>
 </div>
 
-<form action="<?= $block->escapeUrl($block->getAction()); ?>" method="post" onsubmit="return false;" id="<?= $code; ?>-form-validate" class="checkout-payment-method" data-hasrequired="<?= $block->escapeHtmlAttr(__('* Required Fields')) ?>" data-mage-init='{
+<form action="<?= $block->escapeUrl($block->getAction()); ?>" method="post" id="<?= $code; ?>-form-validate" class="checkout-payment-method" data-hasrequired="<?= $block->escapeHtmlAttr(__('* Required Fields')) ?>" data-mage-init='{
     "tokenbaseCardFormatter": {
         "ccTypeSelector": "#<?= $code ?>-cc-type",
         "ccTypeContainer": ".credit-card-types"
@@ -191,17 +191,22 @@
         </div>
     </div>
 </form>
-<script type="text/javascript">
-    //<![CDATA[
-    <?php /* @see Magento\Customer\Block\Adminhtml\Edit\Renderer\Region::render() */ ?>
+<?php $regionId = (int)$block->getRegionId() ?>
+<?php /* @see Magento\Customer\Block\Adminhtml\Edit\Renderer\Region::render() */ ?>
+<?php $inlineScript = <<<JS
     require(["prototype", "mage/adminhtml/form"], function(){
-        jQuery("#<?= $code; ?>-region-id").attr("defaultValue", "<?= (int)$block->getRegionId() ?>");
-        new RegionUpdater("<?= $code; ?>-country", "<?= $code; ?>-region", "<?= $code; ?>-region-id", <?= $this->helper(\Magento\Directory\Helper\Data::class)->getRegionJson() ?> );
+        jQuery("#{$code}-region-id").attr("defaultValue", "{$regionId}");
+        new RegionUpdater("{$code}-country", "{$code}-region", "{$code}-region-id", {$this->helper(\Magento\Directory\Helper\Data::class)->getRegionJson()} );
     });
 
-    require(["jquery"], function($) {
-        <?php /** This is necessary for parsing of mage-data-init elements in the AJAX requests */ ?>
-        $('#<?= $code; ?>-form-validate').trigger('contentUpdated');
+    require(["jquery"], function() {
+        /** This is necessary for parsing of mage-data-init elements in the AJAX requests */
+        jQuery('#{$code}-form-validate').trigger('contentUpdated');
     });
-    //]]>
-</script>
+JS; ?>
+<?php if (isset($secureRenderer) && $secureRenderer instanceof \Magento\Framework\View\Helper\SecureHtmlRenderer): ?>
+    <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $inlineScript, false) ?>
+<?php else: ?>
+    <script><?= $inlineScript ?></script>
+<?php endif; ?>
+

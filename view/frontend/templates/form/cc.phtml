@@ -6,7 +6,7 @@ $code           = $block->escapeHtmlAttr($block->getMethodCode());
 $image          = $block->getBrandingImage();
 $storedCards    = $block->getStoredCards();
 ?>
-<fieldset class="fieldset payment items ccard <?= $code ?>" id="payment_form_<?= $code ?>" style="display:none;">
+<fieldset class="fieldset payment items ccard <?= $code ?>" id="payment_form_<?= $code ?>">
     <?php if ($block->getTokenbaseMethod()->isAcceptJsEnabled() === true): ?>
         <input type="hidden" name="payment[acceptjs_key]" id="<?= $code ?>-acceptjs-key" value="" />
         <input type="hidden" name="payment[acceptjs_value]" id="<?= $code ?>-acceptjs-value" value="" />
@@ -139,3 +139,10 @@ $storedCards    = $block->getStoredCards();
         }
     }
 </script>
+<?php if (isset($secureRenderer) && $secureRenderer instanceof \Magento\Framework\View\Helper\SecureHtmlRenderer): ?>
+    <?= /* @noEscape */ $secureRenderer->renderStyleAsTag('display:none', '#payment_form_' . $code) ?>
+<?php else: ?>
+    <script>
+        document.querySelector('#payment_form_<?= $code ?>')?.style.display = 'none';
+    </script>
+<?php endif; ?>
