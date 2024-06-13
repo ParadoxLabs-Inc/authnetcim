@@ -297,7 +297,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
                 $day = date('t', strtotime($yr . '-' . $mo));
 
                 $paymentData = [
-                    'cc_type'      => '',
+                    'cc_type'      => $this->helper->mapCcTypeToMagento($card['payment']['creditCard']['cardType']),
                     'cc_last4'     => substr((string)$card['payment']['creditCard']['cardNumber'], -4),
                     'cc_exp_year'  => $yr,
                     'cc_exp_month' => $mo,
