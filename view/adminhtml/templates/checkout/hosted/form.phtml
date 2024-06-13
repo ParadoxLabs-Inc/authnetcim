@@ -108,7 +108,11 @@ CSS; ?>
 <?php else: ?>
     <style><?= $inlineStyle ?></style>
     <script>
-        document.querySelector('#payment_form_<?= $code ?>')?.style.display = 'none';
-        document.querySelector('#<?= $code ?>_warning')?.style.display = 'none';
+        if (document.querySelector('#payment_form_<?= $code ?>') instanceof Element) {
+            document.querySelector('#payment_form_<?= $code ?>').style.display = 'none';
+        }
+        if (document.querySelector('#<?= $code ?>_warning') instanceof Element) {
+            document.querySelector('#<?= $code ?>_warning').style.display = 'none';
+        }
     </script>
 <?php endif; ?>

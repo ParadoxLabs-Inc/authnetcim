@@ -100,7 +100,9 @@ CSS; ?>
 <?php else: ?>
     <style><?= $inlineStyle ?></style>
     <script>
-        document.querySelector('#payment_form_<?= $code ?>')?.style.display = 'none';
+        if (document.querySelector('#payment_form_<?= $code ?>') instanceof Element) {
+            document.querySelector('#payment_form_<?= $code ?>').style.display = 'none';
+        }
     </script>
 <?php endif; ?>
 
