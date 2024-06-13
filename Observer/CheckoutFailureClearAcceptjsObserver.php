@@ -36,8 +36,6 @@ class CheckoutFailureClearAcceptjsObserver implements \Magento\Framework\Event\O
     private $quoteRepository;
 
     /**
-     * PaymentMethodAssignAcceptjsDataObserver constructor.
-     *
      * @param \Magento\Sales\Api\OrderPaymentRepositoryInterface $orderPaymentRepository
      * @param \Magento\Quote\Api\CartRepositoryInterface $quoteRepository
      */

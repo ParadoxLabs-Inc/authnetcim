@@ -20,6 +20,8 @@
 
 namespace ParadoxLabs\Authnetcim\Observer;
 
+use Magento\Quote\Api\Data\PaymentExtensionInterface;
+use Magento\Sales\Api\Data\OrderPaymentExtensionInterface;
 use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 
 /**
@@ -119,6 +121,11 @@ class PaymentMethodAssignDataObserver extends \ParadoxLabs\TokenBase\Observer\Pa
              * @see \ParadoxLabs\TokenBase\Observer\PaymentMethodAssignDataObserver::assignTokenbaseData()
              */
             $payment->setData('tokenbase_id', null);
+            $paymentAttributes = $payment->getExtensionAttributes();
+            if ($paymentAttributes instanceof PaymentExtensionInterface
+                || $paymentAttributes instanceof OrderPaymentExtensionInterface) {
+                $paymentAttributes->setTokenbaseId(null);
+            }
         }
     }
 
