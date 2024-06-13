@@ -22,7 +22,7 @@ define([
     'jquery',
     'Magento_Ui/js/modal/alert',
     'mage/translate'
-], function($, alert) {
+], function ($, alert) {
     'use strict';
 
     $.widget('mage.authnetcimHostedForm', {
@@ -41,12 +41,13 @@ define([
          * Bind and initialize component
          * @private
          */
-        _create: function() {
+        _create: function () {
             this.element.on('change', this.options.cardSelector, this.handleCardSelectChange.bind(this));
 
-            // Admin only listener
+            // Admin only listeners
             if (typeof order === 'object') {
                 $('body').on('beforeSubmitOrder', '#edit_form', this.checkHostedFormStatus.bind(this));
+                $('body').on('change', 'input#p_method_' + this.options.method, this.handleCardSelectChange.bind(this));
             }
 
             this.bindCommunicator();
@@ -57,7 +58,7 @@ define([
         /**
          * Reload the payment form/toggle fields if circumstances require
          */
-        handleCardSelectChange: function() {
+        handleCardSelectChange: function () {
             if (this.element.find(this.options.cardSelector).val() !== '') {
                 this.element.find('input.cvv').prop('disabled', false);
                 this.element.find('div.cvv').show();
@@ -80,7 +81,7 @@ define([
         /**
          * Clear and reload the payment form
          */
-        initHostedForm: function() {
+        initHostedForm: function () {
             if (this.element.find('#' + this.options.target).is(':visible') === false) {
                 return;
             }
@@ -104,7 +105,7 @@ define([
         /**
          * Reload the payment form when it's expired
          */
-        reloadExpiredHostedForm: function() {
+        reloadExpiredHostedForm: function () {
             // If form has expired (15 minutes), and is still being displayed, force reload it.
             this.initHostedForm();
         },
@@ -113,7 +114,7 @@ define([
          * Post data to iframe to load the hosted payment form
          * @param data
          */
-        loadHostedForm: function(data, status, jqXHR) {
+        loadHostedForm: function (data, status, jqXHR) {
             if (data.iframeAction === undefined) {
                 return this.handleAjaxError(jqXHR, status, data);
             }
@@ -156,7 +157,7 @@ define([
          * @param status
          * @param error
          */
-        handleAjaxError: function(jqXHR, status, error) {
+        handleAjaxError: function (jqXHR, status, error) {
             var iframe  = this.element.find('#' + this.options.target);
             var message = $.mage.__('A server error occurred. Please try again.');
 
@@ -168,7 +169,8 @@ define([
                 if (responseJson.message !== undefined) {
                     message = responseJson.message;
                 }
-            } catch (error) {}
+            } catch (error) {
+            }
 
             if (iframe.siblings('.message').length > 0) {
                 iframe.siblings('.message').text(message).show();
@@ -190,7 +192,7 @@ define([
         /**
          * Prevent standard button submit if the hosted form is active
          */
-        checkHostedFormStatus: function(event) {
+        checkHostedFormStatus: function (event) {
             if (this.element.find('#' + this.options.target).is(':visible') === false) {
                 return;
             }
@@ -218,7 +220,7 @@ define([
         /**
          * Listen for messages from the payment form iframe
          */
-        bindCommunicator: function() {
+        bindCommunicator: function () {
             window.addEventListener(
                 'message',
                 this.handleCommunication.bind(this),
@@ -229,7 +231,7 @@ define([
         /**
          * Throw an error if the communicator has not connected after 30 seconds (bad)
          */
-        checkCommunicator: function() {
+        checkCommunicator: function () {
             if (this.communicatorActive
                 || this.element.find('#' + this.options.target).is(':visible') === false) {
                 return;
@@ -255,7 +257,7 @@ define([
          * Validate and process a message from the payment form
          * @param event
          */
-        handleCommunication: function(event) {
+        handleCommunication: function (event) {
             if (!event.data
                 || !event.data.action
                 || this.element.find('#' + this.options.target).is(':visible') === false) {
@@ -294,7 +296,7 @@ define([
          * Reinitialize the form when canceled
          * @param response
          */
-        handleCancel: function(response) {
+        handleCancel: function (response) {
             this.initHostedForm();
         },
 
@@ -302,7 +304,7 @@ define([
          * Process payment transaction result (place the order)
          * @param response
          */
-        handleResponse: function(response) {
+        handleResponse: function (response) {
             if (response.createPaymentProfileResponse !== undefined
                 && response.createPaymentProfileResponse.success === 'true') {
                 this.element.find('input[name="payment[save]"]').val(1).prop('checked', true);
@@ -323,7 +325,7 @@ define([
          * Fetch new card details upon payment form completion
          * @param event
          */
-        handleSave: function(event) {
+        handleSave: function (event) {
             if (this.processingSave || this.element.find('#' + this.options.target).is(':visible') === false) {
                 return;
             }
@@ -345,7 +347,7 @@ define([
          * Add and select new card on the UI after completing the payment form
          * @param data
          */
-        addAndSelectCard: function(data) {
+        addAndSelectCard: function (data) {
             this.element.find('#' + this.options.target).trigger('processStop');
 
             if (data.card.method !== this.options.method) {
@@ -374,7 +376,7 @@ define([
          * Get AJAX request parameters from form input
          * @returns {{}}
          */
-        getFormParams: function() {
+        getFormParams: function () {
             var payload = {
                 'method': this.options.method
             };
