@@ -22,7 +22,7 @@ define([
     'jquery',
     'Magento_Ui/js/modal/alert',
     'mage/translate'
-], function($, alert) {
+], function ($, alert) {
     'use strict';
 
     $.widget('mage.authnetcimHostedPaymentInfo', {
@@ -38,7 +38,7 @@ define([
          * Bind and initialize component
          * @private
          */
-        _create: function() {
+        _create: function () {
             this.element.find('#submit-address').on('click', this.saveAddress.bind(this));
             this.element.find('#edit-address').on('click', this.editAddress.bind(this));
 
@@ -48,7 +48,7 @@ define([
         /**
          * Edit billing address
          */
-        editAddress: function() {
+        editAddress: function () {
             this.element.find('.address').show();
             this.element.find('.payment').hide();
         },
@@ -56,7 +56,7 @@ define([
         /**
          * Confirm billing address
          */
-        saveAddress: function() {
+        saveAddress: function () {
             if (this.element.valid() === false) {
                 return;
             }
@@ -74,7 +74,7 @@ define([
         /**
          * Draw address inputs to text
          */
-        renderAddress: function() {
+        renderAddress: function () {
             var address = $(this.options.fieldPrefix + 'firstname').val() + ' ';
             address += $(this.options.fieldPrefix + 'lastname').val() + '<br />';
             address += $(this.options.fieldPrefix + 'company').val()
@@ -100,7 +100,7 @@ define([
         /**
          * Rescroll window upon address confirmation, if needed
          */
-        fixScroll: function() {
+        fixScroll: function () {
             var topPosition = $('fieldset.payment:first').position().top;
 
             if (topPosition < window.scrollY) {
@@ -111,7 +111,7 @@ define([
         /**
          * Clear and reload the payment form
          */
-        initHostedForm: function() {
+        initHostedForm: function () {
             if (this.element.find('#' + this.options.target).is(':visible') === false) {
                 return;
             }
@@ -136,7 +136,7 @@ define([
          * Post data to iframe to load the hosted payment form
          * @param data
          */
-        loadHostedForm: function(data) {
+        loadHostedForm: function (data) {
             var form = document.createElement('form');
             form.target = this.options.target;
             form.method = 'post';
@@ -165,7 +165,7 @@ define([
          * @param status
          * @param error
          */
-        handleAjaxError: function(jqXHR, status, error) {
+        handleAjaxError: function (jqXHR, status, error) {
             this.processingSave = false;
             this.element.find('#' + this.options.target).trigger('processStop');
 
@@ -176,7 +176,8 @@ define([
                 if (responseJson.message !== undefined) {
                     message = responseJson.message;
                 }
-            } catch (error) {}
+            } catch (error) {
+            }
 
             try {
                 alert({
@@ -192,7 +193,7 @@ define([
         /**
          * Listen for messages from the payment form iframe
          */
-        bindCommunicator: function() {
+        bindCommunicator: function () {
             window.removeEventListener(
                 'message',
                 this.handleCommunication.bind(this),
@@ -210,7 +211,7 @@ define([
          * Validate and process a message from the payment form
          * @param event
          */
-        handleCommunication: function(event) {
+        handleCommunication: function (event) {
             if (!event.data
                 || !event.data.action
                 || this.element.find('#' + this.options.target).is(':visible') === false) {
@@ -241,18 +242,18 @@ define([
         },
 
         /**
-         * Reinitialize the form when canceled
+         * Reload the page to reset the form and address.
          * @param response
          */
-        handleCancel: function(response) {
-            this.initHostedForm();
+        handleCancel: function (response) {
+            location.assign(location.href);
         },
 
         /**
          * Fetch new card details upon payment form completion
          * @param event
          */
-        handleSave: function(event) {
+        handleSave: function (event) {
             if (this.processingSave || this.element.find('#' + this.options.target).is(':visible') === false) {
                 return;
             }
@@ -274,7 +275,7 @@ define([
          * Complete card edit process; save address to card
          * @param data
          */
-        updateCard: function(response) {
+        updateCard: function (response) {
             this.processingSave = false;
 
             this.element.find('input[name="id"], input[name="card_id"]').val(response.card.id);
