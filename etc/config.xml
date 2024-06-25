@@ -25,7 +25,7 @@
                 <payment_action>authorize</payment_action>
                 <test>0</test>
                 <useccv>1</useccv>
-                <validation_mode>liveMode</validation_mode>
+                <validation_mode>testMode</validation_mode>
                 <allowspecific>0</allowspecific>
                 <allow_unsaved>1</allow_unsaved>
                 <show_branding>0</show_branding>
@@ -84,7 +84,7 @@
                 <order_status>pending</order_status>
                 <payment_action>authorize</payment_action>
                 <test>0</test>
-                <validation_mode>liveMode</validation_mode>
+                <validation_mode>testMode</validation_mode>
                 <allowspecific>0</allowspecific>
                 <allow_unsaved>1</allow_unsaved>
                 <show_branding>0</show_branding>

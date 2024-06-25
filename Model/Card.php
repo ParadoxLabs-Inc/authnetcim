@@ -353,9 +353,13 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $gateway->setParameter('customerProfileId', $this->getProfileId());
             $gateway->setParameter('customerPaymentProfileId', $this->getPaymentId());
 
+            $isHostedForm = $this->getMethodInstance()->getConfigData('form_type') === ConfigProvider::FORM_HOSTED;
+            $isSaveInfo   = $this->getMethodInstance()->getConfigData('payment_action') === 'order';
             $gateway->setParameter(
                 'validationMode',
-                $this->helper->getIsAccount() ? $this->getMethodInstance()->getConfigData('validation_mode') : null
+                $this->helper->getIsAccount() || ($isHostedForm && $isSaveInfo)
+                    ? $this->getMethodInstance()->getConfigData('validation_mode')
+                    : null
             );
 
             $this->setPaymentInfoOnUpdate($gateway);

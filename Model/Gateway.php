@@ -133,7 +133,6 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'hostedProfileHeadingBgColor'           => ['maxLength' => 7, 'charMask' => 'a-zA-Z0-9#'],
         'hostedProfileIFrameCommunicatorUrl'    => [],
         'hostedProfilePaymentOptions'           => ['enum' => ['showAll', 'showCreditCard', 'showBankAccount']],
-        'hostedProfileValidationMode'           => ['enum' => ['liveMode', 'testMode']],
         'hostedProfileBillingAddressRequired'   => ['enum' => [true, false]],
         'hostedProfileCardCodeRequired'         => ['enum' => [true, false]],
         'hostedProfileBillingAddressOptions'    => ['enum' => ['showBillingAddress', 'showNone']],
@@ -195,7 +194,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'transId'                   => ['charMask' => '\d'],
         'unmaskExpirationDate'      => ['enum' => ['true', 'false']],
         'userFields'                => [],
-        'validationMode'            => ['enum' => ['liveMode', 'testMode', 'none']],
+        'validationMode'            => ['enum' => ['liveMode', 'testMode']],
     ];
 
     /**
@@ -1638,6 +1637,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     ],
                     [
                         'settingName' => 'hostedProfileValidationMode',
+                        // Note: liveMode strictly requires billing address fields on the hosted form.
                         'settingValue' => $this->getParameter('hostedProfileValidationMode', 'testMode'),
                     ],
                     [
@@ -1735,6 +1735,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 'payment'                  => [],
                 'customerPaymentProfileId' => $this->getParameter('customerPaymentProfileId'),
             ],
+            'validationMode' => $this->getParameter('validationMode', 'testMode'),
         ];
 
         $params = $this->createCustomerPaymentProfileAddPaymentInfo($params);
@@ -1789,7 +1790,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $params['customerShippingAddressId'] = $this->getParameter('customerShippingAddressId');
         }
 
-        $params['validationMode'] = $this->getParameter('validationMode');
+        $params['validationMode'] = $this->getParameter('validationMode', 'testMode');
 
         return $this->runTransaction('validateCustomerPaymentProfileRequest', $params);
     }

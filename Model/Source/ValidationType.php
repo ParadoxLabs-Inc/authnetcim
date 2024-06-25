@@ -33,9 +33,8 @@ class ValidationType implements ArrayInterface
     public function toOptionArray()
     {
         return [
-            ['value' => 'liveMode', 'label' => __('Live ($0.01 test transaction)')],
-            ['value' => 'testMode', 'label' => __('Test (Card number validation only)')],
-            ['value' => 'none',     'label' => __('None (No validation performed)')],
+            ['value' => 'testMode', 'label' => __('Validate fields and expiration date')],
+            ['value' => 'liveMode', 'label' => __('Run $0.01 test transaction first (*extra transaction fee)')],
         ];
     }
 }

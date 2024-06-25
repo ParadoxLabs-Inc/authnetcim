@@ -87,10 +87,7 @@
                     <label>Validation Type</label>
                     <source_model>ParadoxLabs\Authnetcim\Model\Source\ValidationType</source_model>
                     <attribute type="shared">1</attribute>
-                    <comment>'Live' to verify new cards are real before storing. This will incur an extra txn fee.</comment>
-                    <depends>
-                        <field id="form_type">acceptjs</field>
-                    </depends>
+                    <comment>For Hosted form, applies to Payment Options and 'save info' forms only.</comment>
                 </field>
                 <field id="cctypes" translate="label comment" type="multiselect" sortOrder="2030" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Allowed Credit Card Types</label>
@@ -272,15 +269,6 @@
                     <label>Inline Payment Form</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
                     <attribute type="shared">1</attribute>
-                    <depends>
-                        <field id="form_type">0</field>
-                    </depends>
-                </field>
-                <field id="validation_mode" translate="label comment" type="select" sortOrder="2010" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
-                    <label>Validation Type</label>
-                    <source_model>ParadoxLabs\Authnetcim\Model\Source\ValidationType</source_model>
-                    <attribute type="shared">1</attribute>
-                    <comment>'Live' to verify new cards are real before storing. This will incur an extra txn fee.</comment>
                     <depends>
                         <field id="form_type">0</field>
                     </depends>
