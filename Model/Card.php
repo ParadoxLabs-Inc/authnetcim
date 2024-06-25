@@ -544,6 +544,8 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             }
         } elseif (strlen((string)$info->getData('cc_number')) >= 12) {
             $gateway->setParameter('cardNumber', $info->getData('cc_number'));
+        } elseif (!empty($info->getCcLast4())) {
+            $gateway->setParameter('cardNumber', 'XXXX' . $info->getCcLast4());
         } else {
             // If we were not given a full CC number, grab the masked value from Authorize.Net.
             $profile = $gateway->getCustomerPaymentProfile();
