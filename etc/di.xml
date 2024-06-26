@@ -193,6 +193,8 @@
                 <item name="refund" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\VirtualRefundCommand</item>
                 <item name="cancel" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\VirtualCancelCommand</item>
                 <item name="void" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\VirtualVoidCommand</item>
+                <item name="accept_payment" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\VirtualReviewAcceptCommand</item>
+                <item name="deny_payment" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\VirtualReviewDenyCommand</item>
                 <item name="fetch_transaction_information" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\VirtualFetchTransactionInformationCommand</item>
             </argument>
         </arguments>
@@ -207,6 +209,8 @@
                 <item name="refund" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\Ach\VirtualRefundCommand</item>
                 <item name="cancel" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\Ach\VirtualCancelCommand</item>
                 <item name="void" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\Ach\VirtualVoidCommand</item>
+                <item name="accept_payment" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\Ach\VirtualReviewAcceptCommand</item>
+                <item name="deny_payment" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\Ach\VirtualReviewDenyCommand</item>
                 <item name="fetch_transaction_information" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\Ach\VirtualFetchTransactionInformationCommand</item>
             </argument>
         </arguments>
@@ -279,6 +283,30 @@
     </virtualType>
 
     <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualVoidCommand" type="ParadoxLabs\TokenBase\Gateway\Command\VoidCommand" shared="false">
+        <arguments>
+            <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\Method</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualReviewAcceptCommand" type="ParadoxLabs\TokenBase\Gateway\Command\ReviewAcceptCommand" shared="false">
+        <arguments>
+            <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Method</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualReviewAcceptCommand" type="ParadoxLabs\TokenBase\Gateway\Command\ReviewAcceptCommand" shared="false">
+        <arguments>
+            <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\Method</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualReviewDenyCommand" type="ParadoxLabs\TokenBase\Gateway\Command\ReviewDenyCommand" shared="false">
+        <arguments>
+            <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Method</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualReviewDenyCommand" type="ParadoxLabs\TokenBase\Gateway\Command\ReviewDenyCommand" shared="false">
         <arguments>
             <argument name="method" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\Method</argument>
         </arguments>

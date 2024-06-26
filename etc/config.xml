@@ -57,7 +57,9 @@
                 <can_edit>1</can_edit>
                 <can_fetch_transaction_information>1</can_fetch_transaction_information>
                 <can_fetch_transaction_info>1</can_fetch_transaction_info>
-                <can_review_payment>0</can_review_payment>
+                <can_review_payment>1</can_review_payment>
+                <can_accept_payment>1</can_accept_payment>
+                <can_deny_payment>1</can_deny_payment>
                 <is_gateway>0</is_gateway>
                 <is_offline>0</is_offline>
                 <can_initialize>0</can_initialize>
@@ -111,7 +113,9 @@
                 <can_edit>1</can_edit>
                 <can_fetch_transaction_information>1</can_fetch_transaction_information>
                 <can_fetch_transaction_info>1</can_fetch_transaction_info>
-                <can_review_payment>0</can_review_payment>
+                <can_review_payment>1</can_review_payment>
+                <can_accept_payment>1</can_accept_payment>
+                <can_deny_payment>1</can_deny_payment>
                 <is_gateway>0</is_gateway>
                 <is_offline>0</is_offline>
                 <can_initialize>0</can_initialize>

@@ -189,10 +189,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 'priorAuthCaptureTransaction',
                 'refundTransaction',
                 'voidTransaction',
+                'updateHeldTransaction',
             ],
         ],
         'transId'                   => ['charMask' => '\d'],
         'unmaskExpirationDate'      => ['enum' => ['true', 'false']],
+        'updateAction'              => ['enum' => ['approve', 'decline']],
         'userFields'                => [],
         'validationMode'            => ['enum' => ['liveMode', 'testMode']],
     ];
@@ -207,6 +209,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'priorAuthCaptureTransaction' => 'prior_auth_capture',
         'refundTransaction'           => 'credit',
         'voidTransaction'             => 'void',
+        'updateHeldTransaction'       => 'update_held_transaction',
     ];
 
     /**
@@ -854,6 +857,104 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         $result = $this->createTransaction();
         return $this->interpretTransaction($result);
+    }
+
+    /**
+     * Approve a held transaction
+     *
+     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param string $transactionId
+     * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
+     */
+    public function acceptPayment(\Magento\Payment\Model\InfoInterface $payment, $transactionId = null)
+    {
+        /** @var \Magento\Sales\Model\Order\Payment $payment */
+
+        $this->setParameter('transactionType', 'updateHeldTransaction');
+        $this->setParameter('updateAction', 'approve');
+
+        if ($transactionId !== null) {
+            $this->setParameter('transId', $transactionId);
+        } elseif (!empty($payment->getLastTransId())) {
+            $this->setParameter('transId', $payment->getLastTransId());
+        }
+
+        $result = $this->updateHeldTransaction();
+        $result['errors'] = $result['transactionResponse']['errors'] ?: [];
+        $result = $this->getDataFromTransactionResponse($result);
+
+        /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
+        $response = $this->responseFactory->create();
+        $response->setData($result + ['is_approved' => false, 'is_denied' => false]);
+
+        if ((int)$response->getResponseCode() !== 1 || $result['messages']['resultCode'] !== 'Ok') {
+            $this->helper->log(
+                $this->code,
+                sprintf(
+                    "Transaction error: %s\n%s\n%s",
+                    $response->getResponseReasonText(),
+                    json_encode($response->getData()),
+                    $this->log
+                )
+            );
+
+            throw new CommandException(
+                __('Authorize.Net CIM Gateway: Transaction failed. ' . $response->getResponseReasonText())
+            );
+        }
+
+        $response->setData('is_approved', true);
+
+        return $response;
+    }
+
+    /**
+     * Deny a held transaction
+     *
+     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param string $transactionId
+     * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
+     */
+    public function denyPayment(\Magento\Payment\Model\InfoInterface $payment, $transactionId = null)
+    {
+        /** @var \Magento\Sales\Model\Order\Payment $payment */
+
+        $this->setParameter('transactionType', 'updateHeldTransaction');
+        $this->setParameter('updateAction', 'decline');
+
+        if ($transactionId !== null) {
+            $this->setParameter('transId', $transactionId);
+        } elseif (!empty($payment->getLastTransId())) {
+            $this->setParameter('transId', $payment->getLastTransId());
+        }
+
+        $result = $this->updateHeldTransaction();
+        $result['errors'] = $result['transactionResponse']['errors'] ?: [];
+        $result = $this->getDataFromTransactionResponse($result);
+
+        /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
+        $response = $this->responseFactory->create();
+        $response->setData($result + ['is_approved' => false, 'is_denied' => false]);
+
+        if ((int)$response->getResponseCode() !== 2 || $result['messages']['resultCode'] !== 'Ok') {
+            $this->helper->log(
+                $this->code,
+                sprintf(
+                    "Transaction error: %s\n%s\n%s",
+                    $response->getResponseReasonText(),
+                    json_encode($response->getData()),
+                    $this->log
+                )
+            );
+
+            throw new CommandException(
+                __('Authorize.Net CIM Gateway: Transaction failed. ' . $response->getResponseReasonText())
+            );
+        }
+
+        $response->setData('is_denied', true);
+
+        return $response;
     }
 
     /**
@@ -1775,6 +1876,23 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     }
 
     /**
+     * Accept or deny a transaction that was held-for-review.
+     *
+     * @return array Raw transaction result (XML)
+     */
+    public function updateHeldTransaction()
+    {
+        $params = [
+            'heldTransactionRequest' => [
+                'action'     => $this->getParameter('updateAction'),
+                'refTransId' => $this->getParameter('transId'),
+            ],
+        ];
+
+        return $this->runTransaction('updateHeldTransactionRequest', $params);
+    }
+
+    /**
      * Run a validation transaction against the stored CIM profile info.
      *
      * @return array Raw transaction result (XML)
@@ -2021,7 +2139,25 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             );
         }
 
-        $txn     = $response['transaction'];
+        if ($response['messages']['resultCode'] !== 'Ok') {
+            $errorMessage = $this->helper->getArrayValue($response, 'messages/message/text');
+
+            $this->helper->log(
+                $this->code,
+                sprintf(
+                    "Transaction error: %s\n%s\n%s",
+                    $errorMessage,
+                    json_encode($response),
+                    $this->log
+                )
+            );
+
+            throw new CommandException(
+                __('Authorize.Net CIM Gateway: Transaction failed. ' . $errorMessage)
+            );
+        }
+
+        $txn     = $response['transaction'] ?? [];
         $eCheck  = $this->helper->getArrayValue($txn, 'payment/bankAccount', false) !== false;
 
         // Map data.

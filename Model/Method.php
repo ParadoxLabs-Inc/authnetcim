@@ -238,4 +238,66 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
 
         return $payment;
     }
+
+    /**
+     * Attempt to accept a payment that us under review
+     *
+     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @return bool
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function acceptPayment(\Magento\Payment\Model\InfoInterface $payment)
+    {
+        /** @var \Magento\Sales\Model\Order\Payment $payment */
+
+        parent::acceptPayment(
+            $payment
+        );
+
+        $response = $this->gateway()->acceptPayment($payment);
+
+        $this->log(json_encode($response->getData()));
+
+        if ($response->getData('is_approved')) {
+            $payment->setData('parent_transaction_id', $payment->getTransactionId());
+
+            $transaction = $payment->getAuthorizationTransaction();
+            if ($transaction instanceof \Magento\Sales\Api\Data\TransactionInterface) {
+                $transaction->setAdditionalInformation('is_transaction_fraud', false);
+            }
+
+            $payment->setIsTransactionApproved(true);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Attempt to deny a payment that us under review
+     *
+     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @return bool
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function denyPayment(\Magento\Payment\Model\InfoInterface $payment)
+    {
+        /** @var \Magento\Sales\Model\Order\Payment $payment */
+
+        parent::acceptPayment(
+            $payment
+        );
+
+        $response = $this->gateway()->denyPayment($payment);
+
+        $this->log(json_encode($response->getData()));
+
+        if ($response->getData('is_denied')) {
+            $payment->setIsTransactionDenied(true);
+            return true;
+        }
+
+        return false;
+    }
 }
