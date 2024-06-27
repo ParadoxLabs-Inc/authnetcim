@@ -55,6 +55,13 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         'voided',
     ];
 
+    public const AUTHORIZED_STATUSES = [
+        'authorizedPendingCapture',
+        'FDSAuthorizedPendingReview',
+        'FDSPendingReview',
+        'underReview',
+    ];
+
     /**
      * @var string
      */
@@ -626,7 +633,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         /**
          * Short circuit if prior hosted transaction
          */
-        if ($payment->getAdditionalInformation('transaction_status') === 'authorizedPendingCapture'
+        if (in_array($payment->getAdditionalInformation('transaction_status'), static::AUTHORIZED_STATUSES, true)
             && !empty($payment->getAdditionalInformation('transaction_id'))
             && $this->getHaveAuthorized() !== true) {
             /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
@@ -695,7 +702,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         /**
          * Adjust transaction flow if there was a prior hosted transaction
          */
-        if ($payment->getAdditionalInformation('transaction_status') === 'authorizedPendingCapture'
+        if (in_array($payment->getAdditionalInformation('transaction_status'), static::AUTHORIZED_STATUSES, true)
             && !empty($payment->getAdditionalInformation('transaction_id'))
             && $this->getHaveAuthorized() !== true) {
             $transactionId = $payment->getAdditionalInformation('transaction_id');

@@ -105,7 +105,24 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
             return $card;
         }
 
-        return parent::loadOrCreateCard($payment);
+        $card = parent::loadOrCreateCard($payment);
+
+        if (empty($card->getPaymentId()) && !empty($payment->getAdditionalInformation('transaction_id'))) {
+            $this->log(sprintf('Card %s has transaction but no payment ID; attempting to create', $card->getId()));
+            $this->gateway()->setParameter('transId', $payment->getAdditionalInformation('transaction_id'));
+            $this->gateway()->setParameter('customerProfileId', $card->getProfileId());
+
+            try {
+                $result = $this->gateway()->createCustomerProfileFromTransaction();
+
+                $card->setPaymentId($result['customerPaymentProfileIdList']['numericString'] ?? null);
+                $card = $this->cardRepository->save($card);
+            } catch (\Exception $e) {
+                $this->log($e->getMessage());
+            }
+        }
+
+        return $card;
     }
 
     /**
