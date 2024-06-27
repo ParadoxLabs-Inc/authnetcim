@@ -54,7 +54,7 @@
             <!-- /ko -->
 
             <div class="field card required" data-bind="visible: showIframe()">
-                <iframe src="about:blank" frameborder="0" style="width:100%;min-width:300px;height:400px;" data-bind="attr: {id: getCode() + '_iframe', name: getCode() + '_iframe'}, afterRender: syncBillingAddress"></iframe>
+                <iframe src="about:blank" data-bind="attr: {id: getCode() + '_iframe', name: getCode() + '_iframe'}, afterRender: syncBillingAddress"></iframe>
             </div>
 
             <!-- ko if: (selectedCard())-->

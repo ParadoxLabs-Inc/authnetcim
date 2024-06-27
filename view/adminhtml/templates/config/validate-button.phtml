@@ -1,35 +1,37 @@
 <?php /** @var $block \ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ValidateButton */ ?>
 <?php $code = $block->escapeJsQuote($block->getGroupCode()) ?>
 
-<script>
+<?php $website = (int)$block->getRequest()->getParam('website') ?: 'null' ?>
+<?php $store   = (int)$block->getRequest()->getParam('store') ?: 'null' ?>
+<?php $inlineScript = <<<JS
     require([
         'jquery',
         'Magento_Ui/js/modal/alert',
         'mage/translate'
-    ], function($, alert) {
-        $('#<?= $block->escapeJs($block->getButtonId()) ?>').on('click', function() {
-            $('#<?= $block->escapeJs($block->getButtonId()) ?>_results').hide();
-            $('body').trigger('processStart');
-            $.post({
-                url: '<?= $block->escapeUrl($block->getAjaxUrl()) ?>',
+    ], function(\$, alert) {
+        jQuery('#{$block->escapeJs($block->getButtonId())}').on('click', function() {
+            jQuery('#{$block->escapeJs($block->getButtonId())}_results').hide();
+            jQuery('body').trigger('processStart');
+            jQuery.post({
+                url: '{$block->escapeUrl($block->getAjaxUrl())}',
                 data: {
-                    apiLoginId: $('input[name="groups[<?= $code ?>][fields][login][value]"]').val(),
-                    transactionKey: $('input[name="groups[<?= $code ?>][fields][trans_key][value]"]').val(),
-                    signatureKey: $('input[name="groups[<?= $code ?>][fields][signature_key][value]"]').val(),
-                    sandbox: $('select[name="groups[<?= $code ?>][fields][test][value]"]').val(),
-                    webhooks: $('select[name="groups[<?= $code ?>][fields][webhooks][value]"]').val(),
-                    website: <?= (int)$block->getRequest()->getParam('website') ?: 'null' ?>,
-                    store: <?= (int)$block->getRequest()->getParam('store') ?: 'null' ?>
+                    apiLoginId: jQuery('input[name="groups[{$code}][fields][login][value]"]').val(),
+                    transactionKey: jQuery('input[name="groups[{$code}][fields][trans_key][value]"]').val(),
+                    signatureKey: jQuery('input[name="groups[{$code}][fields][signature_key][value]"]').val(),
+                    sandbox: jQuery('select[name="groups[{$code}][fields][test][value]"]').val(),
+                    webhooks: jQuery('select[name="groups[{$code}][fields][webhooks][value]"]').val(),
+                    website: {$website},
+                    store: {$store}
                 },
                 dataType: 'json',
                 complete: function() {
-                    $('body').trigger('processStop');
+                    jQuery('body').trigger('processStop');
                 },
                 success: function(response) {
-                    $('#<?= $block->escapeJs($block->getButtonId()) ?>_results').html(response.message).show();
+                    jQuery('#{$block->escapeJs($block->getButtonId())}_results').html(response.message).show();
                 },
                 error: function(jqXHR, status, error) {
-                    var message = $.mage.__('An error occurred. Please try again.');
+                    var message = jQuery.mage.__('An error occurred. Please try again.');
 
                     try {
                         var responseJson = JSON.parse(jqXHR.responseText);
@@ -40,7 +42,7 @@
 
                     try {
                         alert({
-                            title: $.mage.__('Error'),
+                            title: jQuery.mage.__('Error'),
                             content: message
                         });
                     } catch (error) {
@@ -51,7 +53,12 @@
             });
         });
     });
-</script>
+JS; ?>
+<?php if (isset($secureRenderer) && $secureRenderer instanceof \Magento\Framework\View\Helper\SecureHtmlRenderer): ?>
+    <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $inlineScript, false) ?>
+<?php else: ?>
+    <script><?= $inlineScript ?></script>
+<?php endif; ?>
 
 <?= $block->getButtonHtml() ?>
-<div style="color:#0a0;" id="<?= $block->escapeJs($block->getButtonId()) ?>_results"></div>
+<div class="testSuccess" id="<?= $block->escapeJs($block->getButtonId()) ?>_results"></div>

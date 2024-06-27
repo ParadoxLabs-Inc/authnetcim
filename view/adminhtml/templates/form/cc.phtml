@@ -6,7 +6,7 @@ $code           = $block->escapeHtmlAttr($block->getMethodCode());
 $image          = $block->getBrandingImage();
 $storedCards    = $block->getStoredCards();
 ?>
-<div id="payment_form_<?= $code ?>" class="admin__page-section-item checkout-payment-method" style="display:none" data-mage-init='{
+<div id="payment_form_<?= $code ?>" class="admin__page-section-item checkout-payment-method" data-mage-init='{
     "tokenbaseForm": {
         "code":"<?= $code ?>",
         "validateForm": false
@@ -121,3 +121,12 @@ $storedCards    = $block->getStoredCards();
         <?php endif; ?>
     </fieldset>
 </div>
+<?php if (isset($secureRenderer) && $secureRenderer instanceof \Magento\Framework\View\Helper\SecureHtmlRenderer): ?>
+    <?= /* @noEscape */ $secureRenderer->renderStyleAsTag('display:none', '#payment_form_' . $code) ?>
+<?php else: ?>
+    <script>
+        if (document.querySelector('#payment_form_<?= $code ?>') instanceof Element) {
+            document.querySelector('#payment_form_<?= $code ?>').style.display = 'none';
+        }
+    </script>
+<?php endif; ?>

@@ -1,8 +1,9 @@
 <?php /** @var \Magento\Framework\View\Element\Template $block */ ?>
 <!DOCTYPE html>
 <html lang="en">
-    <body>
-        <script type="text/javascript">
+    <head>
+        <title></title>
+        <?php $inlineScript = <<<JS
             function communicateAuthnetResponse(message)
             {
                 if (message && message.length > 0 && window.parent && window.parent.parent) {
@@ -44,6 +45,19 @@
             } else {
                 communicateAuthnetResponse('action=ping');
             }
-        </script>
+        JS; ?>
+        <?php $mockJS = <<<JS
+            var \$ = jQuery = req = requirejs = require = depend = function() {
+            }
+        JS; ?>
+        <?php if (isset($secureRenderer) && $secureRenderer instanceof \Magento\Framework\View\Helper\SecureHtmlRenderer): ?>
+            <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $inlineScript, false) ?>
+            <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $mockJS, false) ?>
+        <?php else: ?>
+            <script><?= $inlineScript ?></script>
+            <script><?= $mockJS ?></script>
+        <?php endif; ?>
+    </head>
+    <body>
     </body>
 </html>

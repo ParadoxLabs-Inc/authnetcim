@@ -156,7 +156,17 @@ define([
             // Reload after 15 min expiration
             setTimeout(this.initHostedForm.bind(this), 15*60*1000);
 
-            this.element.find('#' + this.options.target).trigger('processStop');
+            var iframe = this.element.find('#' + this.options.target);
+            // There's an awkward break between 400-750px; set max width to avoid scrolling.
+            if (iframe.width() > 400 && iframe.width() < 750) {
+                iframe.css('max-width', '400px');
+            }
+            iframe.css('width', '100%');
+            iframe.css('min-width', '300px');
+            iframe.css('height', '400px');
+            iframe.css('border', '0');
+
+            iframe.trigger('processStop');
         },
 
         /**
