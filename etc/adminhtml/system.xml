@@ -83,12 +83,6 @@
                         <field id="form_type">acceptjs</field>
                     </depends>
                 </field>
-                <field id="validation_mode" translate="label comment" type="select" sortOrder="2020" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
-                    <label>Validation Type</label>
-                    <source_model>ParadoxLabs\Authnetcim\Model\Source\ValidationType</source_model>
-                    <attribute type="shared">1</attribute>
-                    <comment>For Hosted form, applies to Payment Options and 'save info' forms only.</comment>
-                </field>
                 <field id="cctypes" translate="label comment" type="multiselect" sortOrder="2030" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Allowed Credit Card Types</label>
                     <source_model>ParadoxLabs\Authnetcim\Model\Config\Cctype</source_model>
@@ -113,6 +107,12 @@
                     <label>New Order Status</label>
                     <source_model>ParadoxLabs\TokenBase\Model\Source\OrderStatus</source_model>
                     <comment>Normally 'Pending' if 'Authorize Only' above; 'Processing' if not.</comment>
+                </field>
+                <field id="validation_mode" translate="label comment" type="select" sortOrder="3025" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Validation Type</label>
+                    <source_model>ParadoxLabs\Authnetcim\Model\Source\ValidationType</source_model>
+                    <attribute type="shared">1</attribute>
+                    <comment>For Hosted form, applies to Payment Options and 'save info' forms only.</comment>
                 </field>
                 <field id="useccv" translate="label comment" type="select" sortOrder="3030" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Credit Card Verification</label>
