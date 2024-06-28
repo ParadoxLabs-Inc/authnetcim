@@ -285,6 +285,8 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
 
             $payment->setIsTransactionApproved(true);
 
+            // Future: If form is hosted, payment action is capture, and order is not yet invoiced, invoice it?
+
             return true;
         }
 

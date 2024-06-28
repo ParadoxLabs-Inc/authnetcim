@@ -1,5 +1,21 @@
 # ParadoxLabs_Authnetcim Changelog
 
+## 5.1.0 - Jun 28, 2024
+- Added ability to set custom communicator URL for headless frontends.
+- Added approve/deny suspected fraud payments from the Magento order details.
+- Added card persistence upon processing of a hosted-form order that was held-for-review.
+- Added CSP/SRI secure mode support for 2.4.0+ (2.4.7 checkout compatibility).
+- Added validation mode option to Hosted forms for Payment Options and save-info checkout.
+- Changed payment form default to Accept.js due to differing behaviors of Hosted form for longtime users.
+- Changed the default validation mode to testMode going forward (fewer txn fees; redundant with typical Hosted configuration).
+- Changed the hosted form cancel button to reload the page, rather than reset the payment form.
+- Fixed hosted form card updates from fetching profile details from CIM unnecessarily.
+- Fixed legacy card imports failing to set card type.
+- Fixed payment extension attributes holding tokenbase_id values improperly.
+- Fixed reorder applying the original payment method if a new card was entered.
+- Fixed the admin checkout hosted payment form failing to load when it defaults to 'Add a new card'.
+- Removed the deprecated 'none' validation mode.
+
 ## 5.0.1 - Jan 23, 2024
 - Added Instant Purchase support for customers with active stored cards.
 - Fixed a reported error on subscription rebilling with hosted forms enabled.
