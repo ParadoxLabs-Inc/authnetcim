@@ -1373,7 +1373,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $params = $this->createTransactionAddTransactionInfo($params, $type, $isNewTxn);
 
         // Most of the data does not matter for follow-ups (capture, void, refund).
-        if ($isNewTxn === true) {
+        if ($isNewTxn === true || ($isRefund === true && $this->hasParameter('cardNumber') === false)) {
             /**
              * Add payment info.
              */
