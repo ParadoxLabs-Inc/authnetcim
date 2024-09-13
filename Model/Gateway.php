@@ -557,12 +557,19 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Set billing address params from Address object
      *
-     * @param \Magento\Customer\Api\Data\AddressInterface $address
+     * @param \Magento\Customer\Api\Data\AddressInterface|\Magento\Sales\Api\Data\OrderAddressInterface $address
      * @return $this
+     * @throws \Magento\Payment\Gateway\Command\CommandException
      */
-    public function setBillTo(\Magento\Customer\Api\Data\AddressInterface $address)
+    public function setBillTo($address)
     {
+        if ($address instanceof \Magento\Customer\Api\Data\AddressInterface) {
         $region = $address->getRegion()->getRegionCode() ?: $address->getRegion()->getRegion();
+        } elseif ($address instanceof \Magento\Sales\Api\Data\OrderAddressInterface) {
+            $region = $address->getRegionCode() ?: $address->getRegion();
+        } else {
+            return $this;
+        }
 
         $this->setParameter('billToFirstName', $address->getFirstname());
         $this->setParameter('billToLastName', $address->getLastname());
@@ -795,6 +802,14 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
             if ($payment->getCreditmemo()->getBaseShippingAmount()) {
                 $this->setParameter('shipAmount', $payment->getCreditmemo()->getBaseShippingAmount());
+            }
+
+            /**
+             * Add billTo, in case the Authorize.Net payment form requires it.
+             */
+            $billingAddress = $payment->getCreditmemo()->getBillingAddress();
+            if ($billingAddress instanceof \Magento\Sales\Api\Data\OrderAddressInterface) {
+                $this->setBillTo($billingAddress);
             }
         }
 
@@ -1373,7 +1388,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $params = $this->createTransactionAddTransactionInfo($params, $type, $isNewTxn);
 
         // Most of the data does not matter for follow-ups (capture, void, refund).
-        if ($isNewTxn === true || ($isRefund === true && $this->hasParameter('cardNumber') === false)) {
+        if ($isNewTxn === true) {
             /**
              * Add payment info.
              */
@@ -1411,7 +1426,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             /**
              * Add customer info.
              */
-            $params = $this->createTransactionAddCustomerInfo($params, $isNewCard);
+            $params = $this->createTransactionAddCustomerInfo($params, $isNewCard, $isRefund);
 
             // Add 3D Secure token?
             if ($this->hasParameter('centinelAuthIndicator') && $this->hasParameter('centinelAuthValue')) {
@@ -2575,9 +2590,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      *
      * @param array $params
      * @param bool $isNewCard
+     * @param bool $isRefund
      * @return array
      */
-    protected function createTransactionAddCustomerInfo($params, $isNewCard)
+    protected function createTransactionAddCustomerInfo($params, $isNewCard, $isRefund = false)
     {
         $params['customer'] = [
             'id'    => $this->getParameter('merchantCustomerId'),
@@ -2590,8 +2606,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 ] + $params['customer'];
         }
 
-        // Add billing address?
-        if ($isNewCard === true) {
+        // Add billing address? If this is a refund, include in case of required fields.
+        if ($isNewCard === true || (!empty($this->getParameter('billToFirstName') && $isRefund))) {
             $params['billTo'] = [
                 'firstName'   => $this->getParameter('billToFirstName'),
                 'lastName'    => $this->getParameter('billToLastName'),
