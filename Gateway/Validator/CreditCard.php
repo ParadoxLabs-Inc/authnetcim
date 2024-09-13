@@ -86,7 +86,11 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
          * Comply with the configuration settings for allowed card types.
          */
         try {
-            $this->validateCcType($payment);
+            // If new card, there will be no card type or ccv with Hosted.
+            if ($this->config->getValue('form_type') === ConfigProvider::FORM_HOSTED
+                && empty($payment->getAdditionalInformation('transaction_id'))) {
+                $this->validateCcType($payment);
+            }
         } catch (\Exception $exception) {
             $isValid = false;
             $fails[] = $exception->getMessage();
