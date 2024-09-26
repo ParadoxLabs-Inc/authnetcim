@@ -286,7 +286,7 @@ class WebhookProcessor
     {
         $webhook       = json_decode((string)$this->request->getContent(), true);
         $transactionId = $webhook['payload']['id'];
-        $responseCode  = $webhook['payload']['responseCode'];
+        $responseCode  = (int)$webhook['payload']['responseCode'];
         $eventType     = $webhook['eventType'];
 
         if (!empty($transactionId) && in_array($eventType, self::TRANSACTION_EVENTS, true)) {
@@ -305,8 +305,7 @@ class WebhookProcessor
             if ($eventType === 'net.authorize.payment.fraud.approved' && $order->isFraudDetected()
                 && $responseCode === 1) {
                 $this->markApproved($order, $txnDetails);
-            } elseif (($eventType === 'net.authorize.payment.fraud.declined' && $order->isFraudDetected())
-                || $responseCode !== 1) {
+            } elseif ($order->isFraudDetected() && in_array($responseCode, [2,3], true)) {
                 $this->markDeclined($order, $txnDetails);
             } elseif ($eventType === 'net.authorize.payment.priorAuthCapture.created' && $order->canInvoice()) {
                 $this->markCaptured($order, $txnDetails);
