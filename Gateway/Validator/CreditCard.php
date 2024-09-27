@@ -86,11 +86,7 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
          * Comply with the configuration settings for allowed card types.
          */
         try {
-            // If new card, there will be no card type or ccv with Hosted.
-            if ($this->config->getValue('form_type') === ConfigProvider::FORM_HOSTED
-                && empty($payment->getAdditionalInformation('transaction_id'))) {
-                $this->validateCcType($payment);
-            }
+            $this->validateCcType($payment);
         } catch (\Exception $exception) {
             $isValid = false;
             $fails[] = $exception->getMessage();
@@ -191,6 +187,11 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
      */
     protected function validateCcType(\Magento\Payment\Model\InfoInterface $payment): void
     {
+        if ($this->config->getValue('form_type') === ConfigProvider::FORM_HOSTED) {
+            // This type check doesn't apply to the hosted form -- we don't know the type at this time.
+            return;
+        }
+
         $typeInfo       = $payment->getData('cc_type');
         $availableTypes = explode(',', $this->config->getValue('cctypes'));
         if (isset($typeInfo) && in_array($typeInfo, $availableTypes, true) === false) {
