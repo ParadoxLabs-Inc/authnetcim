@@ -4,7 +4,19 @@
         <section id="payment">
             <group id="authnetcim" translate="label comment" type="text" sortOrder="33" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Authorize.net CIM</label>
-                <comment><![CDATA[<div style="float:right;text-align:center;"><img src="https://store.paradoxlabs.com/media/wysiwyg/AuthorizeNetCertified.gif" width="140" height="50" border="0" alt="Authorize.net Certified Solution" /><br />by <a href="http://support.paradoxlabs.com/" target="_blank">ParadoxLabs, inc.</a></div>]]></comment>
+                <comment><![CDATA[
+                    <div style="display:flex;margin:0 25p;gap:25px;align-items:center;">
+                        <a href="https://support.paradoxlabs.com/" target="_blank" style="text-align:center;"><img src="https://store.paradoxlabs.com/skin/frontend/responsive/paradox2017/images/primary-logo.svg" width="171" height="50" alt="ParadoxLabs, inc." style="vertical-align:middle;margin-left:2px;"></a>
+                        <div style="flex-grow:1;background-color:#e9fbdb;" class="messages message success">Not seeing a feature or option you need? <button type="button" onclick="window.open('https://paradoxlabs.com/contact/', '_blank', 'noopener=yes')" class="secondary" style="margin-left:15px;">Request a Feature</button></div>
+                        <div style="display:flex;flex-direction:column;gap:2px;">
+                            <button type="button" onclick="window.open('https://store.paradoxlabs.com/media/wysiwyg/ParadoxLabs-CIM-user-manual.pdf', '_blank', 'noopener=yes')">📋 User Manual</button>
+                            <button type="button" onclick="window.open('https://support.paradoxlabs.com/', '_blank', 'noopener=yes')">❓ Get Support</button>
+                        </div>
+                        <div style="float:right;text-align:center;vertical-align:middle;">
+                            <img src="https://store.paradoxlabs.com/media/wysiwyg/AuthorizeNetCertified.gif" width="140" height="50" border="0" alt="Authorize.net Certified Solution" style="vertical-align:middle;">
+                        </div>
+                    </div>
+                ]]></comment>
                 <field id="version" translate="label" type="label" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Version Installed</label>
                     <backend_model>ParadoxLabs\Authnetcim\Model\Config\Version</backend_model>
@@ -209,7 +221,19 @@
             </group>
             <group id="authnetcim_ach" translate="label" type="text" sortOrder="33" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Authorize.net CIM - ACH (eCheck)</label>
-                <comment><![CDATA[<div style="float:right;text-align:center;"><img src="https://store.paradoxlabs.com/media/wysiwyg/AuthorizeNetCertified.gif" width="140" height="50" border="0" alt="Authorize.net Certified Solution" /><br />by <a href="http://support.paradoxlabs.com/" target="_blank">ParadoxLabs, inc.</a></div>]]></comment>
+                <comment><![CDATA[
+                    <div style="display:flex;margin:0 25p;gap:25px;align-items:center;">
+                        <a href="https://support.paradoxlabs.com/" target="_blank" style="text-align:center;"><img src="https://store.paradoxlabs.com/skin/frontend/responsive/paradox2017/images/primary-logo.svg" width="171" height="50" alt="ParadoxLabs, inc." style="vertical-align:middle;margin-left:2px;"></a>
+                        <div style="flex-grow:1;background-color:#e9fbdb;" class="messages message success">Not seeing a feature or option you need? <button type="button" onclick="window.open('https://paradoxlabs.com/contact/', '_blank', 'noopener=yes')" class="secondary" style="margin-left:15px;">Request a Feature</button></div>
+                        <div style="display:flex;flex-direction:column;gap:2px;">
+                            <button type="button" onclick="window.open('https://store.paradoxlabs.com/media/wysiwyg/ParadoxLabs-CIM-user-manual.pdf', '_blank', 'noopener=yes')">📋 User Manual</button>
+                            <button type="button" onclick="window.open('https://support.paradoxlabs.com/', '_blank', 'noopener=yes')">❓ Get Support</button>
+                        </div>
+                        <div style="float:right;text-align:center;vertical-align:middle;">
+                            <img src="https://store.paradoxlabs.com/media/wysiwyg/AuthorizeNetCertified.gif" width="140" height="50" border="0" alt="Authorize.net Certified Solution" style="vertical-align:middle;">
+                        </div>
+                    </div>
+                ]]></comment>
                 <field id="version" translate="label" type="label" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Version Installed</label>
                     <backend_model>ParadoxLabs\Authnetcim\Model\Config\Version</backend_model>
