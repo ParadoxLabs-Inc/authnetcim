@@ -61,7 +61,8 @@ define(
                     .observe([
                         'billingAddressLine',
                         'transactionId',
-                        'communicatorActive'
+                        'communicatorActive',
+                        'agreementsValid'
                     ]);
 
                 this.bindCommunicator();
@@ -69,13 +70,14 @@ define(
                 quote.billingAddress.subscribe(this.syncBillingAddress.bind(this));
                 quote.paymentMethod.subscribe(this.syncBillingAddress.bind(this));
                 quote.totals.subscribe(this.syncBillingAddress.bind(this))
-                this.billingAddressLine.subscribe(this.initHostedForm.bind(this));
+                this.billingAddressLine.subscribe(this.checkReinitHostedForm.bind(this));
                 this.selectedCard.subscribe(this.checkReinitHostedForm.bind(this));
 
                 this.showIframe = ko.computed(function() {
                     return (this.selectedCard() === null || this.selectedCard() === undefined)
                            && (this.transactionId() === null || this.transactionId() === undefined)
-                           && quote.billingAddress() !== null;
+                           && quote.billingAddress() !== null
+                           && this.agreementsValid() === true;
                 }, this);
 
                 this.showSaveOption = ko.computed(function() {
@@ -100,13 +102,42 @@ define(
                 }, this);
 
                 // Revalidate checkout agreements for hosted form upon any changes in that area
-                $('#' + this.getCode() + '-agreements').on(
+                $('#checkout-step-payment').on(
                     'click change',
-                    'input textarea select',
-                    this.checkReinitHostedForm.bind(this)
+                    '#' + this.getCode() + '-agreements input,'
+                        + '#' + this.getCode() + '-agreements select,'
+                        + '#' + this.getCode() + '-agreements textarea',
+                    this.validateAgreements.bind(this)
                 );
+                this.validateAgreements();
 
                 return this;
+            },
+
+            agreementsRendered: function() {
+                var agreements = window.checkoutConfig.checkoutAgreements?.agreements || [];
+
+                if (agreements.length > 0) {
+                    for (var i in agreements) {
+                        // If we have any inputs requiring manual acceptance (mode 1), and those aren't in the UI yet...
+                        if (agreements[i].mode - 0 === 1
+                            && $('#' + this.getCode() + '-agreements '
+                                 + '[name="agreement[' + agreements[i].agreementId + ']"]').length === 0) {
+                            // They aren't all rendered, so don't validate and assume the true response means valid.
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            },
+
+            validateAgreements: function() {
+                if (this.agreementsRendered() && additionalValidators.validate() === true) {
+                    this.agreementsValid(true);
+                } else {
+                    this.agreementsValid(false);
+                }
             },
 
             /**
@@ -117,7 +148,6 @@ define(
                 if ($('#' + this.getCode() + '_iframe').length === 0
                     || quote.paymentMethod() === null
                     || quote.paymentMethod().method !== this.getCode()
-                    || this.selectedCard()
                     || quote.billingAddress() === null) {
                     return;
                 }
@@ -131,7 +161,8 @@ define(
             checkReinitHostedForm: function() {
                 if (this.iframeInitialized === false
                     && (this.selectedCard() === null || this.selectedCard() === undefined)
-                    && additionalValidators.validate() === true) {
+                    && this.billingAddressLine()
+                    && this.agreementsValid() === true) {
                     // The initialized flag is to debounce and ensure we don't reinit unless absolutely necessary.
                     this.iframeInitialized = true;
                     this.initHostedForm();
