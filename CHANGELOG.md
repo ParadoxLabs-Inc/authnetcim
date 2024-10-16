@@ -1,5 +1,21 @@
 # ParadoxLabs_Authnetcim Changelog
 
+## 5.1.2 - Oct 16, 2024
+- Updated SSL certificate bundle.
+- Fixed an invalid template reference with the ACH inline form.
+- Fixed checkout agreement validation with the hosted payment form; the payment form will no longer display until any required terms are accepted.
+- Fixed CVV help tooltip showing up at the end of the page after open.
+- Fixed input validation on the hosted customer form.
+
+## 5.1.1 - Sept 30, 2024
+- Added a help bar to the settings page for manual, support, and requests.
+- Updated packaged SSL certificates for the upcoming DigiCert SSL Certificate Migration.
+- Fixed CC Type validation errors with the hosted payment form.
+- Fixed checkout error if validation mode is still set to 'none' (removed in 5.1.0).
+- Fixed possible 'required field' errors on refund by including billing address on refund requests.
+- Fixed possible API error on refund if order has no CC last4 stored.
+- Fixed webhooks approving an order when the resulting transaction gets declined.
+
 ## 5.1.0 - Jun 28, 2024
 - Added ability to set custom communicator URL for headless frontends.
 - Added approve/deny suspected fraud payments from the Magento order details.
