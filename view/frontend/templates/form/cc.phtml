@@ -91,9 +91,13 @@ $storedCards    = $block->getStoredCards();
             <label for="<?= $code ?>-cc-cid" class="label"><span><?= $block->escapeHtml(__('Card Verification Number')) ?></span></label>
             <div class="control _with-tooltip">
                 <input type="text" title="<?= $block->escapeHtmlAttr(__('Card Verification Number')) ?>" class="input-text cvv" id="<?= $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true, "validate-cc-cvn":"#<?= $code ?>-cc-type"}' autocomplete="cc-csc" maxlength="4" />
-                <?php $_content = '<img src=\"' . $block->escapeUrl($block->getViewFileUrl('Magento_Checkout::cvv.png')) . '\" alt=\"' . $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) . '\" title=\"' . $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) . '\" />'; ?>
-                <div class="note">
-                    <a href="#" class="action cvv" title="<?= $block->escapeHtmlAttr(__('What is this?')) ?>" data-mage-init='{"tooltip": {"content": "<?= $_content ?>"}}'><span><?= $block->escapeHtml(__('What is this?')) ?></span></a>
+                <div class="field-tooltip tooltip note toggle">
+                    <span class="field-tooltip-action tooltip-toggle action-cvv" tabindex="0" data-toggle="dropdown">
+                        <span><?= $block->escapeHtml(__('What is this?')) ?></span>
+                    </span>
+                    <div class="tooltip-content" data-target="dropdown" aria-hidden="true">
+                        <img src="<?= $block->escapeUrl($block->getViewFileUrl('Magento_Checkout::cvv.png')) ?>" alt="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" title="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" />
+                    </div>
                 </div>
             </div>
         </div>
