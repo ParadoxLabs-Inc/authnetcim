@@ -27,7 +27,7 @@ class Ach extends \ParadoxLabs\TokenBase\Block\Adminhtml\Customer\Form
     /**
      * @var string
      */
-    protected $_template = 'ParadoxLabs_Authnetcim::customer/form/ach.phtml';
+    protected $_template = 'ParadoxLabs_TokenBase::customer/form/ach.phtml';
 
     /**
      * Swap form template for Accept Hosted vs inline
