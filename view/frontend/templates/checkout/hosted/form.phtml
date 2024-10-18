@@ -97,7 +97,8 @@ $storedCards    = $block->getStoredCards();
         height: 400px;
         border: 0;
     }
-CSS; ?>
+CSS;
+?>
 <?php if (isset($secureRenderer) && $secureRenderer instanceof \Magento\Framework\View\Helper\SecureHtmlRenderer): ?>
     <?= /* @noEscape */ $secureRenderer->renderTag('style', [], $inlineStyle, false) ?>
     <?= /* @noEscape */ $secureRenderer->renderStyleAsTag('display:none', '#payment_form_' . $code) ?>

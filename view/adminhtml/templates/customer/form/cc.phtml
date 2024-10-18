@@ -203,7 +203,8 @@
         /** This is necessary for parsing of mage-data-init elements in the AJAX requests */
         jQuery('#{$code}-form-validate').trigger('contentUpdated');
     });
-JS; ?>
+JS;
+?>
 <?php if (isset($secureRenderer) && $secureRenderer instanceof \Magento\Framework\View\Helper\SecureHtmlRenderer): ?>
     <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $inlineScript, false) ?>
 <?php else: ?>

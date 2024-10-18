@@ -180,7 +180,8 @@
         /** This is necessary for parsing of mage-data-init elements in the AJAX requests */
         jQuery('#{$code}-form-validate').trigger('contentUpdated');
     });
-JS; ?>
+JS;
+?>
 <?php $inlineStyle = <<<CSS
     \#{$code}_iframe {
         width: 100%;
@@ -189,7 +190,8 @@ JS; ?>
         height: 400px;
         border: 0;
     }
-CSS; ?>
+CSS;
+?>
 <?php if (isset($secureRenderer) && $secureRenderer instanceof \Magento\Framework\View\Helper\SecureHtmlRenderer): ?>
     <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $inlineScript, false) ?>
     <?= /* @noEscape */ $secureRenderer->renderTag('style', [], $inlineStyle, false) ?>
