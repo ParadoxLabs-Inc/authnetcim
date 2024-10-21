@@ -2226,7 +2226,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 : $this->helper->getArrayValue($txn, 'lineItems/lineItem'),
             'tax_exempt'               => $this->helper->getArrayValue($txn, 'taxExempt'),
             'expiration_date'          => $this->helper->getArrayValue($txn, 'payment/creditCard/expirationDate'),
-            'customer_email'           => $this->helper->getArrayValue($txn, 'customer/email'),
+            'customer_email'           => str_replace( // Handle reports of Authnet changing + to space in emails
+                ' ',
+                '+',
+                (string)$this->helper->getArrayValue($txn, 'customer/email')
+            ),
             'customer_ip'              => $this->helper->getArrayValue($txn, 'customerIP'),
             'batch_id'                 => $this->helper->getArrayValue($txn, 'batch/batchId'),
             'settlement_time_utc'      => $this->helper->getArrayValue($txn, 'batch/settlementTimeUTC'),
