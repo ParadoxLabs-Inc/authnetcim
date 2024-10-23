@@ -2610,8 +2610,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 ] + $params['customer'];
         }
 
-        // Add billing address? If this is a refund, include in case of required fields.
-        if ($isNewCard === true || (!empty($this->getParameter('billToFirstName') && $isRefund))) {
+        // Add billing address? If this is a refund, include in case of required fields, provided we aren't using a profile
+        if ($isNewCard === true
+            || (!empty($this->getParameter('billToFirstName'))
+                && $isRefund === true
+                && $this->hasParameter('customerPaymentProfileId') === false
+            )) {
             $params['billTo'] = [
                 'firstName'   => $this->getParameter('billToFirstName'),
                 'lastName'    => $this->getParameter('billToLastName'),
