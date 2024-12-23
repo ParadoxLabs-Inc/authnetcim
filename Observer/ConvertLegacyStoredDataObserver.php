@@ -217,6 +217,10 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
     {
         $affectedOrders = 0;
 
+        if (empty($cards)) {
+            return $affectedOrders;
+        }
+
         $orders = $this->orderCollectionFactory->create();
         $orders->addFieldToFilter('ext_customer_id', ['in' => array_keys($cards)]);
 
