@@ -902,7 +902,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         $result = $this->updateHeldTransaction();
-        $result['errors'] = $result['transactionResponse']['errors'] ?: [];
+        $result['errors'] = $result['transactionResponse']['errors'] ?? [];
         $result = $this->getDataFromTransactionResponse($result);
 
         /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
@@ -951,7 +951,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         $result = $this->updateHeldTransaction();
-        $result['errors'] = $result['transactionResponse']['errors'] ?: [];
+        $result['errors'] = $result['transactionResponse']['errors'] ?? [];
         $result = $this->getDataFromTransactionResponse($result);
 
         /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
