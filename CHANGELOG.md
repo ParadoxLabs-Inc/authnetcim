@@ -1,5 +1,12 @@
 # ParadoxLabs_Authnetcim Changelog
 
+## 5.1.3 - Jan 13, 2025
+- Fixed billing address errors when refunding to a stored card.
+- Fixed a slow order query on legacy card import if no cards need to be imported. (Fixes #13; thanks Steven Hoffman)
+- Fixed a PHP 7.1-7.2 compatibility issue (regression in 5.1.0).
+- Fixed payment accept/deny from the admin panel. (Thanks Kyle)
+- Fixed possible transaction error if customer email includes "+" and the API changed that to " " on response.
+
 ## 5.1.2 - Oct 16, 2024
 - Updated SSL certificate bundle.
 - Fixed an invalid template reference with the ACH inline form.
