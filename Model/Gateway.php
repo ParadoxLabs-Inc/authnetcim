@@ -902,12 +902,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         $result = $this->updateHeldTransaction();
-        $result['errors'] = $result['transactionResponse']['errors'] ?? [];
-        $result = $this->getDataFromTransactionResponse($result);
+        $resultData = $this->getDataFromTransactionResponse($result['transactionResponse']);
 
         /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
         $response = $this->responseFactory->create();
-        $response->setData($result + ['is_approved' => false, 'is_denied' => false]);
+        $response->setData($resultData + ['is_approved' => false, 'is_denied' => false]);
 
         if ((int)$response->getResponseCode() !== 1 || $result['messages']['resultCode'] !== 'Ok') {
             $this->helper->log(
@@ -951,12 +950,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         $result = $this->updateHeldTransaction();
-        $result['errors'] = $result['transactionResponse']['errors'] ?? [];
-        $result = $this->getDataFromTransactionResponse($result);
+        $resultData = $this->getDataFromTransactionResponse($result['transactionResponse']);
 
         /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
         $response = $this->responseFactory->create();
-        $response->setData($result + ['is_approved' => false, 'is_denied' => false]);
+        $response->setData($resultData + ['is_approved' => false, 'is_denied' => false]);
 
         if ((int)$response->getResponseCode() !== 2 || $result['messages']['resultCode'] !== 'Ok') {
             $this->helper->log(
