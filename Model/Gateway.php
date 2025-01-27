@@ -564,7 +564,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     public function setBillTo($address)
     {
         if ($address instanceof \Magento\Customer\Api\Data\AddressInterface) {
-        $region = $address->getRegion()->getRegionCode() ?: $address->getRegion()->getRegion();
+            $region = $address->getRegion()->getRegionCode() ?: $address->getRegion()->getRegion();
         } elseif ($address instanceof \Magento\Sales\Api\Data\OrderAddressInterface) {
             $region = $address->getRegionCode() ?: $address->getRegion();
         } else {
@@ -2608,12 +2608,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 ] + $params['customer'];
         }
 
-        // Add billing address? If this is a refund, include in case of required fields, provided we aren't using a profile
-        if ($isNewCard === true
-            || (!empty($this->getParameter('billToFirstName'))
-                && $isRefund === true
-                && $this->hasParameter('customerPaymentProfileId') === false
-            )) {
+        // Add billing address? Cannot be sent alongside profile ID's.
+        if (($isNewCard === true || ($isRefund === true && $this->hasParameter('cardNumber')))
+            && $this->hasParameter('billToFirstName')) {
             $params['billTo'] = [
                 'firstName'   => $this->getParameter('billToFirstName'),
                 'lastName'    => $this->getParameter('billToLastName'),
