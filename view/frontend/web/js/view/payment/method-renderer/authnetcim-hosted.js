@@ -70,7 +70,7 @@ define(
                 quote.billingAddress.subscribe(this.syncBillingAddress.bind(this));
                 quote.paymentMethod.subscribe(this.syncBillingAddress.bind(this));
                 quote.totals.subscribe(this.syncBillingAddress.bind(this))
-                this.billingAddressLine.subscribe(this.checkReinitHostedForm.bind(this));
+                this.billingAddressLine.subscribe(this.initHostedForm.bind(this));
                 this.selectedCard.subscribe(this.checkReinitHostedForm.bind(this));
 
                 this.showIframe = ko.computed(function() {
