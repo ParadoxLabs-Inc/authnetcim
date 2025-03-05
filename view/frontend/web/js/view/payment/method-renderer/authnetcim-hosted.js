@@ -349,7 +349,19 @@ define(
                         this.handleCancel(event.data);
                         break;
                     case "transactResponse":
-                        this.handleResponse(JSON.parse(event.data.response));
+                        try {
+                            var responseData = JSON.parse(event.data.response || false);
+                            this.handleResponse(responseData);
+                        } catch (error) {
+                            console.error('Received unexpected transactResponse', error, event.data.response);
+                            this.handleFailedOrder({
+                                "responseText": JSON.stringify({
+                                    "message": $.mage.__(
+                                        'An error occurred while processing your payment.'
+                                    )
+                                })
+                            });
+                        }
                         break;
                     case 'successfulSave':
                         this.handleSave(event.data);
