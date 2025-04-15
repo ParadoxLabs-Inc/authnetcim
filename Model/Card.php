@@ -41,8 +41,8 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
      * @param \Magento\Framework\Api\AttributeValueFactory $customAttributeFactory
      * @param \ParadoxLabs\TokenBase\Model\Card\Context $cardContext
      * @param \Magento\Sales\Api\OrderPaymentRepositoryInterface $paymentRepository
-     * @param \Magento\Framework\Model\ResourceModel\AbstractResource $resource
-     * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
+     * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
+     * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
      * @param array $data
      */
     public function __construct(
@@ -52,8 +52,8 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
         \Magento\Framework\Api\AttributeValueFactory $customAttributeFactory,
         \ParadoxLabs\TokenBase\Model\Card\Context $cardContext,
         \Magento\Sales\Api\OrderPaymentRepositoryInterface $paymentRepository,
-        \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
-        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
+        ?\Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
+        ?\Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct(

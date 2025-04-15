@@ -249,7 +249,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         \Magento\Framework\Module\Dir $moduleDir,
         \Magento\Framework\Registry $registry,
         array $data = [],
-        \Magento\Framework\HTTP\ClientInterfaceFactory $communicatorFactory = null
+        ?\Magento\Framework\HTTP\ClientInterfaceFactory $communicatorFactory = null
     ) {
         $this->moduleDir = $moduleDir;
         $this->registry = $registry;
