@@ -1,5 +1,14 @@
 # ParadoxLabs_Authnetcim Changelog
 
+## 5.1.4 - Apr 23, 2025
+- Added support for Magento 2.4.8.
+- Fixed error handling if Accept Hosted returns an invalid JSON response.
+- Fixed Hosted form failing to reload on address or totals change on Luma checkout. (#16)
+- Fixed Hosted form reloading during order submit.
+- Fixed issue where customer id was not being passed into Authorize.net. (#17) (Thanks Chris Huffman)
+- Fixed PHP 8.4 compatibility.
+- Fixed sending billTo data when no card data is present.
+
 ## 5.1.3 - Jan 13, 2025
 - Fixed billing address errors when refunding to a stored card.
 - Fixed a slow order query on legacy card import if no cards need to be imported. (Fixes #13; thanks Steven Hoffman)
