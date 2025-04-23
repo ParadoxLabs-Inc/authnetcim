@@ -1687,9 +1687,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             unset($params['transactionRequest']['profile']);
         }
 
-        if ($this->getParameter('email') !== null || $this->getParameter('customerId') !== null) {
+        if ($this->getParameter('email') !== null || $this->getParameter('merchantCustomerId') !== null) {
             $params['transactionRequest']['customer'] = [
-                'id' => $this->getParameter('customerId'),
+                'id' => $this->getParameter('merchantCustomerId'),
                 'email' => $this->getParameter('email'),
             ];
         }
