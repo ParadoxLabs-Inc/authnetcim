@@ -96,10 +96,11 @@ class NewAch extends \ParadoxLabs\TokenBase\Gateway\Validator\NewAch
         }
 
         $order = $payment->getOrder();
+        $uncoveredAmount = (float)$order->getBaseGrandTotal() - (float)$transactionDetails['amount'];
 
         if ($transactionDetails['customer_email'] !== $order->getCustomerEmail()
             || $transactionDetails['invoice_number'] !== $order->getIncrementId()
-            || $transactionDetails['amount'] < $order->getBaseGrandTotal()) {
+            || $uncoveredAmount > 0.001) {
             throw new LocalizedException(__('Transaction failed, please try again.'));
         }
 

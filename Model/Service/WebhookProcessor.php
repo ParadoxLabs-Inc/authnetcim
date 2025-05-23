@@ -406,7 +406,8 @@ class WebhookProcessor
 
         // Note: Invoices don't have a way to specify an amount independent of items/totals calculation. Could
         // theoretically calculate it ourselves, but not flawlessly. So: Full captures only.
-        if ($txnDetails['amount_settled'] < $order->getTotalDue()) {
+        $uncoveredAmount = (float)$order->getTotalDue() - (float)$txnDetails['amount_settled'];
+        if ($uncoveredAmount > 0.001) {
             $this->helper->log(
                 $this->configProvider->getCode(),
                 sprintf(
