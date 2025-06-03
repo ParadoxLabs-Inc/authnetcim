@@ -450,6 +450,10 @@ class WebhookProcessor
         $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_OFFLINE);
         $invoice->register();
 
+        $invoice->setTransactionId($txnDetails['transaction_id']);
+        $order->getPayment()->setLastTransId($txnDetails['transaction_id']);
+        // TODO: Add capture child transaction of $authTxn, and mark $authTxn closed?
+
         $order->addCommentToStatusHistory(
             __(
                 '$%1 captured via Authorize.net webhook (transaction ID %2).',
