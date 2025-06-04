@@ -311,7 +311,8 @@ class WebhookProcessor
             if ($eventType === 'net.authorize.payment.fraud.approved' && $order->isFraudDetected()
                 && $responseCode === 1) {
                 $this->markApproved($order, $txnDetails);
-            } elseif ($order->isFraudDetected() && in_array($responseCode, [2,3], true)) {
+            } elseif (($eventType === 'net.authorize.payment.fraud.declined' || in_array($responseCode, [2,3], true))
+                && $order->isFraudDetected()) {
                 $this->markDeclined($order, $txnDetails);
             } elseif ($eventType === 'net.authorize.payment.priorAuthCapture.created' && $order->canInvoice()) {
                 $this->markCaptured($order, $txnDetails);
