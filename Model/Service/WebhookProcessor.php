@@ -351,19 +351,20 @@ class WebhookProcessor
             true
         );
 
-        $this->orderRepository->save($order);
+        if ($txnDetails->getTransactionType() === 'auth_capture'
+            || $txnDetails->getData('amount_settled') > 0) {
+            $this->markCaptured($order, $txnDetails);
+            return;
+        }
 
         if ($txnDetails['transaction_type'] === 'auth_only') {
             $this->helper->log(
                 $this->configProvider->getCode(),
                 sprintf('Marking order %s authorized', $order->getIncrementId())
             );
-        } else {
-            $this->helper->log(
-                $this->configProvider->getCode(),
-                sprintf('Marking order %s paid', $order->getIncrementId())
-            );
         }
+
+        $this->orderRepository->save($order);
     }
 
     /**
