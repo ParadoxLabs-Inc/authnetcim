@@ -357,7 +357,7 @@ class WebhookProcessor
             return;
         }
 
-        if ($txnDetails['transaction_type'] === 'auth_only') {
+        if ($txnDetails->getTransactionType() === 'auth_only') {
             $this->helper->log(
                 $this->configProvider->getCode(),
                 sprintf('Marking order %s authorized', $order->getIncrementId())
