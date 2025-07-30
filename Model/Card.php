@@ -21,6 +21,7 @@
 namespace ParadoxLabs\Authnetcim\Model;
 
 use Magento\Payment\Gateway\Command\CommandException;
+use Magento\Sales\Model\Order\Payment;
 
 /**
  * Authorize.Net CIM card model
@@ -256,6 +257,10 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $gateway->setParameter('merchantCustomerId', $this->getCustomerId());
             $gateway->setParameter('email', $this->getCustomerEmail());
 
+            if ($this->useMultipleCustomerProfiles()) {
+                $gateway->setParameter('description', 'Magento ' . date('c'));
+            }
+
             $profileId = $gateway->createCustomerProfile();
 
             if (!empty($profileId)) {
@@ -289,6 +294,55 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
     }
 
     /**
+     * Get existing customer profile ID if possible, or else create one
+     *
+     * @return $this
+     * @throws \Magento\Payment\Gateway\Command\CommandException
+     */
+    protected function getOrCreateCustomerProfileId(): self
+    {
+        // Does the payment already have a customer profile? If so, use it.
+        $profileId = $this->getInfoInstance() instanceof Payment
+            ? $this->getInfoInstance()->getAdditionalInformation('profile_id')
+            : null;
+
+        // Are we using one profile per customer? Does the customer have a profile ID? Try to import it.
+        if (empty($profileId) && $this->useMultipleCustomerProfiles() === false) {
+            $profileIdAttr = $this->getCustomer()->getCustomAttribute('authnetcim_profile_id');
+            if ($profileIdAttr instanceof \Magento\Framework\Api\AttributeInterface) {
+                $profileId = $profileIdAttr->getValue();
+            }
+        }
+
+        // If there's still no profile ID, create one.
+        if (empty($profileId)) {
+            $this->createCustomerProfile();
+
+            $profileId = $this->getProfileId();
+
+            $this->getInfoInstance()->setAdditionalInformation('profile_id', $profileId);
+        }
+
+        $this->setProfileId($profileId);
+
+        return $this;
+    }
+
+    /**
+     * Check if we should use multiple CIM customer profiles per customer.
+     *
+     * Authorize.net CIM limits each CIM profile to 10 stored cards. Problematic for frequent customers. This avoids
+     * the limit by creating a separate profile for each card. There's no limit on the number of customer profiles.
+     *
+     * @return bool
+     * @throws \Magento\Payment\Gateway\Command\CommandException
+     */
+    protected function useMultipleCustomerProfiles(): bool
+    {
+        return (bool)$this->getMethodInstance()->getConfigData('use_multiple_customer_profiles');
+    }
+
+    /**
      * Attempt to create a CIM payment profile
      *
      * @param bool $retry
@@ -316,18 +370,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
          * Make sure we have a customer profile, first off.
          */
         if ($this->getProfileId() == '') {
-            // Does the customer have a profile ID? Try to import it.
-            $profileId = $this->getCustomer()->getCustomAttribute('authnetcim_profile_id');
-            if ($profileId instanceof \Magento\Framework\Api\AttributeInterface) {
-                $profileId = $profileId->getValue();
-            }
-
-            if (!empty($profileId)) {
-                $this->setProfileId($profileId);
-            } else {
-                // No profile ID, so create one.
-                $this->createCustomerProfile();
-            }
+            $this->getOrCreateCustomerProfileId();
         }
 
         /**

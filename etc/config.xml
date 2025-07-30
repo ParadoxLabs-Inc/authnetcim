@@ -40,6 +40,7 @@
                 <accent_color>#1979C3</accent_color>
                 <enable_hosted_captcha>1</enable_hosted_captcha>
                 <hosted_custom_communicator_url />
+                <use_multiple_customer_profiles>1</use_multiple_customer_profiles>
                 <client_key />
                 <group>tokenbase</group>
                 <!-- Feature flags -->
@@ -97,6 +98,7 @@
                 <verify_ssl>1</verify_ssl>
                 <enable_webhooks>0</enable_webhooks>
                 <hosted_custom_communicator_url />
+                <use_multiple_customer_profiles>1</use_multiple_customer_profiles>
                 <group>tokenbase</group>
                 <!-- Feature flags -->
                 <can_order>1</can_order>
