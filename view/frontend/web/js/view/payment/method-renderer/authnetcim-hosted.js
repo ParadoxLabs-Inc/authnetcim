@@ -160,6 +160,7 @@ define(
              */
             checkReinitHostedForm: function() {
                 if (this.iframeInitialized === false
+                    && this.placeOrderAllowedFlag() === true
                     && (this.selectedCard() === null || this.selectedCard() === undefined)
                     && this.billingAddressLine()
                     && this.agreementsValid() === true) {

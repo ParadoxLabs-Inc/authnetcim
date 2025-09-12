@@ -23,6 +23,7 @@ namespace ParadoxLabs\Authnetcim\Model\Service;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\Data\TransactionInterface;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
+use ParadoxLabs\TokenBase\Model\Gateway\Response;
 
 class WebhookProcessor
 {
@@ -91,6 +92,8 @@ class WebhookProcessor
      */
     protected $achConfigProvider;
 
+    protected \Magento\Framework\Event\ManagerInterface $eventManager;
+
     /**
      * WebhookProcessor constructor.
      *
@@ -108,6 +111,7 @@ class WebhookProcessor
      * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider $achConfigProvider
+     * @param \Magento\Framework\Event\ManagerInterface $eventManager
      */
     public function __construct(
         \ParadoxLabs\TokenBase\Helper\Data $helper,
@@ -123,7 +127,8 @@ class WebhookProcessor
         \Magento\Sales\Api\CreditmemoManagementInterface $creditmemoService,
         \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider $achConfigProvider
+        \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider $achConfigProvider,
+        \Magento\Framework\Event\ManagerInterface $eventManager
     ) {
         $this->helper = $helper;
         $this->request = $request;
@@ -139,6 +144,7 @@ class WebhookProcessor
         $this->methodFactory = $methodFactory;
         $this->storeManager = $storeManager;
         $this->achConfigProvider = $achConfigProvider;
+        $this->eventManager = $eventManager;
     }
 
     /**
@@ -291,10 +297,10 @@ class WebhookProcessor
 
         if (!empty($transactionId) && in_array($eventType, self::TRANSACTION_EVENTS, true)) {
             $gateway->setParameter('transId', $transactionId);
-            $txnDetails = $gateway->getTransactionDetails();
+            $txnDetails = $gateway->getTransactionDetailsObject();
 
             if ($eventType === 'net.authorize.payment.refund.created') {
-                $transactionId = $txnDetails['reference_transaction_id'];
+                $transactionId = $txnDetails->getData('reference_transaction_id');
             }
 
             $order = $this->getOrderByTxnId($transactionId);
@@ -305,7 +311,8 @@ class WebhookProcessor
             if ($eventType === 'net.authorize.payment.fraud.approved' && $order->isFraudDetected()
                 && $responseCode === 1) {
                 $this->markApproved($order, $txnDetails);
-            } elseif ($order->isFraudDetected() && in_array($responseCode, [2,3], true)) {
+            } elseif (($eventType === 'net.authorize.payment.fraud.declined' || in_array($responseCode, [2,3], true))
+                && $order->isFraudDetected()) {
                 $this->markDeclined($order, $txnDetails);
             } elseif ($eventType === 'net.authorize.payment.priorAuthCapture.created' && $order->canInvoice()) {
                 $this->markCaptured($order, $txnDetails);
@@ -313,7 +320,7 @@ class WebhookProcessor
                 $this->markRefunded($order, $txnDetails);
             }
 
-            $this->helper->log($this->configProvider->getCode(), json_encode($txnDetails));
+            $this->helper->log($this->configProvider->getCode(), json_encode($txnDetails->getData()));
         }
     }
 
@@ -321,14 +328,14 @@ class WebhookProcessor
      * Mark the given order/transaction approved
      *
      * @param \Magento\Sales\Api\Data\OrderInterface $order
-     * @param array $txnDetails
+     * @param \ParadoxLabs\TokenBase\Model\Gateway\Response $txnDetails
      * @return void
      */
-    protected function markApproved(OrderInterface $order, array $txnDetails): void
+    protected function markApproved(OrderInterface $order, Response $txnDetails): void
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
         $payment = $order->getPayment();
-        $payment->setData('parent_transaction_id', $txnDetails['transaction_id']);
+        $payment->setData('parent_transaction_id', $txnDetails->getTransactionId());
 
         $transaction = $payment->getAuthorizationTransaction();
         $transaction->setAdditionalInformation('is_transaction_fraud', false);
@@ -338,35 +345,36 @@ class WebhookProcessor
 
         $order->addCommentToStatusHistory(
             __(
-                'Transaction %1 approved via Authorize.net webhook.',
-                $txnDetails['transaction_id']
+                'Transaction "%1" approved via Authorize.net webhook.',
+                $txnDetails->getTransactionId()
             ),
             true
         );
 
-        $this->orderRepository->save($order);
+        if ($txnDetails->getTransactionType() === 'auth_capture'
+            || $txnDetails->getData('amount_settled') > 0) {
+            $this->markCaptured($order, $txnDetails);
+            return;
+        }
 
-        if ($txnDetails['transaction_type'] === 'auth_only') {
+        if ($txnDetails->getTransactionType() === 'auth_only') {
             $this->helper->log(
                 $this->configProvider->getCode(),
                 sprintf('Marking order %s authorized', $order->getIncrementId())
             );
-        } else {
-            $this->helper->log(
-                $this->configProvider->getCode(),
-                sprintf('Marking order %s paid', $order->getIncrementId())
-            );
         }
+
+        $this->orderRepository->save($order);
     }
 
     /**
      * Mark the given order/transaction declined
      *
      * @param \Magento\Sales\Api\Data\OrderInterface $order
-     * @param array $txnDetails
+     * @param \ParadoxLabs\TokenBase\Model\Gateway\Response $txnDetails
      * @return void
      */
-    protected function markDeclined(OrderInterface $order, array $txnDetails): void
+    protected function markDeclined(OrderInterface $order, Response $txnDetails): void
     {
         $this->helper->log(
             $this->configProvider->getCode(),
@@ -375,7 +383,7 @@ class WebhookProcessor
 
         /** @var \Magento\Sales\Model\Order\Payment $payment */
         $payment = $order->getPayment();
-        $payment->setData('parent_transaction_id', $txnDetails['transaction_id']);
+        $payment->setData('parent_transaction_id', $txnDetails->getTransactionId());
         $payment->setIsTransactionDenied(true);
         $payment->getAuthorizationTransaction()->closeAuthorization();
         $payment->update(false);
@@ -384,8 +392,8 @@ class WebhookProcessor
 
         $order->addCommentToStatusHistory(
             __(
-                'Transaction %1 declined via Authorize.net webhook.',
-                $txnDetails['transaction_id']
+                'Transaction "%1" declined via Authorize.net webhook.',
+                $txnDetails->getTransactionId()
             ),
             true
         );
@@ -396,24 +404,25 @@ class WebhookProcessor
      * Mark the given order/transaction captured
      *
      * @param \Magento\Sales\Api\Data\OrderInterface $order
-     * @param array $txnDetails
+     * @param \ParadoxLabs\TokenBase\Model\Gateway\Response $txnDetails
      * @return void
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    protected function markCaptured(OrderInterface $order, array $txnDetails): void
+    protected function markCaptured(OrderInterface $order, Response $txnDetails): void
     {
         /** @var \Magento\Sales\Model\Order $order */
 
         // Note: Invoices don't have a way to specify an amount independent of items/totals calculation. Could
         // theoretically calculate it ourselves, but not flawlessly. So: Full captures only.
-        if ($txnDetails['amount_settled'] < $order->getTotalDue()) {
+        $uncoveredAmount = (float)$order->getTotalDue() - (float)$txnDetails->getData('amount_settled');
+        if ($uncoveredAmount > 0.001) {
             $this->helper->log(
                 $this->configProvider->getCode(),
                 sprintf(
                     'Order %s value is %0.2f; only %0.2f was captured. Unable to mark invoiced.',
                     $order->getIncrementId(),
                     $order->getGrandTotal(),
-                    $txnDetails['amount_settled']
+                    $txnDetails->getData('amount_settled')
                 )
             );
 
@@ -421,8 +430,8 @@ class WebhookProcessor
                 __(
                     'Authorize.net webhook reports $%1 was captured in transaction ID %2, but the total due is $%3. The'
                     . ' order must be invoiced manually to reconcile records.',
-                    $txnDetails['amount_settled'],
-                    $txnDetails['transaction_id'],
+                    $txnDetails->getData('amount_settled'),
+                    $txnDetails->getTransactionId(),
                     $order->getTotalDue()
                 )
             );
@@ -433,7 +442,7 @@ class WebhookProcessor
 
         $authTxn = $this->getTransaction(
             $order,
-            $txnDetails['transaction_id'],
+            $txnDetails->getTransactionId(),
             TransactionInterface::TYPE_AUTH
         );
         if ($authTxn->getTxnId() && $authTxn->getIsClosed()) {
@@ -446,15 +455,47 @@ class WebhookProcessor
             sprintf('Marking order %s paid', $order->getIncrementId())
         );
 
+        /** @var \Magento\Sales\Model\Order\Payment $payment */
+        $payment = $order->getPayment();
+
         $invoice = $this->invoiceService->prepareInvoice($order);
         $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_OFFLINE);
         $invoice->register();
+        $invoice->setTransactionId($txnDetails->getTransactionId());
+        $invoice->setIsPaid(true);
+
+        $payment->setTransactionId($txnDetails->getTransactionId());
+        $payment->setLastTransId($txnDetails->getTransactionId());
+        $payment->setShouldCloseParentTransaction(true);
+
+        $this->eventManager->dispatch(
+            'sales_order_payment_capture',
+            ['payment' => $payment, 'invoice' => $invoice]
+        );
+
+        $payment->setAdditionalInformation(
+            array_replace_recursive($payment->getAdditionalInformation() ?? [], $txnDetails->getData())
+        );
+        $payment->setTransactionAdditionalInfo(
+            \Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS,
+            $txnDetails->getData()
+        );
+        $payment->setData(
+            'base_amount_paid_online',
+            $payment->getBaseAmountPaidOnline() + $txnDetails->getData('amount_settled')
+        );
+
+        $payment->addTransaction(
+            \Magento\Sales\Model\Order\Payment\Transaction::TYPE_CAPTURE,
+            $order,
+            false
+        );
 
         $order->addCommentToStatusHistory(
             __(
-                '$%1 captured via Authorize.net webhook (transaction ID %2).',
-                $txnDetails['amount_settled'],
-                $txnDetails['transaction_id']
+                '$%1 captured via Authorize.net webhook. Transaction ID: "%2"',
+                $txnDetails->getData('amount_settled'),
+                $txnDetails->getTransactionId()
             ),
             true
         );
@@ -467,10 +508,10 @@ class WebhookProcessor
      * Mark the given order/transaction refunded
      *
      * @param \Magento\Sales\Api\Data\OrderInterface $order
-     * @param array $txnDetails
+     * @param \ParadoxLabs\TokenBase\Model\Gateway\Response $txnDetails
      * @return void
      */
-    protected function markRefunded(OrderInterface $order, array $txnDetails): void
+    protected function markRefunded(OrderInterface $order, Response $txnDetails): void
     {
         /** @var \Magento\Sales\Model\Order $order */
 
@@ -484,22 +525,23 @@ class WebhookProcessor
 
         // NB: Refunds don't have a way to specify an amount independent of items/totals calculation. Could
         // theoretically calculate it ourselves, but not flawlessly. So: Full refunds only.
-        if ($txnDetails['amount'] < $amountPaid) {
+        $uncoveredAmount = (float)$amountPaid - (float)$txnDetails->getData('amount');
+        if ($uncoveredAmount > 0.001) {
             $this->helper->log(
                 $this->configProvider->getCode(),
                 sprintf(
                     '%0.2f is paid on the order or invoice; only %0.2f was refunded. Unable to mark refunded.',
                     $amountPaid,
-                    $txnDetails['amount']
+                    $txnDetails->getData('amount')
                 )
             );
 
             $order->addCommentToStatusHistory(
                 __(
-                    'Authorize.net webhook reports $%1 was refunded in transaction ID %2, but the amount paid is $%3.'
+                    'Authorize.net webhook reports $%1 was refunded in transaction ID "%2", but the amount paid is $%3.'
                     . ' The order must be refunded manually to reconcile records.',
-                    $txnDetails['amount'],
-                    $txnDetails['transaction_id'],
+                    $txnDetails->getData('amount'),
+                    $txnDetails->getTransactionId(),
                     $amountPaid
                 )
             );
@@ -510,7 +552,7 @@ class WebhookProcessor
 
         $capture = $this->getTransaction(
             $order,
-            $txnDetails['reference_transaction_id'],
+            $txnDetails->getData('reference_transaction_id'),
             TransactionInterface::TYPE_CAPTURE
         );
         if ($capture->getTxnId() && $capture->getIsClosed()) {
@@ -525,9 +567,9 @@ class WebhookProcessor
 
         $order->addCommentToStatusHistory(
             __(
-                '$%1 refunded via Authorize.net webhook (transaction ID %2).',
-                $txnDetails['amount'],
-                $txnDetails['transaction_id']
+                '$%1 refunded via Authorize.net webhook. Transaction ID: "%2"',
+                $txnDetails->getData('amount'),
+                $txnDetails->getTransactionId()
             ),
             true
         );

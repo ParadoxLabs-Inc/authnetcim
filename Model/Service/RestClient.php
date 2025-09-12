@@ -73,7 +73,7 @@ class RestClient
         ConfigProvider $config,
         \Magento\Framework\HTTP\ZendClientFactory $httpClientFactory,
         \Magento\Framework\Module\Dir $moduleDir,
-        \ParadoxLabs\Authnetcim\Model\Service\RestClient\CurlFactory $curlClientFactory = null
+        ?\ParadoxLabs\Authnetcim\Model\Service\RestClient\CurlFactory $curlClientFactory = null
     ) {
         $this->helper = $helper;
         $this->config = $config;
