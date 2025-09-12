@@ -105,6 +105,12 @@ class FrontendRequest extends AbstractRequestHandler
      */
     public function getEmail(): ?string
     {
+        // Check for email in billing address from request first
+        $billingFromRequest = $this->request->getParam('billing');
+        if (!empty($billingFromRequest) && !empty($billingFromRequest['email'])) {
+            return $billingFromRequest['email'];
+        }
+
         if (!empty($this->getQuote()->getBillingAddress()->getEmail())) {
             return $this->getQuote()->getBillingAddress()->getEmail();
         }
