@@ -20,6 +20,7 @@
 
 namespace ParadoxLabs\Authnetcim\Model\Service;
 
+use Magento\Sales\Api\Data\InvoiceInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\Data\TransactionInterface;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
@@ -336,12 +337,19 @@ class WebhookProcessor
         /** @var \Magento\Sales\Model\Order\Payment $payment */
         $payment = $order->getPayment();
         $payment->setData('parent_transaction_id', $txnDetails->getTransactionId());
+        $payment->setTransactionId($txnDetails->getTransactionId());
 
         $transaction = $payment->getAuthorizationTransaction();
         $transaction->setAdditionalInformation('is_transaction_fraud', false);
 
         $payment->setIsTransactionApproved(true);
         $payment->update(false);
+
+        if ($txnDetails->getTransactionType() === 'auth_capture'
+            || $txnDetails->getData('amount_settled') > 0) {
+            $this->markCaptured($order, $txnDetails);
+            return;
+        }
 
         $order->addCommentToStatusHistory(
             __(
@@ -350,12 +358,6 @@ class WebhookProcessor
             ),
             true
         );
-
-        if ($txnDetails->getTransactionType() === 'auth_capture'
-            || $txnDetails->getData('amount_settled') > 0) {
-            $this->markCaptured($order, $txnDetails);
-            return;
-        }
 
         if ($txnDetails->getTransactionType() === 'auth_only') {
             $this->helper->log(
@@ -457,21 +459,9 @@ class WebhookProcessor
 
         /** @var \Magento\Sales\Model\Order\Payment $payment */
         $payment = $order->getPayment();
-
-        $invoice = $this->invoiceService->prepareInvoice($order);
-        $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_OFFLINE);
-        $invoice->register();
-        $invoice->setTransactionId($txnDetails->getTransactionId());
-        $invoice->setIsPaid(true);
-
         $payment->setTransactionId($txnDetails->getTransactionId());
         $payment->setLastTransId($txnDetails->getTransactionId());
         $payment->setShouldCloseParentTransaction(true);
-
-        $this->eventManager->dispatch(
-            'sales_order_payment_capture',
-            ['payment' => $payment, 'invoice' => $invoice]
-        );
 
         $payment->setAdditionalInformation(
             array_replace_recursive($payment->getAdditionalInformation() ?? [], $txnDetails->getData())
@@ -500,7 +490,6 @@ class WebhookProcessor
             true
         );
 
-        $this->invoiceRepository->save($invoice);
         $this->orderRepository->save($order);
     }
 
