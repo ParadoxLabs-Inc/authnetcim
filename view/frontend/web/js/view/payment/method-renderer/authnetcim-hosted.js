@@ -245,6 +245,7 @@ define(
                 // There's an awkward break between 400-750px; set max width to avoid scrolling.
                 if (iframe.width() > 400 && iframe.width() < 750) {
                     iframe.css('max-width', '400px');
+                    iframe.css('margin', '0 auto');
                 }
                 iframe.css('width', '100%');
                 iframe.css('min-width', '300px');
