@@ -21,6 +21,7 @@
 namespace ParadoxLabs\Authnetcim\Model\Ach;
 
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Payment\Gateway\Command\CommandException;
 
 /**
  * Authorize.Net CIM API Gateway - custom built for perfection.
@@ -80,5 +81,70 @@ class Gateway extends \ParadoxLabs\Authnetcim\Model\Gateway
         }
 
         return false;
+    }
+
+    /**
+     * Run a refund transaction for $amount with the given payment info
+     *
+     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param float $amount
+     * @param string $transactionId
+     * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
+     * @throws CommandException
+     */
+    public function refund(\Magento\Payment\Model\InfoInterface $payment, $amount, $transactionId = null)
+    {
+        // Send last4 values for verification of ACH refunds
+        if ($payment->getMethod() === ConfigProvider::CODE) {
+            if ($payment->getData('echeck_account_type') !== 'businessChecking') {
+                $this->setParameter('echeckType', 'PPD');
+            } else {
+                $this->setParameter('echeckType', 'CCD');
+            }
+
+            $this->setParameter('nameOnAccount', $payment->getData('echeck_account_name'));
+            $this->setParameter('bankName', $payment->getData('echeck_bank_name'));
+            $this->setParameter('accountType', $payment->getData('echeck_account_type'));
+            $this->setParameter(
+                'routingNumber',
+                'XXXX' . substr($payment->getData('echeck_routing_number'), -4)
+            );
+            $this->setParameter(
+                'accountNumber',
+                'XXXX' . substr($payment->getData('cc_last_4'), -4)
+            );
+        }
+
+        return parent::refund(
+            $payment,
+            $amount,
+            $transactionId
+        );
+    }
+
+    /**
+     * Add refund payment info to a createTransaction API request's parameters.
+     *
+     * Split out to reduce that method's cyclomatic complexity.
+     *
+     * @param array $params
+     * @return array
+     */
+    protected function createTransactionAddRefundInfo($params)
+    {
+        if ($this->hasParameter('accountNumber')) {
+            $params['payment'] = [
+                'bankAccount' => [
+                    'accountType'   => $this->getParameter('accountType'),
+                    'routingNumber' => $this->getParameter('routingNumber'),
+                    'accountNumber' => $this->getParameter('accountNumber'),
+                    'nameOnAccount' => $this->getParameter('nameOnAccount'),
+                    'echeckType'    => $this->getParameter('echeckType'),
+                    'bankName'      => $this->getParameter('bankName'),
+                ],
+            ];
+        }
+
+        return $params;
     }
 }
