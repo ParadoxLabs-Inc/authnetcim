@@ -233,4 +233,21 @@ class FrontendRequest extends AbstractRequestHandler
 
         $this->paymentResource->save($payment);
     }
+
+    /**
+     * Clear the stored profile ID for the current session/context.
+     *
+     * @return void
+     */
+    protected function clearProfileId(): void
+    {
+        if ($this->request->getParam('source') === 'paymentinfo') {
+            $this->customerSession->unsetData('authnetcim_profile_id');
+
+            return;
+        }
+
+        $payment = $this->checkoutSession->getQuote()->getPayment();
+        $payment->unsAdditionalInformation('profile_id');
+    }
 }

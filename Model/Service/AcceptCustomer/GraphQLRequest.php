@@ -342,4 +342,21 @@ class GraphQLRequest extends AbstractRequestHandler
             );
         }
     }
+
+    /**
+     * Clear the stored profile ID for the current session/context.
+     *
+     * @return void
+     */
+    protected function clearProfileId(): void
+    {
+        $this->profileId = null;
+
+        if ($this->graphQlArgs['source'] === 'paymentinfo') {
+            return;
+        }
+
+        $payment = $this->getQuote()->getPayment();
+        $payment->unsAdditionalInformation('profile_id');
+    }
 }

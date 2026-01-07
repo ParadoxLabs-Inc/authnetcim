@@ -148,12 +148,38 @@ abstract class AbstractRequestHandler
     /**
      * Get hosted profile page request token
      *
+     * @return string
      * @throws \Magento\Framework\Exception\InputException
      * @throws \Magento\Framework\Exception\StateException
      * @throws \Magento\Payment\Gateway\Command\CommandException
      * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getToken(): string
+    {
+        try {
+            return $this->fetchToken();
+        } catch (\Magento\Framework\Exception\InputException $e) {
+            // Check for stale profile error from Authorize.Net and retry once
+            if (stripos($e->getMessage(), 'record cannot be found') !== false) {
+                $this->clearProfileId();
+
+                return $this->fetchToken();
+            }
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Fetch hosted profile page request token from gateway.
+     *
+     * @return string
+     * @throws \Magento\Framework\Exception\InputException
+     * @throws \Magento\Framework\Exception\StateException
+     * @throws \Magento\Payment\Gateway\Command\CommandException
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    protected function fetchToken(): string
     {
         $method = $this->getMethod();
 
@@ -299,4 +325,11 @@ abstract class AbstractRequestHandler
      * @return void
      */
     abstract protected function saveCardToQuote(CardInterface $card): void;
+
+    /**
+     * Clear the stored profile ID for the current session/context.
+     *
+     * @return void
+     */
+    abstract protected function clearProfileId(): void;
 }
