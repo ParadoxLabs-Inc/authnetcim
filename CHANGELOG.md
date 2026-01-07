@@ -1,5 +1,19 @@
 # ParadoxLabs_Authnetcim Changelog
 
+## 5.2.0 - Jan 7, 2026
+- Added ability to use a different CIM customer profile for each new checkout, to bypass 10-payment-profile limit errors.
+- Added intermediate star certificate (DigiCert SHA2 Secure Server CA) to SSL bundle.
+- Changed GraphQL to hard dependency, removing compatibility for Magento 2.2.
+- Fixed ACH refund to reference masked account data when possible for hosted form compatibility.
+- Fixed checkout to reload hosted form if guest email changes. (#20, #21) (Thanks Chris)
+- Fixed hosted and webhook transaction amount comparisons to handle string versus float values and precision. (#18)
+- Fixed hosted form margin and positioning on 400-740px viewport width.
+- Fixed post-auth transaction fraud rejection via webhook failing to cancel the Magento order.
+- Fixed "record cannot be found" error on hosted form init if Authorize.net account was changed mid-session. (#8)
+- Fixed webhook capture to set invoice transaction ID after an external capture.
+- Fixed webhook transaction approval to invoice when the payment action is set to authorize and capture.
+- Removed Entrust chain certificates from cert bundle.
+
 ## 5.1.4 - Apr 23, 2025
 - Added support for Magento 2.4.8.
 - Fixed error handling if Accept Hosted returns an invalid JSON response.
