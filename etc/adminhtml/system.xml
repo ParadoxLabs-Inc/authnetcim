@@ -202,6 +202,11 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, when you create a partial invoice, we will reauthorize any outstanding balance on the order. This helps guarantee funds, but can cause multiple holds on the card until transactions settle.</comment>
                 </field>
+                <field id="use_multiple_customer_profiles" translate="label comment" type="select" sortOrder="5025" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Use multiple CIM customer profiles</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If yes, a new CIM profile will be created each time a customer saves a new card. This prevents "10 payment profiles" errors for frequent customers. (Always yes for Hosted forms)</comment>
+                </field>
                 <field id="savecard_opt_out" translate="label comment" type="select" sortOrder="5030" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Auto-select 'save for next time'</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
@@ -387,6 +392,11 @@
                     <label>Reauthorize on Partial Invoice</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If yes, when you create a partial invoice, we will reauthorize any outstanding balance on the order. This helps guarantee funds, but can cause multiple holds on the card until transactions settle.</comment>
+                </field>
+                <field id="use_multiple_customer_profiles" translate="label comment" type="select" sortOrder="5015" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Use multiple CIM customer profiles</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If yes, a new CIM profile will be created each time a customer saves a new card. This prevents "10 payment profiles" errors for frequent customers. (Always yes for Hosted forms)</comment>
                 </field>
                 <field id="savecard_opt_out" translate="label comment" type="select" sortOrder="5020" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Auto-select 'save for next time'</label>
