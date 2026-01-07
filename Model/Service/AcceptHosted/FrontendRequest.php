@@ -78,21 +78,27 @@ class FrontendRequest extends AbstractRequestHandler
      */
     public function getCustomerProfileId(): string
     {
-        $payment = $this->checkoutSession->getQuote()->getPayment();
+        $payment    = $this->checkoutSession->getQuote()->getPayment();
+        $email      = $this->getEmail();
+        $customerId = $this->getCustomerId();
 
-        if ($payment->hasAdditionalInformation('profile_id')) {
+        if ($payment->hasAdditionalInformation('profile_id')
+            && $payment->getAdditionalInformation('email') === $email
+            && $payment->getAdditionalInformation('merchantCustomerId') === $customerId) {
             return $payment->getAdditionalInformation('profile_id');
         }
 
         /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
         $gateway = $this->getMethod()->gateway();
-        $gateway->setParameter('email', $this->getEmail());
-        $gateway->setParameter('merchantCustomerId', $this->getCustomerId());
+        $gateway->setParameter('email', $email);
+        $gateway->setParameter('merchantCustomerId', $customerId);
         $gateway->setParameter('description', 'Magento ' . date('c'));
 
         $profileId = $gateway->createCustomerProfile();
 
         $payment->setAdditionalInformation('profile_id', $profileId);
+        $payment->setAdditionalInformation('email', $email);
+        $payment->setAdditionalInformation('merchantCustomerId', $customerId);
         $this->paymentResource->save($payment);
 
         return (string)$profileId;
@@ -105,6 +111,18 @@ class FrontendRequest extends AbstractRequestHandler
      */
     public function getEmail(): ?string
     {
+        // If we're logged in, go straight to the quote data.
+        if ((int)$this->getCustomerId() > 0) {
+            return $this->getQuote()->getBillingAddress()->getEmail();
+        }
+
+        // Check for email in billing address from request first
+        $billingFromRequest = $this->request->getParam('billing');
+        if (!empty($billingFromRequest) && !empty($billingFromRequest['email'])) {
+            return $billingFromRequest['email'];
+        }
+
+        // Then check existing quote billing address data
         if (!empty($this->getQuote()->getBillingAddress()->getEmail())) {
             return $this->getQuote()->getBillingAddress()->getEmail();
         }

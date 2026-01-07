@@ -152,7 +152,11 @@ define(
                     return;
                 }
 
-                this.billingAddressLine(this.getAddressLine(quote.billingAddress()) + '|' + quote.totals().grand_total);
+                this.billingAddressLine(
+                    this.getAddressLine(quote.billingAddress()) + '|'
+                    + quote.totals().grand_total + '|'
+                    + quote.guestEmail
+                );
             },
 
             /**

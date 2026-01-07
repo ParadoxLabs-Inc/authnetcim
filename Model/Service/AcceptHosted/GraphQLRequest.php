@@ -113,8 +113,13 @@ class GraphQLRequest extends AbstractRequestHandler
     public function getCustomerProfileId(): string
     {
         // If we were given a card ID, get the profile ID from that
-        $payment = $this->getQuote()->getPayment();
-        if ($payment->hasAdditionalInformation('profile_id')) {
+        $payment    = $this->getQuote()->getPayment();
+        $email      = $this->getEmail();
+        $customerId = $this->getCustomerId();
+
+        if ($payment->hasAdditionalInformation('profile_id')
+            && $payment->getAdditionalInformation('email') === $email
+            && $payment->getAdditionalInformation('merchantCustomerId') === $customerId) {
             return $payment->getAdditionalInformation('profile_id');
         }
 
@@ -129,14 +134,16 @@ class GraphQLRequest extends AbstractRequestHandler
         /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
         $gateway = $this->getMethod()->gateway();
 
-        $gateway->setParameter('email', $this->getEmail());
-        $gateway->setParameter('merchantCustomerId', $this->getCustomerId());
+        $gateway->setParameter('email', $email);
+        $gateway->setParameter('merchantCustomerId', $customerId);
         $gateway->setParameter('description', 'Magento ' . date('c'));
 
         $profileId = $gateway->createCustomerProfile();
 
         // Store the profile ID on the payment record.
         $payment->setAdditionalInformation('profile_id', $profileId);
+        $payment->setAdditionalInformation('email', $email);
+        $payment->setAdditionalInformation('merchantCustomerId', $customerId);
         $this->paymentResource->save($payment);
 
         return (string)$profileId;
