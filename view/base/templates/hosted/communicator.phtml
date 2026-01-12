@@ -54,8 +54,8 @@
             <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $inlineScript, false) ?>
             <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $mockJS, false) ?>
         <?php else: ?>
-            <script><?= $inlineScript ?></script>
-            <script><?= $mockJS ?></script>
+            <script><?= /* @noEscape */ $inlineScript ?></script>
+            <script><?= /* @noEscape */ $mockJS ?></script>
         <?php endif; ?>
     </head>
     <body>

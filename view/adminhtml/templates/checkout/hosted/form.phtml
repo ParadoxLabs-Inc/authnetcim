@@ -107,7 +107,7 @@ CSS;
     <?= /* @noEscape */ $secureRenderer->renderStyleAsTag('display:none', '#payment_form_' . $code) ?>
     <?= /* @noEscape */ $secureRenderer->renderStyleAsTag('display:none', '#' . $code . '_warning') ?>
 <?php else: ?>
-    <style><?= $inlineStyle ?></style>
+    <style><?= /* @noEscape */ $inlineStyle ?></style>
     <script>
         if (document.querySelector('#payment_form_<?= /* @noEscape */ $code ?>') instanceof Element) {
             document.querySelector('#payment_form_<?= /* @noEscape */ $code ?>').style.display = 'none';

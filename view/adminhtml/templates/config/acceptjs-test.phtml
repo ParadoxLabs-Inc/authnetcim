@@ -86,6 +86,6 @@ CSS;
     <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $inlineScript, false) ?>
     <?= /* @noEscape */ $secureRenderer->renderTag('style', [], $inlineStyle, false) ?>
 <?php else: ?>
-    <script><?= $inlineScript ?></script>
-    <style><?= $inlineStyle ?></style>
+    <script><?= /* @noEscape */ $inlineScript ?></script>
+    <style><?= /* @noEscape */ $inlineStyle ?></style>
 <?php endif; ?>

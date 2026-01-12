@@ -7,17 +7,17 @@
                           value: getCode(),
                           checked: isChecked,
                           click: selectPaymentMethod,
-                          visible: isRadioButtonVisible()"/>
+                          visible: isRadioButtonVisible()">
         <label class="label" data-bind="attr: {'for': getCode()}"><span data-bind="text: getTitle()"></span></label>
     </div>
 
     <form class="payment-method-content" data-bind="mageInit: {'tokenbaseCardFormatter': {}, 'validation': {}}">
         <!-- ko if: (useAcceptJs()) -->
-            <input type="hidden" name="payment[acceptjs_key]" value="" data-bind="attr: {id: getCode() + '-acceptjs-key'}, value: acceptJsKey"/>
-            <input type="hidden" name="payment[acceptjs_value]" value="" data-bind="attr: {id: getCode() + '-acceptjs-value'}, value: acceptJsValue"/>
-            <input type="hidden" name="payment[cc_last4]" value="" data-bind="attr: {id: getCode() + '-cc-last4'}, value: creditCardLast4"/>
+            <input type="hidden" name="payment[acceptjs_key]" value="" data-bind="attr: {id: getCode() + '-acceptjs-key'}, value: acceptJsKey">
+            <input type="hidden" name="payment[acceptjs_value]" value="" data-bind="attr: {id: getCode() + '-acceptjs-value'}, value: acceptJsValue">
+            <input type="hidden" name="payment[cc_last4]" value="" data-bind="attr: {id: getCode() + '-cc-last4'}, value: creditCardLast4">
             <!-- ko if: (canStoreBin()) -->
-                <input type="hidden" name="payment[cc_bin]" value="" data-bind="attr: {id: getCode() + '-cc-bin'}, value: creditCardBin"/>
+                <input type="hidden" name="payment[cc_bin]" value="" data-bind="attr: {id: getCode() + '-cc-bin'}, value: creditCardBin">
             <!-- /ko -->
         <!-- /ko -->
         <div class="payment-method-billing-address">
@@ -32,7 +32,7 @@
             <!-- /ko -->
             <!-- ko if: (getLogoImage())-->
             <div class="sorter">
-                <img data-bind="attr: {'src': getLogoImage(), 'alt': $t('Processed by Authorize.Net')}" />
+                <img data-bind="attr: {'src': getLogoImage(), 'alt': $t('Processed by Authorize.Net')}">
             </div>
             <!--/ko-->
             <!-- ko if: (useVault()) -->
@@ -86,7 +86,7 @@
                 <div class="control">
                     <input type="text" class="input-text" value="" autocomplete="cc-number"
                            data-bind="attr: {id: getCode() + '-cc-number', name: !useAcceptJs() ? 'payment[cc_number]' : null, title: $t('Credit Card Number'), 'data-container': getCode() + '-cc-number', 'data-validate': JSON.stringify({'required':true, 'validate-cc-number':'#' + getCode() + '-cc-type', 'validate-cc-type':'#' + getCode() + '-cc-type'})},
-                    enable: true, textInput: creditCardNumberFormatted"/>
+                    enable: true, textInput: creditCardNumberFormatted">
                 </div>
             </div>
             <div class="field date required" data-bind="attr: {id: getCode() + '-cc-type-exp-div'}, visible: isFormShown">
@@ -141,7 +141,7 @@
                        'data-container': getCode() + '-cc-cvv',
                        'data-validate': JSON.stringify({'required-number':true, 'validate-cc-cvn':'#' + getCode() + '-cc-type'})},
                        enable: true,
-                       textInput: creditCardVerificationNumber" />
+                       textInput: creditCardVerificationNumber">
                     <div class="field-tooltip toggle">
                         <span class="field-tooltip-action action-cvv"
                               tabindex="0"
@@ -168,7 +168,7 @@
                            value="1"
                            checked="checked"
                            class="checkbox"
-                           data-bind="attr: {id: getCode() + '-save'}, checked: save"/>
+                           data-bind="attr: {id: getCode() + '-save'}, checked: save">
                     <label class="label" data-bind="attr: {for: getCode() + '-save'}">
                         <span><!-- ko text: $t('For your convenience, this data will be stored securely by our payment processor.')--><!-- /ko --></span>
                     </label>
@@ -179,7 +179,7 @@
                            value="1"
                            checked="checked"
                            class="checkbox"
-                           data-bind="attr: {id: getCode() + '-save'}, checked: save"/>
+                           data-bind="attr: {id: getCode() + '-save'}, checked: save">
                     <label class="label" data-bind="attr: {for: getCode() + '-save'}">
                         <span><!-- ko text: $t('Save for next time')--><!-- /ko --></span>
                     </label>

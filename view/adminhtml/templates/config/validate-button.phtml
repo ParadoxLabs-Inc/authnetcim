@@ -58,7 +58,7 @@ JS;
 <?php if (isset($secureRenderer) && $secureRenderer instanceof \Magento\Framework\View\Helper\SecureHtmlRenderer): ?>
     <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $inlineScript, false) ?>
 <?php else: ?>
-    <script><?= $inlineScript ?></script>
+    <script><?= /* @noEscape */ $inlineScript ?></script>
 <?php endif; ?>
 
 <?= $block->getButtonHtml() ?>

@@ -160,7 +160,7 @@ CSS;
     <?= /* @noEscape */ $secureRenderer->renderTag('style', [], $inlineStyle, false) ?>
     <?= /* @noEscape */ $secureRenderer->renderStyleAsTag('display:none', '#form-validate .hide-fieldset') ?>
 <?php else: ?>
-    <style><?= $inlineStyle ?></style>
+    <style><?= /* @noEscape */ $inlineStyle ?></style>
     <script>
         var elements = document.querySelectorAll('#form-validate .hide-fieldset');
         if (elements) {
