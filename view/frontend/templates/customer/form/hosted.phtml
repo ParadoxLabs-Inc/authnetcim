@@ -1,6 +1,5 @@
 <?php
 /** @var \ParadoxLabs\Authnetcim\Block\Customer\Form\Cc $block */
-// @codingStandardsIgnoreFile
 ?>
 <?php $code = $block->escapeHtmlAttr($block->getCode()); ?>
 
@@ -15,13 +14,13 @@
 </div>
 
 <form action="<?= $block->escapeHtmlAttr($block->getAction() . '?method=' . $code); ?>" method="post" id="form-validate" class="checkout-payment-method" data-hasrequired="<?= $block->escapeHtmlAttr(__('* Required Fields')) ?>">
-    <?= $block->getBlockHtml('formkey'); ?>
+    <?= /* @noEscape */ $block->getBlockHtml('formkey'); ?>
     <input type="hidden" name="id" value="<?= $block->getCard()->getId() ? $block->escapeHtmlAttr($block->getCard()->getHash()) : ''; ?>" />
     <input type="hidden" name="source" value="paymentinfo" />
     <fieldset class="fieldset address">
         <legend class="legend"><span><?= $block->escapeHtml(__('Cardholder Information')) ?></span></legend><br>
 
-        <?= $block->getNameBlockHtml() ?>
+        <?= /* @noEscape */ $block->getNameBlockHtml() ?>
         <div class="field company">
             <label class="label" for="company"><span><?= $block->escapeHtml(__('Company')) ?></span></label>
             <div class="control">
@@ -43,17 +42,17 @@
         <div class="field street required">
             <label for="street" class="label"><span><?= $block->escapeHtml(__('Street')) ?></span></label>
             <div class="control">
-                <input type="text" name="billing[street][]" value="<?= $block->escapeHtmlAttr($block->getStreetLine(1)) ?>" title="<?= $block->escapeHtmlAttr(__('Street Address')) ?>" id="street" class="input-text <?= $_streetValidationClass ?>"  />
+                <input type="text" name="billing[street][]" value="<?= $block->escapeHtmlAttr($block->getStreetLine(1)) ?>" title="<?= $block->escapeHtmlAttr(__('Street Address')) ?>" id="street" class="input-text <?= /* @noEscape */ $_streetValidationClass ?>"  />
                 <div class="nested">
                     <?php $_streetValidationClass = trim(str_replace('required-entry', '', $_streetValidationClass)); ?>
                     <?php for ($_i = 1, $_n = $this->helper(\Magento\Customer\Helper\Address::class)->getStreetLines(); $_i < $_n; $_i++): ?>
                         <?php $lineNo = (int)($_i+1); ?>
                         <div class="field additional">
-                            <label class="label" for="street_<?= $lineNo ?>">
+                            <label class="label" for="street_<?= /* @noEscape */ $lineNo ?>">
                                 <span><?= $block->escapeHtml(__('Street Address %1', $lineNo)) ?></span>
                             </label>
                             <div class="control">
-                                <input type="text" name="billing[street][]" value="<?= $block->escapeHtmlAttr($block->getStreetLine($lineNo)) ?>" title="<?= $block->escapeHtmlAttr(__('Street Address %1', $lineNo)) ?>" id="street_<?= $lineNo ?>" class="input-text <?= $_streetValidationClass ?>">
+                                <input type="text" name="billing[street][]" value="<?= $block->escapeHtmlAttr($block->getStreetLine($lineNo)) ?>" title="<?= $block->escapeHtmlAttr(__('Street Address %1', $lineNo)) ?>" id="street_<?= /* @noEscape */ $lineNo ?>" class="input-text <?= /* @noEscape */ $_streetValidationClass ?>">
                             </div>
                         </div>
                     <?php endfor; ?>
@@ -84,7 +83,7 @@
         <div class="field country required">
             <label class="label" for="country"><span><?= $block->escapeHtml(__('Country')) ?></span></label>
             <div class="control">
-                <?= $block->getCountryHtmlSelect($block->getAddress()->getCountryId(), 'billing[country_id]') ?>
+                <?= /* @noEscape */ $block->getCountryHtmlSelect($block->getAddress()->getCountryId(), 'billing[country_id]') ?>
             </div>
         </div>
     </fieldset>
@@ -134,14 +133,14 @@
         },
         "#country": {
             "regionUpdater": {
-                "optionalRegionAllowed": <?= $block->getConfig('general/region/display_all') ? 'true' : 'false' ?>,
+                "optionalRegionAllowed": <?= /* @noEscape */ $block->getConfig('general/region/display_all') ? 'true' : 'false' ?>,
                 "regionListId": "#region-id",
                 "regionInputId": "#region",
                 "postcodeId": "#zip",
                 "form": "#form-validate",
-                "regionJson": <?= $this->helper(\Magento\Directory\Helper\Data::class)->getRegionJson() ?>,
+                "regionJson": <?= /* @noEscape */ $this->helper(\Magento\Directory\Helper\Data::class)->getRegionJson() ?>,
                 "defaultRegion": "<?= (int)$block->getRegionId() ?>",
-                "countriesWithOptionalZip": <?= $this->helper(\Magento\Directory\Helper\Data::class)->getCountriesWithOptionalZip(true) ?>
+                "countriesWithOptionalZip": <?= /* @noEscape */ $this->helper(\Magento\Directory\Helper\Data::class)->getCountriesWithOptionalZip(true) ?>
             }
         }
     }

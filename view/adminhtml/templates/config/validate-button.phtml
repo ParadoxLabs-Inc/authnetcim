@@ -61,5 +61,5 @@ JS;
     <script><?= /* @noEscape */ $inlineScript ?></script>
 <?php endif; ?>
 
-<?= $block->getButtonHtml() ?>
+<?= /* @noEscape */ $block->getButtonHtml() ?>
 <div class="testSuccess" id="<?= $block->escapeJs($block->getButtonId()) ?>_results"></div>

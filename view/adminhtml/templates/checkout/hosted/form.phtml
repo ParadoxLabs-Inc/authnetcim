@@ -1,6 +1,5 @@
 <?php
 /** @var \ParadoxLabs\Authnetcim\Block\Form\Cc $block */
-// @codingStandardsIgnoreFile
 
 $code           = $block->escapeHtmlAttr($block->getMethodCode());
 $image          = $block->getBrandingImage();
@@ -25,12 +24,12 @@ if ($block->getTokenbaseMethod()->getConfigData('payment_action') === 'order') {
 }'>
     <input id="<?= /* @noEscape */ $code ?>-payment-method" type="hidden" name="payment[method]" value="<?= /* @noEscape */ $code ?>" />
     <input id="<?= /* @noEscape */ $code ?>-transaction-id" type="hidden" name="payment[transaction_id]" value="" />
-    <?= $block->getBlockHtml('formkey') ?>
+    <?= /* @noEscape */ $block->getBlockHtml('formkey') ?>
 
     <fieldset class="admin__fieldset payment items ccard">
         <?php if ($image): ?>
             <div class="page-actions">
-                <img src="<?= $block->escapeHtmlAttr($image); ?>" />
+                <img src="<?= $block->escapeUrl($image); ?>" />
             </div>
         <?php endif; ?>
 
@@ -62,7 +61,7 @@ if ($block->getTokenbaseMethod()->getConfigData('payment_action') === 'order') {
             </div>
         </div>
 
-        <?= $block->getChildHtml() ?>
+        <?= /* @noEscape */ $block->getChildHtml() ?>
 
         <?php if ($block->hasVerification() && $block->getMethod()->getConfigData('require_ccv')): ?>
             <div class="admin__field _required cvv">

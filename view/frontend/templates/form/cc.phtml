@@ -1,6 +1,5 @@
 <?php
 /** @var \ParadoxLabs\TokenBase\Block\Form\Cc $block */
-// @codingStandardsIgnoreFile
 
 $code           = $block->escapeHtmlAttr($block->getMethodCode());
 $image          = $block->getBrandingImage();
@@ -17,7 +16,7 @@ $storedCards    = $block->getStoredCards();
     <?php endif; ?>
     <?php if ($image): ?>
         <div class="sorter">
-            <img src="<?= $block->escapeHtmlAttr($image); ?>" />
+            <img src="<?= $block->escapeUrl($image); ?>" />
         </div>
     <?php endif; ?>
     <?php if ($block->haveStoredCards()): ?>
@@ -43,7 +42,7 @@ $storedCards    = $block->getStoredCards();
             <ul class="credit-card-types">
                 <?php foreach ($block->getCcAvailableTypes() as $_typeCode => $_typeName): ?>
                     <li class="item<?php if ($_typeCode == $_ccType): ?> _active<?php endif; ?>" data-type="<?= $block->escapeHtmlAttr($_typeCode); ?>">
-                        <img src="<?= $block->getViewFileUrl('Magento_Payment::images/cc/' . strtolower((string)$_typeCode) . '.png'); ?>" alt="<?= $block->escapeHtmlAttr($_typeName); ?>" />
+                        <img src="<?= $block->escapeUrl($block->getViewFileUrl('Magento_Payment::images/cc/' . strtolower((string)$_typeCode) . '.png')); ?>" alt="<?= $block->escapeHtmlAttr($_typeName); ?>" />
                     </li>
                 <?php endforeach; ?>
             </ul>
@@ -96,14 +95,14 @@ $storedCards    = $block->getStoredCards();
                         <span><?= $block->escapeHtml(__('What is this?')) ?></span>
                     </span>
                     <div class="tooltip-content" data-target="dropdown" aria-hidden="true">
-                        <img src="<?= $block->escapeHtmlAttr($block->getViewFileUrl('Magento_Checkout::cvv.png')) ?>" alt="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" title="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" />
+                        <img src="<?= $block->escapeUrl($block->getViewFileUrl('Magento_Checkout::cvv.png')) ?>" alt="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" title="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" />
                     </div>
                 </div>
             </div>
         </div>
     <?php endif; ?>
 
-    <?= $block->getChildHtml(); ?>
+    <?= /* @noEscape */ $block->getChildHtml(); ?>
     <?php if (!$block->isGuestCheckout()): ?>
         <div class="field save hide-if-card-selected">
             <div class="control">
@@ -137,7 +136,7 @@ $storedCards    = $block->getStoredCards();
                 "formSelector": ".main form",
                 "submitSelector": ".payments button[type=submit], button#payment-continue",
                 "cardSelector": "#<?= /* @noEscape */ $code; ?>-card-id",
-                "sandbox": <?= $block->getMethod()->getConfigData('test') ? 'true' : 'false'; ?>
+                "sandbox": <?= /* @noEscape */ $block->getMethod()->getConfigData('test') ? 'true' : 'false'; ?>
             }
             <?php endif; ?>
         }

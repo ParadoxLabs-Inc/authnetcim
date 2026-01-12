@@ -1,6 +1,5 @@
 <?php
 /** @var \ParadoxLabs\TokenBase\Block\Adminhtml\Customer\Form $block */
-// @codingStandardsIgnoreFile
 ?>
 <?php $code = $block->escapeHtmlAttr($block->getCode()); ?>
 
@@ -27,7 +26,7 @@
         "fieldPrefix": "#<?= /* @noEscape */ $code ?>-"
     }
 }'>
-    <?= $block->getBlockHtml('formkey') ?>
+    <?= /* @noEscape */ $block->getBlockHtml('formkey') ?>
     <input type="hidden" name="card_id" value="<?= $block->getCard()->getId() ? $block->escapeHtmlAttr($block->getCard()->getHash()) : '' ?>" />
     <input type="hidden" name="method" value="<?= /* @noEscape */ $code ?>" />
     <input type="hidden" name="source" value="paymentinfo" />
@@ -73,18 +72,18 @@
         <div class="admin__field street _required">
             <label for="<?= /* @noEscape */ $code ?>-street" class="admin__field-label"><span><?= $block->escapeHtml(__('Street')) ?></span></label>
             <div class="admin__field-control">
-                <input type="text" name="billing[street][]" value="<?= $block->escapeHtmlAttr($block->getStreetLine(1)) ?>" title="<?= $block->escapeHtmlAttr(__('Street Address')) ?>" id="<?= /* @noEscape */ $code ?>-street" class="admin__control-text input-text <?= $_streetValidationClass ?>" data-validate='{required:true}' />
+                <input type="text" name="billing[street][]" value="<?= $block->escapeHtmlAttr($block->getStreetLine(1)) ?>" title="<?= $block->escapeHtmlAttr(__('Street Address')) ?>" id="<?= /* @noEscape */ $code ?>-street" class="admin__control-text input-text <?= /* @noEscape */ $_streetValidationClass ?>" data-validate='{required:true}' />
                 <div class="nested">
                     <?php $_streetValidationClass = trim(str_replace('required-entry', '', $_streetValidationClass)); ?>
                     <?php /** NB: Secure Acceptance only supports 2 street lines according to documentation */ ?>
                     <?php for ($_i = 1, $_n = min(2, $this->helper(\Magento\Customer\Helper\Address::class)->getStreetLines()); $_i < $_n; $_i++): ?>
                         <?php $lineNo = (int)($_i + 1); ?>
                         <div class="admin__field additional">
-                            <label class="admin__field-label" for="<?= /* @noEscape */ $code ?>-street_<?= $lineNo ?>">
+                            <label class="admin__field-label" for="<?= /* @noEscape */ $code ?>-street_<?= /* @noEscape */ $lineNo ?>">
                                 <span><?= $block->escapeHtml(__('Street Address %1', $lineNo)) ?></span>
                             </label>
                             <div class="admin__field-control">
-                                <input type="text" name="billing[street][]" value="<?= $block->escapeHtmlAttr($block->getStreetLine($lineNo)) ?>" title="<?= $block->escapeHtmlAttr(__('Street Address %1', $lineNo)) ?>" id="<?= /* @noEscape */ $code ?>-street_<?= $lineNo ?>" class="admin__control-text input-text <?= $_streetValidationClass ?>">
+                                <input type="text" name="billing[street][]" value="<?= $block->escapeHtmlAttr($block->getStreetLine($lineNo)) ?>" title="<?= $block->escapeHtmlAttr(__('Street Address %1', $lineNo)) ?>" id="<?= /* @noEscape */ $code ?>-street_<?= /* @noEscape */ $lineNo ?>" class="admin__control-text input-text <?= /* @noEscape */ $_streetValidationClass ?>">
                             </div>
                         </div>
                     <?php endfor; ?>
@@ -115,7 +114,7 @@
         <div class="admin__field country _required">
             <label class="admin__field-label" for="<?= /* @noEscape */ $code ?>-country"><span><?= $block->escapeHtml(__('Country')) ?></span></label>
             <div class="admin__field-control">
-                <?= str_replace('class="', 'class="admin__control-select ', $block->getCountryHtmlSelect($block->getAddress()->getCountryId(), 'billing[country_id]', $code . '-country')) ?>
+                <?= /* @noEscape */ str_replace('class="', 'class="admin__control-select ', $block->getCountryHtmlSelect($block->getAddress()->getCountryId(), 'billing[country_id]', $code . '-country')) ?>
             </div>
         </div>
     </fieldset>
@@ -164,7 +163,7 @@
     </fieldset>
     <div class="actions-toolbar">
         <div class="secondary">
-            <a class="action-back" href="<?= $block->escapeHtmlAttr($block->getBackUrl()) ?>"><span><?= $block->escapeHtml(__('Cancel')) ?></span></a>
+            <a class="action-back" href="<?= $block->escapeUrl($block->getBackUrl()) ?>"><span><?= $block->escapeHtml(__('Cancel')) ?></span></a>
         </div>
     </div>
 </form>

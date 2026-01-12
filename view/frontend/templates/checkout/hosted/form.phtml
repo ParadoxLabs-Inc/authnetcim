@@ -1,18 +1,17 @@
 <?php
 /** @var \ParadoxLabs\Authnetcim\Block\Form\Cc $block */
-// @codingStandardsIgnoreFile
 
 $code           = $block->escapeHtmlAttr($block->getMethodCode());
 $image          = $block->getBrandingImage();
 $storedCards    = $block->getStoredCards();
 ?>
 <fieldset class="fieldset payment items ccard <?= /* @noEscape */ $code ?>" id="payment_form_<?= /* @noEscape */ $code ?>">
-    <?= $block->getBlockHtml('formkey') ?>
+    <?= /* @noEscape */ $block->getBlockHtml('formkey') ?>
     <input type="hidden" name="source" value="checkout" />
 
     <?php if ($image): ?>
         <div class="sorter">
-            <img src="<?= $block->escapeHtmlAttr($image); ?>" />
+            <img src="<?= $block->escapeUrl($image); ?>" />
         </div>
     <?php endif; ?>
 
@@ -51,14 +50,14 @@ $storedCards    = $block->getStoredCards();
                         <span><?= $block->escapeHtml(__('What is this?')) ?></span>
                     </span>
                     <div class="tooltip-content" data-target="dropdown" aria-hidden="true">
-                        <img src="<?= $block->escapeHtmlAttr($block->getViewFileUrl('Magento_Checkout::cvv.png')) ?>" alt="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" title="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" />
+                        <img src="<?= $block->escapeUrl($block->getViewFileUrl('Magento_Checkout::cvv.png')) ?>" alt="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" title="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" />
                     </div>
                 </div>
             </div>
         </div>
     <?php endif; ?>
 
-    <?= $block->getChildHtml(); ?>
+    <?= /* @noEscape */ $block->getChildHtml(); ?>
     <?php if (!$block->isGuestCheckout()): ?>
         <div class="field save">
             <div class="control">

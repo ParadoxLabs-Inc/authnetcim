@@ -1,6 +1,5 @@
 <?php
 /** @var \ParadoxLabs\TokenBase\Block\Form\Cc $block */
-// @codingStandardsIgnoreFile
 
 $code           = $block->escapeHtmlAttr($block->getMethodCode());
 $image          = $block->getBrandingImage();
@@ -23,7 +22,7 @@ $storedCards    = $block->getStoredCards();
         "formSelector": "#edit_form",
         "submitSelector": "#edit_form button.save, #submit_order_top_button",
         "cardSelector": "#<?= /* @noEscape */ $code ?>-card-id",
-        "sandbox": <?= $block->getMethod()->getConfigData('test') ? 'true' : 'false'; ?>
+        "sandbox": <?= /* @noEscape */ $block->getMethod()->getConfigData('test') ? 'true' : 'false'; ?>
     }
 <?php endif; ?>
 }'>
@@ -39,7 +38,7 @@ $storedCards    = $block->getStoredCards();
     <fieldset class="admin__fieldset payment items ccard">
         <?php if ($image): ?>
             <div class="page-actions">
-                <img src="<?= $block->escapeHtmlAttr($image); ?>" />
+                <img src="<?= $block->escapeUrl($image); ?>" />
             </div>
         <?php endif; ?>
         <?php if ($block->haveStoredCards()): ?>
@@ -64,7 +63,7 @@ $storedCards    = $block->getStoredCards();
                 <ul class="credit-card-types">
                     <?php foreach ($block->getCcAvailableTypes() as $_typeCode => $_typeName): ?>
                         <li class="item<?php if ($_typeCode == $_ccType): ?> _active<?php endif; ?>" data-type="<?= $block->escapeHtmlAttr($_typeCode); ?>">
-                            <img src="<?= $block->getViewFileUrl('Magento_Payment::images/cc/' . strtolower((string)$_typeCode) . '.png'); ?>" alt="<?= $block->escapeHtmlAttr($_typeName); ?>" />
+                            <img src="<?= $block->escapeUrl($block->getViewFileUrl('Magento_Payment::images/cc/' . strtolower((string)$_typeCode) . '.png')); ?>" alt="<?= $block->escapeHtmlAttr($_typeName); ?>" />
                         </li>
                     <?php endforeach; ?>
                 </ul>
@@ -94,7 +93,7 @@ $storedCards    = $block->getStoredCards();
                 </select>
             </div>
         </div>
-        <?= $block->getChildHtml() ?>
+        <?= /* @noEscape */ $block->getChildHtml() ?>
         <?php if ($block->hasVerification()): ?>
             <div class="admin__field _required cvv <?php if ($block->getMethod()->getConfigData('require_ccv') == 0): ?>hide-if-card-selected<?php endif; ?>">
                 <label class="label admin__field-label" for="<?= /* @noEscape */ $code ?>-cc-cid" ><span><?= $block->escapeHtml(__('Card Verification Number')) ?></span></label>
