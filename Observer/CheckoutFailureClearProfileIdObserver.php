@@ -20,9 +20,6 @@
 
 namespace ParadoxLabs\Authnetcim\Observer;
 
-/**
- * CheckoutFailureClearProfileIdObserver Class
- */
 class CheckoutFailureClearProfileIdObserver implements \Magento\Framework\Event\ObserverInterface
 {
     /**

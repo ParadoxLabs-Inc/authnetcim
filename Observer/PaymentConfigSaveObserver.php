@@ -20,9 +20,6 @@
 
 namespace ParadoxLabs\Authnetcim\Observer;
 
-/**
- * PaymentConfigSaveObserver Class
- */
 class PaymentConfigSaveObserver implements \Magento\Framework\Event\ObserverInterface
 {
     /**

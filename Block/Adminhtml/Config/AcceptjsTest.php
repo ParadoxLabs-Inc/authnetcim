@@ -20,9 +20,6 @@
 
 namespace ParadoxLabs\Authnetcim\Block\Adminhtml\Config;
 
-/**
- * AcceptjsTest Class
- */
 class AcceptjsTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
 {
     /**

@@ -22,9 +22,6 @@ namespace ParadoxLabs\Authnetcim\Block\Adminhtml\Config;
 
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
 
-/**
- * ApiTest Class
- */
 class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
 {
     /**

@@ -20,9 +20,6 @@
 
 namespace ParadoxLabs\Authnetcim\Observer;
 
-/**
- * CheckoutFailureClearAcceptjsObserver Class
- */
 class CheckoutFailureClearAcceptjsObserver implements \Magento\Framework\Event\ObserverInterface
 {
     /**

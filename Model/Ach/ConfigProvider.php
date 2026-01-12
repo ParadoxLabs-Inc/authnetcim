@@ -20,9 +20,6 @@
 
 namespace ParadoxLabs\Authnetcim\Model\Ach;
 
-/**
- * ConfigProvider Class
- */
 class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
 {
     public const CODE = 'authnetcim_ach';

@@ -24,9 +24,6 @@ use Magento\Quote\Model\Quote\Payment as QuotePayment;
 use Magento\Sales\Model\Order\Payment as OrderPayment;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
 
-/**
- * CreditCard Class
- */
 class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
 {
     /**

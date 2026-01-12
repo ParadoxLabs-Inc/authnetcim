@@ -23,9 +23,6 @@ namespace ParadoxLabs\Authnetcim\Model;
 use Magento\Payment\Model\CcConfig;
 use Magento\Payment\Model\CcGenericConfigProvider;
 
-/**
- * ConfigProvider Class
- */
 class ConfigProvider extends CcGenericConfigProvider
 {
     public const CODE = 'authnetcim';

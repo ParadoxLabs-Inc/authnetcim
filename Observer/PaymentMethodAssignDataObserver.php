@@ -24,9 +24,6 @@ use Magento\Quote\Api\Data\PaymentExtensionInterface;
 use Magento\Sales\Api\Data\OrderPaymentExtensionInterface;
 use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 
-/**
- * PaymentMethodAssignDataObserver Class
- */
 class PaymentMethodAssignDataObserver extends \ParadoxLabs\TokenBase\Observer\PaymentMethodAssignDataObserver
 {
     /**

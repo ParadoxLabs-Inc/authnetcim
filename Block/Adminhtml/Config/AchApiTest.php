@@ -20,9 +20,6 @@
 
 namespace ParadoxLabs\Authnetcim\Block\Adminhtml\Config;
 
-/**
- * AchApiTest Class
- */
 class AchApiTest extends ApiTest
 {
     /**

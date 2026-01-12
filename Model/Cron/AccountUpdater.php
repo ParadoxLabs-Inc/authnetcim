@@ -22,9 +22,6 @@ namespace ParadoxLabs\Authnetcim\Model\Cron;
 
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
 
-/**
- * AccountUpdater Class
- */
 class AccountUpdater
 {
     const PER_PAGE = 1000;

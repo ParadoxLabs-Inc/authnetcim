@@ -20,9 +20,6 @@
 
 namespace ParadoxLabs\Authnetcim\Model\Config;
 
-/**
- * Cctype Class
- */
 class Cctype extends \Magento\Payment\Model\Source\Cctype
 {
     /**
