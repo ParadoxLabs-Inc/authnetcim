@@ -14,7 +14,7 @@
     </h2>
 </div>
 
-<form action="<?= $block->escapeUrl($block->getAction() . '?method=' . $code); ?>" method="post" id="form-validate" class="checkout-payment-method" data-hasrequired="<?= $block->escapeHtmlAttr(__('* Required Fields')) ?>">
+<form action="<?= $block->escapeHtmlAttr($block->getAction() . '?method=' . $code); ?>" method="post" id="form-validate" class="checkout-payment-method" data-hasrequired="<?= $block->escapeHtmlAttr(__('* Required Fields')) ?>">
     <?= $block->getBlockHtml('formkey'); ?>
     <input type="hidden" name="id" value="<?= $block->getCard()->getId() ? $block->escapeHtmlAttr($block->getCard()->getHash()) : ''; ?>" />
     <input type="hidden" name="source" value="paymentinfo" />
@@ -105,17 +105,17 @@
     <fieldset class="fieldset payment hide-fieldset">
         <legend class="legend"><span><?= $block->escapeHtml(__('Cardholder Information')) ?></span></legend><br>
 
-        <div class="field" id="<?= $code ?>-address">
+        <div class="field" id="<?= /* @noEscape */ $code ?>-address">
             <address></address>
             <button type="button" class="action" id="edit-address">
                 <span><?= $block->escapeHtml(__('Edit')) ?></span>
             </button>
         </div>
     </fieldset>
-    <fieldset class="fieldset payment <?= $code ?> hide-fieldset">
+    <fieldset class="fieldset payment <?= /* @noEscape */ $code ?> hide-fieldset">
         <div class="field required">
             <div class="control">
-                <iframe src="about:blank" frameborder="0" id="<?= $code ?>_iframe" name="<?= $code ?>_iframe"></iframe>
+                <iframe src="about:blank" frameborder="0" id="<?= /* @noEscape */ $code ?>_iframe" name="<?= /* @noEscape */ $code ?>_iframe"></iframe>
             </div>
         </div>
     </fieldset>
@@ -125,8 +125,8 @@
         "#form-validate": {
             "validation": {},
             "authnetcimHostedPaymentInfo": {
-                "method": "<?= $code ?>",
-                "target": "<?= $code ?>_iframe",
+                "method": "<?= /* @noEscape */ $code ?>",
+                "target": "<?= /* @noEscape */ $code ?>_iframe",
                 "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getProfileParams', ['method' => $code])) ?>",
                 "updateCardUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/updateCard', ['method' => $code])) ?>",
                 "successUrl": "<?= $block->escapeJs($block->getUrl('*/*', ['method' => $code])) ?>"

@@ -14,16 +14,16 @@
     </h2>
 </div>
 
-<form action="<?= $block->escapeUrl($block->getAction()); ?>" method="post" id="form-validate" class="checkout-payment-method" data-hasrequired="<?= $block->escapeHtmlAttr(__('* Required Fields')) ?>">
+<form action="<?= $block->escapeHtmlAttr($block->getAction()); ?>" method="post" id="form-validate" class="checkout-payment-method" data-hasrequired="<?= $block->escapeHtmlAttr(__('* Required Fields')) ?>">
     <?= $block->getBlockHtml('formkey'); ?>
     <input type="hidden" name="id" value="<?= $block->getCard()->getId() ? $block->escapeHtmlAttr($block->getCard()->getHash()) : ''; ?>" />
-    <input type="hidden" name="method" value="<?= $code; ?>" />
+    <input type="hidden" name="method" value="<?= /* @noEscape */ $code; ?>" />
     <?php if ($block->getMethod()->isAcceptJsEnabled() === true): ?>
-        <input type="hidden" name="payment[acceptjs_key]" id="<?= $code ?>-acceptjs-key" value="" />
-        <input type="hidden" name="payment[acceptjs_value]" id="<?= $code ?>-acceptjs-value" value="" />
-        <input type="hidden" name="payment[cc_last4]" id="<?= $code ?>-cc-last4" value="" />
+        <input type="hidden" name="payment[acceptjs_key]" id="<?= /* @noEscape */ $code ?>-acceptjs-key" value="" />
+        <input type="hidden" name="payment[acceptjs_value]" id="<?= /* @noEscape */ $code ?>-acceptjs-value" value="" />
+        <input type="hidden" name="payment[cc_last4]" id="<?= /* @noEscape */ $code ?>-cc-last4" value="" />
         <?php if ($block->getMethod()->getConfigData('can_store_bin') == 1): ?>
-            <input type="hidden" name="payment[cc_bin]" id="<?= $code ?>-cc-bin" value="" />
+            <input type="hidden" name="payment[cc_bin]" id="<?= /* @noEscape */ $code ?>-cc-bin" value="" />
         <?php endif; ?>
     <?php endif; ?>
     <fieldset class="fieldset">
@@ -96,7 +96,7 @@
             </div>
         </div>
     </fieldset>
-    <fieldset class="fieldset payment items ccard <?= $code ?>">
+    <fieldset class="fieldset payment items ccard <?= /* @noEscape */ $code ?>">
         <legend class="legend"><span><?= $block->escapeHtml(__('Credit Card Information')) ?></span></legend><br>
 
         <div class="field type required">
@@ -109,22 +109,22 @@
                         </li>
                     <?php endforeach; ?>
                 </ul>
-                <input type="hidden" name="payment[cc_type]" id="<?= $code ?>-cc-type" value="<?= $block->escapeHtmlAttr($_ccType); ?>" />
+                <input type="hidden" name="payment[cc_type]" id="<?= /* @noEscape */ $code ?>-cc-type" value="<?= $block->escapeHtmlAttr($_ccType); ?>" />
             </div>
         </div>
         <div class="field number required">
-            <label for="<?= $code ?>-cc-number" class="label"><span><?= $block->escapeHtml(__('CC Number')) ?></span></label>
+            <label for="<?= /* @noEscape */ $code ?>-cc-number" class="label"><span><?= $block->escapeHtml(__('CC Number')) ?></span></label>
             <div class="control">
-                <input type="text" id="<?= $code ?>-cc-number" name="payment[cc_number]" title="<?= $block->escapeHtmlAttr(__('Credit Card Number')) ?>" class="input-text" value="<?= $block->escapeHtmlAttr($block->getCard()->getLabel(false)); ?>" data-validate='{"required-number":true, "validate-cc-number":"#<?= $code ?>-cc-type", "validate-cc-type":"#<?= $code ?>-cc-type"}' autocomplete="cc-number" />
+                <input type="text" id="<?= /* @noEscape */ $code ?>-cc-number" name="payment[cc_number]" title="<?= $block->escapeHtmlAttr(__('Credit Card Number')) ?>" class="input-text" value="<?= $block->escapeHtmlAttr($block->getCard()->getLabel(false)); ?>" data-validate='{"required-number":true, "validate-cc-number":"#<?= /* @noEscape */ $code ?>-cc-type", "validate-cc-type":"#<?= /* @noEscape */ $code ?>-cc-type"}' autocomplete="cc-number" />
             </div>
         </div>
-        <div class="field date required" id="<?= $code ?>-cc-type_exp_div">
-            <label for="<?= $code ?>-cc-exp-month" class="label"><span><?= $block->escapeHtml(__('Expiration')) ?></span></label>
+        <div class="field date required" id="<?= /* @noEscape */ $code ?>-cc-type_exp_div">
+            <label for="<?= /* @noEscape */ $code ?>-cc-exp-month" class="label"><span><?= $block->escapeHtml(__('Expiration')) ?></span></label>
             <div class="control">
                 <div class="fields group group-2">
                     <div class="field no-label month">
                         <div class="control">
-                            <select id="<?= $code ?>-cc-exp-month" name="payment[cc_exp_month]" class="select month" data-validate='{required:true, "validate-cc-exp":"#<?= $code ?>-cc-exp-year"}' autocomplete="cc-exp-month">
+                            <select id="<?= /* @noEscape */ $code ?>-cc-exp-month" name="payment[cc_exp_month]" class="select month" data-validate='{required:true, "validate-cc-exp":"#<?= /* @noEscape */ $code ?>-cc-exp-year"}' autocomplete="cc-exp-month">
                                 <?php $_ccExpMonth = $block->getCard()->getAdditional('cc_exp_month'); ?>
                                 <?php foreach ($block->getCcBlock()->getCcMonths() as $k => $v): ?>
                                     <option value="<?= $k ? $block->escapeHtmlAttr($k) : '' ?>"<?php if ($k == $_ccExpMonth): ?> selected="selected"<?php endif ?>><?= $block->escapeHtml($v) ?></option>
@@ -135,7 +135,7 @@
                     <div class="field no-label year">
                         <div class="control">
                             <?php $_ccExpYear = $block->getCard()->getAdditional('cc_exp_year'); ?>
-                            <select id="<?= $code ?>-cc-exp-year" name="payment[cc_exp_year]" class="select year" data-validate='{required:true}' autocomplete="cc-exp-year">
+                            <select id="<?= /* @noEscape */ $code ?>-cc-exp-year" name="payment[cc_exp_year]" class="select year" data-validate='{required:true}' autocomplete="cc-exp-year">
                                 <?php foreach ($block->getCcBlock()->getCcYears() as $k => $v): ?>
                                     <option value="<?= $k ? $block->escapeHtmlAttr($k) : '' ?>"<?php if ($k == $_ccExpYear): ?> selected="selected"<?php endif ?>><?= $block->escapeHtml($v) ?></option>
                                 <?php endforeach ?>
@@ -146,16 +146,16 @@
             </div>
         </div>
         <?php if ($block->getMethod()->getConfigData('useccv')): ?>
-            <div class="field cvv required" id="<?= $code ?>-cc-type_cvv_div">
-                <label for="<?= $code ?>-cc-cid" class="label"><span><?= $block->escapeHtml(__('CCV')) ?></span></label>
+            <div class="field cvv required" id="<?= /* @noEscape */ $code ?>-cc-type_cvv_div">
+                <label for="<?= /* @noEscape */ $code ?>-cc-cid" class="label"><span><?= $block->escapeHtml(__('CCV')) ?></span></label>
                 <div class="control _with-tooltip">
-                    <input type="text" title="<?= $block->escapeHtmlAttr(__('Card Verification Number')) ?>" class="input-text cvv" id="<?= $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true, "validate-cc-cvn":"#<?= $code ?>-cc-type"}' autocomplete="cc-csc" maxlength="4" />
+                    <input type="text" title="<?= $block->escapeHtmlAttr(__('Card Verification Number')) ?>" class="input-text cvv" id="<?= /* @noEscape */ $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true, "validate-cc-cvn":"#<?= /* @noEscape */ $code ?>-cc-type"}' autocomplete="cc-csc" maxlength="4" />
                     <div class="field-tooltip tooltip note toggle">
                         <span class="field-tooltip-action tooltip-toggle action-cvv" tabindex="0" data-toggle="dropdown">
                             <span><?= $block->escapeHtml(__('What is this?')) ?></span>
                         </span>
                         <div class="tooltip-content" data-target="dropdown" aria-hidden="true">
-                            <img src="<?= $block->escapeUrl($block->getViewFileUrl('Magento_Checkout::cvv.png')) ?>" alt="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" title="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" />
+                            <img src="<?= $block->escapeHtmlAttr($block->getViewFileUrl('Magento_Checkout::cvv.png')) ?>" alt="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" title="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" />
                         </div>
                     </div>
                 </div>
@@ -169,7 +169,7 @@
             </button>
         </div>
         <div class="secondary">
-            <a class="action back" href="<?= $block->escapeUrl($block->getBackUrl()) ?>"><span><?= $block->escapeHtml(__('Cancel')) ?></span></a>
+            <a class="action back" href="<?= $block->escapeHtmlAttr($block->getBackUrl()) ?>"><span><?= $block->escapeHtml(__('Cancel')) ?></span></a>
         </div>
     </div>
 </form>
@@ -178,14 +178,14 @@
         "#form-validate": {
             "validation": {},
             "tokenbaseCardFormatter": {
-                "ccTypeSelector": "#<?= $code ?>-cc-type",
+                "ccTypeSelector": "#<?= /* @noEscape */ $code ?>-cc-type",
                 "ccTypeContainer": ".credit-card-types"
             }
             <?php if ($block->getMethod()->isAcceptJsEnabled() === true): ?>,
             "authnetcimAcceptjs": {
                 "apiLoginId": "<?= $block->escapeHtmlAttr($block->getMethod()->getConfigData('login')); ?>",
                 "clientKey": "<?= $block->escapeHtmlAttr($block->getMethod()->getConfigData('client_key')); ?>",
-                "method": "<?= $code; ?>",
+                "method": "<?= /* @noEscape */ $code; ?>",
                 "formSelector": "#form-validate",
                 "submitSelector": "#form-validate button[type=submit]",
                 "sandbox": <?= $block->getMethod()->getConfigData('test') ? 'true' : 'false'; ?>

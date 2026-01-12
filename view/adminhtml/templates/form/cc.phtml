@@ -6,46 +6,46 @@ $code           = $block->escapeHtmlAttr($block->getMethodCode());
 $image          = $block->getBrandingImage();
 $storedCards    = $block->getStoredCards();
 ?>
-<div id="payment_form_<?= $code ?>" class="admin__page-section-item checkout-payment-method" data-mage-init='{
+<div id="payment_form_<?= /* @noEscape */ $code ?>" class="admin__page-section-item checkout-payment-method" data-mage-init='{
     "tokenbaseForm": {
-        "code":"<?= $code ?>",
+        "code":"<?= /* @noEscape */ $code ?>",
         "validateForm": false
     },
     "tokenbaseCardFormatter": {
-        "ccTypeSelector": "#<?= $code ?>-cc-type",
+        "ccTypeSelector": "#<?= /* @noEscape */ $code ?>-cc-type",
         "ccTypeContainer": ".credit-card-types"
     }
 <?php if ($block->getTokenbaseMethod()->isAcceptJsEnabled() === true): ?>,
     "authnetcimAcceptjs": {
         "apiLoginId": "<?= $block->escapeHtmlAttr($block->getMethod()->getConfigData('login')); ?>",
         "clientKey": "<?= $block->escapeHtmlAttr($block->getMethod()->getConfigData('client_key')); ?>",
-        "method": "<?= $code; ?>",
+        "method": "<?= /* @noEscape */ $code; ?>",
         "formSelector": "#edit_form",
         "submitSelector": "#edit_form button.save, #submit_order_top_button",
-        "cardSelector": "#<?= $code ?>-card-id",
+        "cardSelector": "#<?= /* @noEscape */ $code ?>-card-id",
         "sandbox": <?= $block->getMethod()->getConfigData('test') ? 'true' : 'false'; ?>
     }
 <?php endif; ?>
 }'>
-    <input id="<?= $code ?>-payment-method" type="hidden" name="payment[method]" value="<?= $code ?>" />
+    <input id="<?= /* @noEscape */ $code ?>-payment-method" type="hidden" name="payment[method]" value="<?= /* @noEscape */ $code ?>" />
     <?php if ($block->getTokenbaseMethod()->isAcceptJsEnabled() === true): ?>
-        <input type="hidden" name="payment[acceptjs_key]" id="<?= $code ?>-acceptjs-key" value="" />
-        <input type="hidden" name="payment[acceptjs_value]" id="<?= $code ?>-acceptjs-value" value="" />
-        <input type="hidden" name="payment[cc_last4]" id="<?= $code ?>-cc-last4" value="" />
+        <input type="hidden" name="payment[acceptjs_key]" id="<?= /* @noEscape */ $code ?>-acceptjs-key" value="" />
+        <input type="hidden" name="payment[acceptjs_value]" id="<?= /* @noEscape */ $code ?>-acceptjs-value" value="" />
+        <input type="hidden" name="payment[cc_last4]" id="<?= /* @noEscape */ $code ?>-cc-last4" value="" />
         <?php if ($block->getTokenbaseMethod()->getConfigData('can_store_bin') == 1): ?>
-            <input type="hidden" name="payment[cc_bin]" id="<?= $code ?>-cc-bin" value="" />
+            <input type="hidden" name="payment[cc_bin]" id="<?= /* @noEscape */ $code ?>-cc-bin" value="" />
         <?php endif; ?>
     <?php endif; ?>
     <fieldset class="admin__fieldset payment items ccard">
         <?php if ($image): ?>
             <div class="page-actions">
-                <img src="<?= $block->escapeUrl($image); ?>" />
+                <img src="<?= $block->escapeHtmlAttr($image); ?>" />
             </div>
         <?php endif; ?>
         <?php if ($block->haveStoredCards()): ?>
             <div class="admin__field">
                 <div class="admin__field-control control">
-                    <select id="<?= $code ?>-card-id" name="payment[card_id]" class="select admin__control-select">
+                    <select id="<?= /* @noEscape */ $code ?>-card-id" name="payment[card_id]" class="select admin__control-select">
                         <?php /** @var \ParadoxLabs\TokenBase\Model\Card $card */ ?>
                         <?php foreach ($storedCards as $card): ?>
                             <?php $card = $card->getTypeInstance(); ?>
@@ -68,26 +68,26 @@ $storedCards    = $block->getStoredCards();
                         </li>
                     <?php endforeach; ?>
                 </ul>
-                <input type="hidden" name="payment[cc_type]" id="<?= $code ?>-cc-type" value="<?= $block->escapeHtmlAttr($_ccType); ?>" />
+                <input type="hidden" name="payment[cc_type]" id="<?= /* @noEscape */ $code ?>-cc-type" value="<?= $block->escapeHtmlAttr($_ccType); ?>" />
             </div>
         </div>
         <div class="admin__field _required number hide-if-card-selected">
-            <label class="label admin__field-label" for="<?= $code ?>-cc-number"><span><?= $block->escapeHtml(__('Credit Card Number')) ?></span></label>
+            <label class="label admin__field-label" for="<?= /* @noEscape */ $code ?>-cc-number"><span><?= $block->escapeHtml(__('Credit Card Number')) ?></span></label>
             <div class="admin__field-control control">
-                <input type="text" id="<?= $code ?>-cc-number" name="payment[cc_number]"  title="<?= $block->escapeHtmlAttr(__('Credit Card Number')) ?>" class="input-text admin__control-text validate-cc-number validate-cc-type" value="<?= $block->escapeHtmlAttr($block->getInfoData('cc_number')); ?>" data-validate='{"required-number":true, "validate-cc-number":"#<?= $code ?>-cc-type", "validate-cc-type":"#<?= $code ?>-cc-type"}' autocomplete="cc-number" />
+                <input type="text" id="<?= /* @noEscape */ $code ?>-cc-number" name="payment[cc_number]"  title="<?= $block->escapeHtmlAttr(__('Credit Card Number')) ?>" class="input-text admin__control-text validate-cc-number validate-cc-type" value="<?= $block->escapeHtmlAttr($block->getInfoData('cc_number')); ?>" data-validate='{"required-number":true, "validate-cc-number":"#<?= /* @noEscape */ $code ?>-cc-type", "validate-cc-type":"#<?= /* @noEscape */ $code ?>-cc-type"}' autocomplete="cc-number" />
             </div>
         </div>
         <div class="admin__field _required date hide-if-card-selected">
-            <label class="label admin__field-label" for="<?= $code ?>-cc-exp-month"><span><?= $block->escapeHtml(__('Expiration Date')) ?></span></label>
+            <label class="label admin__field-label" for="<?= /* @noEscape */ $code ?>-cc-exp-month"><span><?= $block->escapeHtml(__('Expiration Date')) ?></span></label>
             <div class="admin__field-control control">
-                <select id="<?= $code ?>-cc-exp-month" name="payment[cc_exp_month]" class="month validate-cc-exp required-entry _required select admin__control-select" data-validate='{required:true, "validate-cc-exp":"#<?= $code ?>-cc-exp-year"}' autocomplete="cc-exp-month">
+                <select id="<?= /* @noEscape */ $code ?>-cc-exp-month" name="payment[cc_exp_month]" class="month validate-cc-exp required-entry _required select admin__control-select" data-validate='{required:true, "validate-cc-exp":"#<?= /* @noEscape */ $code ?>-cc-exp-year"}' autocomplete="cc-exp-month">
                     <?php $_ccExpMonth = $block->getInfoData('cc_exp_month') ?>
                     <?php foreach ($block->getCcMonths() as $k=>$v): ?>
                         <option value="<?= $k?$block->escapeHtmlAttr($k):'' ?>"<?php if ($k==$_ccExpMonth): ?> selected="selected"<?php endif ?>><?= $block->escapeHtml($v) ?></option>
                     <?php endforeach ?>
                 </select>
                 <?php $_ccExpYear = $block->getInfoData('cc_exp_year') ?>
-                <select id="<?= $code ?>-cc-exp-year" name="payment[cc_exp_year]" class="year required-entry _required select admin__control-select" data-validate='{required:true}' autocomplete="cc-exp-year">
+                <select id="<?= /* @noEscape */ $code ?>-cc-exp-year" name="payment[cc_exp_year]" class="year required-entry _required select admin__control-select" data-validate='{required:true}' autocomplete="cc-exp-year">
                     <?php foreach ($block->getCcYears() as $k=>$v): ?>
                         <option value="<?= $k?$block->escapeHtmlAttr($k):'' ?>"<?php if ($k==$_ccExpYear): ?> selected="selected"<?php endif ?>><?= $block->escapeHtml($v) ?></option>
                     <?php endforeach ?>
@@ -97,10 +97,10 @@ $storedCards    = $block->getStoredCards();
         <?= $block->getChildHtml() ?>
         <?php if ($block->hasVerification()): ?>
             <div class="admin__field _required cvv <?php if ($block->getMethod()->getConfigData('require_ccv') == 0): ?>hide-if-card-selected<?php endif; ?>">
-                <label class="label admin__field-label" for="<?= $code ?>-cc-cid" ><span><?= $block->escapeHtml(__('Card Verification Number')) ?></span></label>
+                <label class="label admin__field-label" for="<?= /* @noEscape */ $code ?>-cc-cid" ><span><?= $block->escapeHtml(__('Card Verification Number')) ?></span></label>
                 <div class="admin__field-control control">
                     <div class="v-fix">
-                        <input type="text" title="<?= $block->escapeHtmlAttr(__('Card Verification Number')) ?>" class="input-text admin__control-text cvv required-entry" id="<?= $code ?>-cc-cid" name="payment[cc_cid]" value="<?= $block->escapeHtmlAttr($block->getInfoData('cc_cid')); ?>" data-validate='{"required-number":true}' autocomplete="cc-csc" />
+                        <input type="text" title="<?= $block->escapeHtmlAttr(__('Card Verification Number')) ?>" class="input-text admin__control-text cvv required-entry" id="<?= /* @noEscape */ $code ?>-cc-cid" name="payment[cc_cid]" value="<?= $block->escapeHtmlAttr($block->getInfoData('cc_cid')); ?>" data-validate='{"required-number":true}' autocomplete="cc-csc" />
                     </div>
                 </div>
             </div>
@@ -110,11 +110,11 @@ $storedCards    = $block->getStoredCards();
                 <div class="admin__field-control control">
                     <?php if ($block->getMethod()->getConfigData('allow_unsaved')): ?>
                         <input type="hidden" name="payment[save]" value="0" />
-                        <input type="checkbox" title="<?= $block->escapeHtmlAttr(__('Save for next time')) ?>" class="input-checkbox" id="<?= $code ?>-save" name="payment[save]" value="1" <?php if ($block->getMethod()->getConfigData('savecard_opt_out') && $block->getInfoData('save') !== 0): ?>checked="checked"<?php endif; ?> />
-                        <label for="<?= $code ?>-save"><?= $block->escapeHtml(__('Save for next time')) ?></label>
+                        <input type="checkbox" title="<?= $block->escapeHtmlAttr(__('Save for next time')) ?>" class="input-checkbox" id="<?= /* @noEscape */ $code ?>-save" name="payment[save]" value="1" <?php if ($block->getMethod()->getConfigData('savecard_opt_out') && $block->getInfoData('save') !== 0): ?>checked="checked"<?php endif; ?> />
+                        <label for="<?= /* @noEscape */ $code ?>-save"><?= $block->escapeHtml(__('Save for next time')) ?></label>
                     <?php else: ?>
                         <input type="hidden" name="payment[save]" value="1" />
-                        <label class="label admin__field-label" for="<?= $code ?>-save"><?= $block->escapeHtml(__('For your convenience, this data will be stored securely by our payment processor.')) ?></label>
+                        <label class="label admin__field-label" for="<?= /* @noEscape */ $code ?>-save"><?= $block->escapeHtml(__('For your convenience, this data will be stored securely by our payment processor.')) ?></label>
                     <?php endif; ?>
                 </div>
             </div>
@@ -125,8 +125,8 @@ $storedCards    = $block->getStoredCards();
     <?= /* @noEscape */ $secureRenderer->renderStyleAsTag('display:none', '#payment_form_' . $code) ?>
 <?php else: ?>
     <script>
-        if (document.querySelector('#payment_form_<?= $code ?>') instanceof Element) {
-            document.querySelector('#payment_form_<?= $code ?>').style.display = 'none';
+        if (document.querySelector('#payment_form_<?= /* @noEscape */ $code ?>') instanceof Element) {
+            document.querySelector('#payment_form_<?= /* @noEscape */ $code ?>').style.display = 'none';
         }
     </script>
 <?php endif; ?>

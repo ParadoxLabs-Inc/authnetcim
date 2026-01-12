@@ -13,7 +13,7 @@
             jQuery('#{$block->escapeJs($block->getButtonId())}_results').hide();
             jQuery('body').trigger('processStart');
             jQuery.post({
-                url: '{$block->escapeUrl($block->getAjaxUrl())}',
+                url: '{$block->escapeJsQuote($block->getAjaxUrl())}',
                 data: {
                     apiLoginId: jQuery('input[name="groups[{$code}][fields][login][value]"]').val(),
                     transactionKey: jQuery('input[name="groups[{$code}][fields][trans_key][value]"]').val(),
