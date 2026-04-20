@@ -20,7 +20,6 @@
 
 namespace ParadoxLabs\Authnetcim\Model\Service;
 
-use Magento\Sales\Api\Data\InvoiceInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\Data\TransactionInterface;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
