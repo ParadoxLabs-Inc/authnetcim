@@ -15,14 +15,15 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Block\Adminhtml\Config;
 
+use Magento\Backend\Block\Widget\Button;
 use Magento\Config\Block\System\Config\Form\Field;
 use Magento\Framework\Data\Form\Element\AbstractElement;
-use Magento\Backend\Block\Widget\Button;
 
 class ValidateButton extends Field
 {
@@ -33,7 +34,7 @@ class ValidateButton extends Field
     /**
      * Remove scope label
      *
-     * @param  AbstractElement $element
+     * @param AbstractElement $element
      * @return string
      */
     public function render(AbstractElement $element)
@@ -48,7 +49,7 @@ class ValidateButton extends Field
     /**
      * Return element html
      *
-     * @param  AbstractElement $element
+     * @param AbstractElement $element
      * @return string
      */
     protected function _getElementHtml(AbstractElement $element)

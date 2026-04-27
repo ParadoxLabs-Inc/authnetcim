@@ -15,54 +15,38 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Setup\Patch\Data;
 
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\StateException;
 use Magento\Customer\Model\Customer;
+use Magento\Customer\Setup\CustomerSetup;
+use Magento\Customer\Setup\CustomerSetupFactory;
+use Magento\Eav\Api\AttributeRepositoryInterface;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\Patch\DataPatchInterface;
 use Magento\Framework\Setup\Patch\PatchRevertableInterface;
+use ParadoxLabs\TokenBase\Helper\Operation;
+use Throwable;
 
 class CustomerProfileIdAttr implements DataPatchInterface, PatchRevertableInterface
 {
     /**
-     * @var \ParadoxLabs\TokenBase\Helper\Operation
-     */
-    private $helper;
-
-    /**
-     * @var \Magento\Eav\Api\AttributeRepositoryInterface
-     */
-    private $attributeRepository;
-
-    /**
-     * @var \Magento\Customer\Setup\CustomerSetupFactory
-     */
-    private $customerSetupFactory;
-
-    /**
-     * @var ModuleDataSetupInterface
-     */
-    private $moduleDataSetup;
-
-    /**
      * @param ModuleDataSetupInterface $moduleDataSetup
-     * @param \Magento\Customer\Setup\CustomerSetupFactory $customerSetupFactory
-     * @param \Magento\Eav\Api\AttributeRepositoryInterface $attributeRepository
-     * @param \ParadoxLabs\TokenBase\Helper\Operation $helper
+     * @param CustomerSetupFactory $customerSetupFactory
+     * @param AttributeRepositoryInterface $attributeRepository
+     * @param Operation $helper
      */
     public function __construct(
-        ModuleDataSetupInterface $moduleDataSetup,
-        \Magento\Customer\Setup\CustomerSetupFactory $customerSetupFactory,
-        \Magento\Eav\Api\AttributeRepositoryInterface $attributeRepository,
-        \ParadoxLabs\TokenBase\Helper\Operation $helper
+        private readonly ModuleDataSetupInterface $moduleDataSetup,
+        private readonly CustomerSetupFactory $customerSetupFactory,
+        private readonly AttributeRepositoryInterface $attributeRepository,
+        private readonly Operation $helper,
     ) {
-        $this->moduleDataSetup = $moduleDataSetup;
-        $this->customerSetupFactory = $customerSetupFactory;
-        $this->attributeRepository = $attributeRepository;
-        $this->helper = $helper;
     }
 
     /**
@@ -74,7 +58,7 @@ class CustomerProfileIdAttr implements DataPatchInterface, PatchRevertableInterf
      */
     public function apply()
     {
-        /** @var \Magento\Customer\Setup\CustomerSetup $customerSetup */
+        /** @var CustomerSetup $customerSetup */
         $customerSetup = $this->customerSetupFactory->create(['setup' => $this->moduleDataSetup]);
 
         $this->moduleDataSetup->startSetup();
@@ -85,7 +69,7 @@ class CustomerProfileIdAttr implements DataPatchInterface, PatchRevertableInterf
             } else {
                 $this->updateAttribute($customerSetup);
             }
-        } catch (\Exception $exception) {
+        } catch (Throwable $exception) {
             $this->helper->log('authnetcim', $exception->getMessage());
         }
 
@@ -115,13 +99,13 @@ class CustomerProfileIdAttr implements DataPatchInterface, PatchRevertableInterf
     }
 
     /**
-     * @param \Magento\Customer\Setup\CustomerSetup $customerSetup
+     * @param CustomerSetup $customerSetup
      * @return void
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Framework\Exception\StateException
+     * @throws LocalizedException
+     * @throws StateException
      * @throws \Exception
      */
-    public function addAttribute(\Magento\Customer\Setup\CustomerSetup $customerSetup): void
+    public function addAttribute(CustomerSetup $customerSetup): void
     {
         $customerSetup->addAttribute(
             Customer::ENTITY,
@@ -157,12 +141,12 @@ class CustomerProfileIdAttr implements DataPatchInterface, PatchRevertableInterf
     }
 
     /**
-     * @param \Magento\Customer\Setup\CustomerSetup $customerSetup
+     * @param CustomerSetup $customerSetup
      * @return void
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Framework\Exception\StateException
+     * @throws LocalizedException
+     * @throws StateException
      */
-    public function updateAttribute(\Magento\Customer\Setup\CustomerSetup $customerSetup): void
+    public function updateAttribute(CustomerSetup $customerSetup): void
     {
         /**
          * is_system must be 0 in order for attribute values to save.
@@ -224,7 +208,7 @@ class CustomerProfileIdAttr implements DataPatchInterface, PatchRevertableInterf
      */
     public function revert()
     {
-        /** @var \Magento\Customer\Setup\CustomerSetup $customerSetup */
+        /** @var CustomerSetup $customerSetup */
         $customerSetup = $this->customerSetupFactory->create(['setup' => $this->moduleDataSetup]);
 
         $this->moduleDataSetup->startSetup();

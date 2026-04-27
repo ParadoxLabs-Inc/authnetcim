@@ -15,27 +15,42 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer;
 
+use Magento\Framework\Url;
+use ParadoxLabs\TokenBase\Model\Method\Factory;
+use ParadoxLabs\TokenBase\Api\CardRepositoryInterface;
+use ParadoxLabs\Authnetcim\Helper\Data;
+use ParadoxLabs\Authnetcim\Model\Service\CustomerProfile;
+use Magento\Payment\Gateway\Command\CommandException;
+use ParadoxLabs\Authnetcim\Model\Gateway;
+use ParadoxLabs\Authnetcim\Model\Card;
+use Magento\Framework\Exception\InputException;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\StateException;
+use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider;
+use ParadoxLabs\Authnetcim\Model\Method;
 use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 
 abstract class AbstractRequestHandler
 {
-    public const HOSTED_ENDPOINTS = [
-        'live'    => 'https://accept.authorize.net/',
-        'sandbox' => 'https://test.authorize.net/',
-    ];
+    public const HOSTED_ENDPOINTS
+        = [
+            'live' => 'https://accept.authorize.net/',
+            'sandbox' => 'https://test.authorize.net/',
+        ];
 
     /**
-     * @var \Magento\Framework\Url
+     * @var Url
      */
     protected $urlBuilder;
 
     /**
-     * @var \ParadoxLabs\TokenBase\Model\Method\Factory
+     * @var Factory
      */
     protected $methodFactory;
 
@@ -45,22 +60,22 @@ abstract class AbstractRequestHandler
     protected $cardFactory;
 
     /**
-     * @var \ParadoxLabs\TokenBase\Api\CardRepositoryInterface
+     * @var CardRepositoryInterface
      */
     protected $cardRepository;
 
     /**
-     * @var \ParadoxLabs\Authnetcim\Helper\Data
+     * @var Data
      */
     protected $helper;
 
     /**
-     * @var \ParadoxLabs\Authnetcim\Model\Method
+     * @var Method
      */
     protected $method;
 
     /**
-     * @var \ParadoxLabs\Authnetcim\Model\Service\CustomerProfile
+     * @var CustomerProfile
      */
     protected $customerProfileService;
 
@@ -72,31 +87,31 @@ abstract class AbstractRequestHandler
     /**
      * AbstractRequestHandler constructor.
      *
-     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\Context $context
+     * @param Context $context
      */
     public function __construct(
         Context $context
     ) {
-        $this->urlBuilder = $context->getUrlBuilder();
-        $this->methodFactory = $context->getMethodFactory();
-        $this->cardFactory = $context->getCardFactory();
-        $this->cardRepository = $context->getCardRepository();
-        $this->helper = $context->getHelper();
+        $this->urlBuilder             = $context->getUrlBuilder();
+        $this->methodFactory          = $context->getMethodFactory();
+        $this->cardFactory            = $context->getCardFactory();
+        $this->cardRepository         = $context->getCardRepository();
+        $this->helper                 = $context->getHelper();
         $this->customerProfileService = $context->getCustomerProfileService();
     }
 
     /**
      * Get the payment method instance
      *
-     * @return \ParadoxLabs\Authnetcim\Model\Method
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @return Method
+     * @throws LocalizedException
      */
-    public function getMethod(): \ParadoxLabs\Authnetcim\Model\Method
+    public function getMethod(): Method
     {
         if ($this->method === null) {
             $methodCode = $this->getMethodCode();
 
-            /** @var \ParadoxLabs\Authnetcim\Model\Method $method */
+            /** @var Method $method */
             $this->method = $this->methodFactory->getMethodInstance($methodCode);
             $this->method->setStore($this->getStoreId());
 
@@ -120,7 +135,7 @@ abstract class AbstractRequestHandler
 
         $paymentId = $this->getCustomerPaymentId();
         if ($paymentId) {
-            $action = 'customer/editPayment';
+            $action                     = 'customer/editPayment';
             $params['paymentProfileId'] = $paymentId;
         }
 
@@ -134,7 +149,7 @@ abstract class AbstractRequestHandler
      * Get Authorize.Net Accept Hosted API endpoint URL for the current configuration.
      *
      * @return string
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     protected function getEndpoint(): string
     {
@@ -149,16 +164,16 @@ abstract class AbstractRequestHandler
      * Get hosted profile page request token
      *
      * @return string
-     * @throws \Magento\Framework\Exception\InputException
-     * @throws \Magento\Framework\Exception\StateException
-     * @throws \Magento\Payment\Gateway\Command\CommandException
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws InputException
+     * @throws StateException
+     * @throws CommandException
+     * @throws LocalizedException
      */
     public function getToken(): string
     {
         try {
             return $this->fetchToken();
-        } catch (\Magento\Framework\Exception\InputException $e) {
+        } catch (InputException $e) {
             // Check for stale profile error from Authorize.Net and retry once
             if (stripos($e->getMessage(), 'record cannot be found') !== false) {
                 $this->clearProfileId();
@@ -174,27 +189,27 @@ abstract class AbstractRequestHandler
      * Fetch hosted profile page request token from gateway.
      *
      * @return string
-     * @throws \Magento\Framework\Exception\InputException
-     * @throws \Magento\Framework\Exception\StateException
-     * @throws \Magento\Payment\Gateway\Command\CommandException
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws InputException
+     * @throws StateException
+     * @throws CommandException
+     * @throws LocalizedException
      */
     protected function fetchToken(): string
     {
         $method = $this->getMethod();
 
-        /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
+        /** @var Gateway $gateway */
         $gateway = $method->gateway();
 
         // Get CC form token
         $customCommunicatorUrl = $this->method->getConfigData('hosted_custom_communicator_url');
-        $communicatorUrl = $customCommunicatorUrl ?: $this->urlBuilder->getUrl('authnetcim/hosted/communicator');
+        $communicatorUrl       = $customCommunicatorUrl ?: $this->urlBuilder->getUrl('authnetcim/hosted/communicator');
 
         $gateway->setParameter('hostedProfileIFrameCommunicatorUrl', $communicatorUrl);
         $gateway->setParameter('hostedProfileHeadingBgColor', $method->getConfigData('accent_color'));
         $gateway->setParameter('customerProfileId', $this->getCustomerProfileId());
 
-        if ($this->getMethodCode() === \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider::CODE) {
+        if ($this->getMethodCode() === ConfigProvider::CODE) {
             $gateway->setParameter('hostedProfilePaymentOptions', 'showBankAccount');
             $gateway->setParameter('hostedProfileCardCodeRequired', false);
         }
@@ -203,11 +218,11 @@ abstract class AbstractRequestHandler
 
         if (!empty($response['messages']['message']['text'])
             && $response['messages']['message']['text'] !== 'Successful.') {
-            throw new \Magento\Framework\Exception\InputException(__($response['messages']['message']['text']));
+            throw new InputException(__($response['messages']['message']['text']));
         }
 
         if (empty($response['token'])) {
-            throw new \Magento\Framework\Exception\StateException(__('Unable to initialize payment form.'));
+            throw new StateException(__('Unable to initialize payment form.'));
         }
 
         return $response['token'];
@@ -217,7 +232,7 @@ abstract class AbstractRequestHandler
      * Sync the new/edited card from CIM to Magento.
      *
      * @return CardInterface
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     public function getCard(): CardInterface
     {
@@ -229,7 +244,7 @@ abstract class AbstractRequestHandler
                 $this->getCustomerProfileId()
             );
 
-            /** @var \ParadoxLabs\Authnetcim\Model\Card $card */
+            /** @var Card $card */
             $card = $this->cardFactory->create();
             $card->setMethod($this->getMethodCode());
             $card->setCustomerId($this->getCustomerId());
@@ -248,7 +263,7 @@ abstract class AbstractRequestHandler
             $card = $this->cardRepository->getByHash($cardId);
 
             if ($card->hasOwner((int)$this->helper->getCurrentCustomer()->getId()) === false) {
-                throw new \Magento\Framework\Exception\LocalizedException(__('Could not load payment profile'));
+                throw new LocalizedException(__('Could not load payment profile'));
             }
 
             $card = $card->getTypeInstance();

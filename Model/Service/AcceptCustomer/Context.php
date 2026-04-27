@@ -15,73 +15,45 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer;
 
+use Magento\Framework\Url;
+use ParadoxLabs\Authnetcim\Helper\Data;
+use ParadoxLabs\Authnetcim\Model\Service\CustomerProfile;
+use ParadoxLabs\TokenBase\Api\CardRepositoryInterface;
+use ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory;
+use ParadoxLabs\TokenBase\Model\Method\Factory;
+
 class Context
 {
     /**
-     * @var \Magento\Framework\Url
-     */
-    private $urlBuilder;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Model\Method\Factory
-     */
-    private $methodFactory;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory
-     */
-    private $cardFactory;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Api\CardRepositoryInterface
-     */
-    private $cardRepository;
-
-    /**
-     * @var \ParadoxLabs\Authnetcim\Helper\Data
-     */
-    private $helper;
-
-    /**
-     * @var \ParadoxLabs\Authnetcim\Model\Service\CustomerProfile
-     */
-    private $customerProfileService;
-
-    /**
      * AbstractRequestHandler constructor.
      *
-     * @param \Magento\Framework\Url $urlBuilder
-     * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
-     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory
-     * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
-     * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
-     * @param \ParadoxLabs\Authnetcim\Model\Service\CustomerProfile $customerProfileService
+     * @param Url $urlBuilder
+     * @param Factory $methodFactory
+     * @param CardInterfaceFactory $cardFactory
+     * @param CardRepositoryInterface $cardRepository
+     * @param Data $helper
+     * @param CustomerProfile $customerProfileService
      */
     public function __construct(
-        \Magento\Framework\Url $urlBuilder,
-        \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
-        \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory $cardFactory,
-        \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
-        \ParadoxLabs\Authnetcim\Helper\Data $helper,
-        \ParadoxLabs\Authnetcim\Model\Service\CustomerProfile $customerProfileService
+        private readonly Url $urlBuilder,
+        private readonly Factory $methodFactory,
+        private readonly CardInterfaceFactory $cardFactory,
+        private readonly CardRepositoryInterface $cardRepository,
+        private readonly Data $helper,
+        private readonly CustomerProfile $customerProfileService
     ) {
-        $this->urlBuilder = $urlBuilder;
-        $this->methodFactory = $methodFactory;
-        $this->cardFactory = $cardFactory;
-        $this->cardRepository = $cardRepository;
-        $this->helper = $helper;
-        $this->customerProfileService = $customerProfileService;
     }
 
     /**
      * Get urlBuilder
      *
-     * @return \Magento\Framework\Url
+     * @return Url
      */
     public function getUrlBuilder()
     {
@@ -91,7 +63,7 @@ class Context
     /**
      * Get methodFactory
      *
-     * @return \ParadoxLabs\TokenBase\Model\Method\Factory
+     * @return Factory
      */
     public function getMethodFactory()
     {
@@ -101,7 +73,7 @@ class Context
     /**
      * Get cardFactory
      *
-     * @return \ParadoxLabs\TokenBase\Api\Data\CardInterfaceFactory
+     * @return CardInterfaceFactory
      */
     public function getCardFactory()
     {
@@ -111,7 +83,7 @@ class Context
     /**
      * Get cardRepository
      *
-     * @return \ParadoxLabs\TokenBase\Api\CardRepositoryInterface
+     * @return CardRepositoryInterface
      */
     public function getCardRepository()
     {
@@ -121,7 +93,7 @@ class Context
     /**
      * Get helper
      *
-     * @return \ParadoxLabs\Authnetcim\Helper\Data
+     * @return Data
      */
     public function getHelper()
     {
@@ -131,7 +103,7 @@ class Context
     /**
      * Get customerProfileService
      *
-     * @return \ParadoxLabs\Authnetcim\Model\Service\CustomerProfile
+     * @return CustomerProfile
      */
     public function getCustomerProfileService()
     {

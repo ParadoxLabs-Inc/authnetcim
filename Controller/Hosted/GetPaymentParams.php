@@ -15,61 +15,57 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Controller\Hosted;
 
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\CsrfAwareActionInterface;
+use Magento\Framework\App\Request\InvalidRequestException;
+use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Data\Form\FormKey\Validator;
+use ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\FrontendRequest;
+use Throwable;
 
 class GetPaymentParams extends Action implements CsrfAwareActionInterface, HttpPostActionInterface
 {
     /**
-     * @var \Magento\Framework\Data\Form\FormKey\Validator
-     */
-    protected $formKey;
-
-    /**
-     * @var \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\FrontendRequest
-     */
-    protected $acceptHosted;
-
-    /**
      * GetPaymentParams constructor.
      *
-     * @param \Magento\Framework\App\Action\Context $context
-     * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey
-     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\FrontendRequest $acceptHosted
+     * @param Context $context
+     * @param Validator $formKey
+     * @param FrontendRequest $acceptHosted
      */
     public function __construct(
-        \Magento\Framework\App\Action\Context $context,
-        \Magento\Framework\Data\Form\FormKey\Validator $formKey,
-        \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\FrontendRequest $acceptHosted
+        Context $context,
+        protected readonly Validator $formKey,
+        protected readonly FrontendRequest $acceptHosted
     ) {
         parent::__construct($context);
-
-        $this->formKey = $formKey;
-        $this->acceptHosted = $acceptHosted;
     }
 
     /**
      * Execute action based on request and return result
      *
-     * @return \Magento\Framework\Controller\ResultInterface
+     * @return ResultInterface
      */
     public function execute()
     {
-        /** @var \Magento\Framework\Controller\Result\Json $result */
+        /** @var Json $result */
         $result = $this->resultFactory->create(ResultFactory::TYPE_JSON);
 
         try {
             $params = $this->acceptHosted->getParams();
 
             $result->setData($params);
-        } catch (\Exception $exception) {
+        } catch (Throwable $exception) {
             $result->setHttpResponseCode(400);
             $result->setData([
                 'message' => $exception->getMessage(),
@@ -82,23 +78,23 @@ class GetPaymentParams extends Action implements CsrfAwareActionInterface, HttpP
     /**
      * Create exception in case CSRF validation failed.
      *
-     * @param \Magento\Framework\App\RequestInterface $request
+     * @param RequestInterface $request
      *
-     * @return \Magento\Framework\App\Request\InvalidRequestException|null
+     * @return InvalidRequestException|null
      */
     public function createCsrfValidationException(
-        \Magento\Framework\App\RequestInterface $request
-    ): ?\Magento\Framework\App\Request\InvalidRequestException {
+        RequestInterface $request
+    ): ?InvalidRequestException {
         $message = __('Invalid Form Key. Please refresh the page.');
 
-        /** @var \Magento\Framework\Controller\Result\Json $result */
+        /** @var Json $result */
         $result = $this->resultFactory->create(ResultFactory::TYPE_JSON);
         $result->setHttpResponseCode(403);
         $result->setData([
             'message' => $message,
         ]);
 
-        return new \Magento\Framework\App\Request\InvalidRequestException(
+        return new InvalidRequestException(
             $result,
             [$message]
         );
@@ -107,11 +103,11 @@ class GetPaymentParams extends Action implements CsrfAwareActionInterface, HttpP
     /**
      * Perform custom request validation.
      *
-     * @param \Magento\Framework\App\RequestInterface $request
+     * @param RequestInterface $request
      *
      * @return bool|null
      */
-    public function validateForCsrf(\Magento\Framework\App\RequestInterface $request): ?bool
+    public function validateForCsrf(RequestInterface $request): ?bool
     {
         return $this->formKey->validate($request);
     }

@@ -15,24 +15,29 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Controller\Hosted;
 
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\View\Result\Page;
 use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\Action\HttpGetActionInterface;
+use Magento\Framework\Controller\ResultFactory;
 
-class Communicator extends Action implements \Magento\Framework\App\Action\HttpGetActionInterface
+class Communicator extends Action implements HttpGetActionInterface
 {
     /**
      * Execute action based on request and return result
      *
-     * @return \Magento\Framework\Controller\ResultInterface
+     * @return ResultInterface
      */
     public function execute()
     {
-        /** @var \Magento\Framework\View\Result\Page $result */
-        $result = $this->resultFactory->create(\Magento\Framework\Controller\ResultFactory::TYPE_LAYOUT);
+        /** @var Page $result */
+        $result = $this->resultFactory->create(ResultFactory::TYPE_LAYOUT);
 
         return $result;
     }

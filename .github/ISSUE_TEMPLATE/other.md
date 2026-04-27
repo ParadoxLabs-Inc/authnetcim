@@ -19,8 +19,8 @@ ISSUES MISSING IMPORTANT INFORMATION MAY BE CLOSED WITHOUT INVESTIGATION.
 -->
 
 # :question: Other
-<!-- If you're asking a question, have you searched through Github first? -->
 
+<!-- If you're asking a question, have you searched through Github first? -->
 
 ## Environment
 

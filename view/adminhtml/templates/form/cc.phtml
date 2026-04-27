@@ -1,9 +1,11 @@
 <?php
 /** @var \ParadoxLabs\TokenBase\Block\Form\Cc $block */
 
-$code           = $block->escapeHtmlAttr($block->getMethodCode());
-$image          = $block->getBrandingImage();
-$storedCards    = $block->getStoredCards();
+use Magento\Framework\View\Helper\SecureHtmlRenderer;
+
+$code        = $block->escapeHtmlAttr($block->getMethodCode());
+$image       = $block->getBrandingImage();
+$storedCards = $block->getStoredCards();
 ?>
 <div id="payment_form_<?= /* @noEscape */ $code ?>" class="admin__page-section-item checkout-payment-method" data-mage-init='{
     "tokenbaseForm": {
@@ -120,7 +122,7 @@ $storedCards    = $block->getStoredCards();
         <?php endif; ?>
     </fieldset>
 </div>
-<?php if (isset($secureRenderer) && $secureRenderer instanceof \Magento\Framework\View\Helper\SecureHtmlRenderer): ?>
+<?php if (isset($secureRenderer) && $secureRenderer instanceof SecureHtmlRenderer): ?>
     <?= /* @noEscape */ $secureRenderer->renderStyleAsTag('display:none', '#payment_form_' . $code) ?>
 <?php else: ?>
     <script>

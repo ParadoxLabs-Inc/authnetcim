@@ -15,16 +15,38 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model\Service;
 
-use Magento\Sales\Api\Data\InvoiceInterface;
+use ParadoxLabs\Authnetcim\Model\Method;
+use Magento\Sales\Model\ResourceModel\Order\Payment\Transaction\Collection;
+use Magento\Sales\Model\Order\Payment;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Event\ManagerInterface;
+use Magento\Framework\Exception\InputException;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Sales\Api\CreditmemoManagementInterface;
+use Magento\Sales\Api\CreditmemoRepositoryInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\Data\TransactionInterface;
+use Magento\Sales\Api\InvoiceManagementInterface;
+use Magento\Sales\Api\InvoiceRepositoryInterface;
+use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Model\Order;
+use Magento\Sales\Model\Order\CreditmemoFactory;
+use Magento\Sales\Model\Order\Invoice;
+use Magento\Sales\Model\Order\Payment\Transaction;
+use Magento\Sales\Model\ResourceModel\Order\Payment\Transaction\CollectionFactory;
+use Magento\Store\Model\StoreManagerInterface;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
+use ParadoxLabs\TokenBase\Api\GatewayInterface;
+use ParadoxLabs\TokenBase\Helper\Data;
 use ParadoxLabs\TokenBase\Model\Gateway\Response;
+use ParadoxLabs\TokenBase\Model\Method\Factory;
+use Throwable;
 
 class WebhookProcessor
 {
@@ -35,124 +57,55 @@ class WebhookProcessor
         'net.authorize.payment.refund.created',
         'net.authorize.payment.void.created',
     ];
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Helper\Data
-     */
-    protected $helper;
-    /**
-     * @var \Magento\Framework\App\Request\Http
-     */
-    protected $request;
-    /**
-     * @var \ParadoxLabs\Authnetcim\Model\ConfigProvider
-     */
-    protected $configProvider;
-    /**
-     * @var \Magento\Sales\Model\ResourceModel\Order\CollectionFactory
-     */
-    protected $orderCollectionFactory;
-    /**
-     * @var \Magento\Sales\Api\OrderRepositoryInterface
-     */
-    protected $orderRepository;
-    /**
-     * @var \Magento\Sales\Model\Service\InvoiceService
-     */
-    protected $invoiceService;
-    /**
-     * @var \Magento\Sales\Api\InvoiceRepositoryInterface
-     */
-    protected $invoiceRepository;
-    /**
-     * @var \Magento\Sales\Api\CreditmemoRepositoryInterface
-     */
-    protected $creditmemoRepository;
     /**
      * @var \Magento\Sales\Model\ResourceModel\Order\Payment\Transaction\CollectionFactory
      */
     protected $txnCollectionFactory;
-    /**
-     * @var \Magento\Sales\Api\CreditmemoManagementInterface
-     */
-    protected $creditmemoService;
-    /**
-     * @var \Magento\Sales\Model\Order\CreditmemoFactory
-     */
-    protected $creditmemoFactory;
-    /**
-     * @var \ParadoxLabs\TokenBase\Model\Method\Factory
-     */
-    protected $methodFactory;
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
-    protected $storeManager;
-    /**
-     * @var \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider
-     */
-    protected $achConfigProvider;
-
-    protected \Magento\Framework\Event\ManagerInterface $eventManager;
 
     /**
      * WebhookProcessor constructor.
      *
-     * @param \ParadoxLabs\TokenBase\Helper\Data $helper
-     * @param \Magento\Framework\App\RequestInterface $request
-     * @param \ParadoxLabs\Authnetcim\Model\ConfigProvider $configProvider
+     * @param Data $helper
+     * @param RequestInterface $request
+     * @param ConfigProvider $configProvider
      * @param \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory
-     * @param \Magento\Sales\Api\OrderRepositoryInterface $orderRepository
-     * @param \Magento\Sales\Api\InvoiceManagementInterface $invoiceService
-     * @param \Magento\Sales\Api\InvoiceRepositoryInterface $invoiceRepository
-     * @param \Magento\Sales\Api\CreditmemoRepositoryInterface $creditmemoRepository
+     * @param OrderRepositoryInterface $orderRepository
+     * @param InvoiceManagementInterface $invoiceService
+     * @param InvoiceRepositoryInterface $invoiceRepository
+     * @param CreditmemoRepositoryInterface $creditmemoRepository
      * @param \Magento\Sales\Model\ResourceModel\Order\Payment\Transaction\CollectionFactory $txnCollectionFactory
-     * @param \Magento\Sales\Model\Order\CreditmemoFactory $creditmemoFactory
-     * @param \Magento\Sales\Api\CreditmemoManagementInterface $creditmemoService
-     * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param CreditmemoFactory $creditmemoFactory
+     * @param CreditmemoManagementInterface $creditmemoService
+     * @param Factory $methodFactory
+     * @param StoreManagerInterface $storeManager
      * @param \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider $achConfigProvider
-     * @param \Magento\Framework\Event\ManagerInterface $eventManager
+     * @param ManagerInterface $eventManager
      */
     public function __construct(
-        \ParadoxLabs\TokenBase\Helper\Data $helper,
-        \Magento\Framework\App\RequestInterface $request,
-        ConfigProvider $configProvider,
-        \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory,
-        \Magento\Sales\Api\OrderRepositoryInterface $orderRepository,
-        \Magento\Sales\Api\InvoiceManagementInterface $invoiceService,
-        \Magento\Sales\Api\InvoiceRepositoryInterface $invoiceRepository,
-        \Magento\Sales\Api\CreditmemoRepositoryInterface $creditmemoRepository,
-        \Magento\Sales\Model\ResourceModel\Order\Payment\Transaction\CollectionFactory $txnCollectionFactory,
-        \Magento\Sales\Model\Order\CreditmemoFactory $creditmemoFactory,
-        \Magento\Sales\Api\CreditmemoManagementInterface $creditmemoService,
-        \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider $achConfigProvider,
-        \Magento\Framework\Event\ManagerInterface $eventManager
+        protected readonly Data $helper,
+        protected readonly RequestInterface $request,
+        protected ConfigProvider $configProvider,
+        protected readonly \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory,
+        protected readonly OrderRepositoryInterface $orderRepository,
+        protected readonly InvoiceManagementInterface $invoiceService,
+        protected readonly InvoiceRepositoryInterface $invoiceRepository,
+        protected readonly CreditmemoRepositoryInterface $creditmemoRepository,
+        CollectionFactory $txnCollectionFactory,
+        protected readonly CreditmemoFactory $creditmemoFactory,
+        protected readonly CreditmemoManagementInterface $creditmemoService,
+        protected readonly Factory $methodFactory,
+        protected readonly StoreManagerInterface $storeManager,
+        protected readonly \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider $achConfigProvider,
+        protected readonly ManagerInterface $eventManager
     ) {
-        $this->helper = $helper;
-        $this->request = $request;
-        $this->configProvider = $configProvider;
-        $this->orderCollectionFactory = $orderCollectionFactory;
-        $this->orderRepository = $orderRepository;
-        $this->invoiceService = $invoiceService;
-        $this->invoiceRepository = $invoiceRepository;
-        $this->creditmemoRepository = $creditmemoRepository;
-        $this->txnCollectionFactory = $txnCollectionFactory;
-        $this->creditmemoService = $creditmemoService;
-        $this->creditmemoFactory = $creditmemoFactory;
-        $this->methodFactory = $methodFactory;
-        $this->storeManager = $storeManager;
-        $this->achConfigProvider = $achConfigProvider;
-        $this->eventManager = $eventManager;
+        $this->txnCollectionFactory   = $txnCollectionFactory;
     }
 
     /**
      * Process webhook input for the current request.
      *
      * @return void
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     public function process(): void
     {
@@ -162,6 +115,7 @@ class WebhookProcessor
 
         if ($this->configProvider->isWebhookEnabled() !== true) {
             $this->helper->log($this->configProvider->getCode(), 'Webhook received, but disabled in config.');
+
             return;
         }
 
@@ -170,12 +124,12 @@ class WebhookProcessor
         $this->validateWebhook();
 
         try {
-            /** @var \ParadoxLabs\Authnetcim\Model\Method $method */
+            /** @var Method $method */
             $method = $this->methodFactory->getMethodInstance($this->configProvider->getCode());
             $method->setStore($this->storeManager->getStore()->getId());
             $gateway = $method->gateway();
             $this->executeWebhook($gateway);
-        } catch (\Exception $exception) {
+        } catch (Throwable $exception) {
             $this->helper->log(
                 $this->configProvider->getCode(),
                 'Webhook failed to execute: ' . $exception->getMessage()
@@ -189,33 +143,33 @@ class WebhookProcessor
      * Validate the webhook signature against configuration.
      *
      * @return void
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     protected function validateWebhook(): void
     {
         $signatureHeader = $this->request->getServer('X-ANET-SIGNATURE')
             ?? $this->request->getServer('HTTP_X_ANET_SIGNATURE')
             ?? '=';
-        $deliveredHmac   = strtoupper(explode('=', $signatureHeader, 2)[1]);
+        $deliveredHmac   = strtoupper(explode('=', (string) $signatureHeader, 2)[1]);
 
-        $payload         = $this->request->getContent();
+        $payload = $this->request->getContent();
 
         if (empty($payload)) {
             $this->helper->log($this->configProvider->getCode(), 'Empty webhook request received');
-            throw new \Magento\Framework\Exception\InputException(__('No webhook received'));
+            throw new InputException(__('No webhook received'));
         }
 
-        $generatedHmac   = strtoupper(hash_hmac('sha512', $payload, $this->configProvider->getSignatureKey()));
+        $generatedHmac = strtoupper(hash_hmac('sha512', $payload, $this->configProvider->getSignatureKey()));
 
         if ($signatureHeader === '=' || $deliveredHmac !== $generatedHmac) {
-            $this->helper->log($this->configProvider->getCode(), 'Webhook signature failed: '.$payload);
-            $this->helper->log($this->configProvider->getCode(), 'Webhook signature failed: '.$payload, true);
-            $this->helper->log($this->configProvider->getCode(), 'Delivered: '.$deliveredHmac, true);
-            $this->helper->log($this->configProvider->getCode(), 'Generated: '.$generatedHmac, true);
+            $this->helper->log($this->configProvider->getCode(), 'Webhook signature failed: ' . $payload);
+            $this->helper->log($this->configProvider->getCode(), 'Webhook signature failed: ' . $payload, true);
+            $this->helper->log($this->configProvider->getCode(), 'Delivered: ' . $deliveredHmac, true);
+            $this->helper->log($this->configProvider->getCode(), 'Generated: ' . $generatedHmac, true);
             $this->helper->log($this->configProvider->getCode(), json_encode($this->request->getServer()), true);
-            throw new \Magento\Framework\Exception\LocalizedException(__('Invalid webhook signature'));
+            throw new LocalizedException(__('Invalid webhook signature'));
         } else {
-            $this->helper->log($this->configProvider->getCode(), 'Received valid webhook: '.$payload);
+            $this->helper->log($this->configProvider->getCode(), 'Received valid webhook: ' . $payload);
         }
     }
 
@@ -223,7 +177,7 @@ class WebhookProcessor
      * Fetch order by Authnet transaction ID
      *
      * @param string $transactionId
-     * @return \Magento\Sales\Api\Data\OrderInterface
+     * @return OrderInterface
      */
     protected function getOrderByTxnId(string $transactionId): OrderInterface
     {
@@ -255,22 +209,23 @@ class WebhookProcessor
         $orders->addFieldToFilter('sop.method', $this->configProvider->getCode());
         $orders->setPageSize(1);
 
-        /** @var \Magento\Sales\Model\Order $order */
+        /** @var Order $order */
         $order = $orders->getFirstItem();
+
         return $order;
     }
 
     /**
      * Get auth transaction object for the given order/txn.
      *
-     * @param \Magento\Sales\Api\Data\OrderInterface $order
+     * @param OrderInterface $order
      * @param string $transactionId
      * @param string $type
-     * @return \Magento\Sales\Api\Data\TransactionInterface
+     * @return TransactionInterface
      */
     protected function getTransaction(OrderInterface $order, string $transactionId, string $type): TransactionInterface
     {
-        /** @var \Magento\Sales\Model\ResourceModel\Order\Payment\Transaction\Collection $transactions */
+        /** @var Collection $transactions */
         $transactions = $this->txnCollectionFactory->create();
         $transactions->addFieldToFilter('order_id', $order->getId());
         $transactions->addFieldToFilter('txn_id', $transactionId);
@@ -279,17 +234,18 @@ class WebhookProcessor
 
         /** @var TransactionInterface $transaction */
         $transaction = $transactions->getFirstItem();
+
         return $transaction;
     }
 
     /**
      * Process data changes from the webhook
      *
-     * @param \ParadoxLabs\TokenBase\Api\GatewayInterface $gateway
+     * @param GatewayInterface $gateway
      * @return void
      * @throws \Exception
      */
-    protected function executeWebhook(\ParadoxLabs\TokenBase\Api\GatewayInterface $gateway): void
+    protected function executeWebhook(GatewayInterface $gateway): void
     {
         $webhook       = json_decode((string)$this->request->getContent(), true);
         $transactionId = $webhook['payload']['id'];
@@ -305,14 +261,14 @@ class WebhookProcessor
             }
 
             $order = $this->getOrderByTxnId($transactionId);
-            if ($order instanceof \Magento\Sales\Model\Order === false || empty($order->getId())) {
+            if ($order instanceof Order === false || empty($order->getId())) {
                 return;
             }
 
             if ($eventType === 'net.authorize.payment.fraud.approved' && $order->isFraudDetected()
                 && $responseCode === 1) {
                 $this->markApproved($order, $txnDetails);
-            } elseif (($eventType === 'net.authorize.payment.fraud.declined' || in_array($responseCode, [2,3], true))
+            } elseif (($eventType === 'net.authorize.payment.fraud.declined' || in_array($responseCode, [2, 3], true))
                 && $order->isFraudDetected()) {
                 $this->markDeclined($order, $txnDetails);
             } elseif ($eventType === 'net.authorize.payment.priorAuthCapture.created' && $order->canInvoice()) {
@@ -328,13 +284,13 @@ class WebhookProcessor
     /**
      * Mark the given order/transaction approved
      *
-     * @param \Magento\Sales\Api\Data\OrderInterface $order
-     * @param \ParadoxLabs\TokenBase\Model\Gateway\Response $txnDetails
+     * @param OrderInterface $order
+     * @param Response $txnDetails
      * @return void
      */
     protected function markApproved(OrderInterface $order, Response $txnDetails): void
     {
-        /** @var \Magento\Sales\Model\Order\Payment $payment */
+        /** @var Payment $payment */
         $payment = $order->getPayment();
         $payment->setData('parent_transaction_id', $txnDetails->getTransactionId());
         $payment->setTransactionId($txnDetails->getTransactionId());
@@ -348,6 +304,7 @@ class WebhookProcessor
         if ($txnDetails->getTransactionType() === 'auth_capture'
             || $txnDetails->getData('amount_settled') > 0) {
             $this->markCaptured($order, $txnDetails);
+
             return;
         }
 
@@ -372,8 +329,8 @@ class WebhookProcessor
     /**
      * Mark the given order/transaction declined
      *
-     * @param \Magento\Sales\Api\Data\OrderInterface $order
-     * @param \ParadoxLabs\TokenBase\Model\Gateway\Response $txnDetails
+     * @param OrderInterface $order
+     * @param Response $txnDetails
      * @return void
      */
     protected function markDeclined(OrderInterface $order, Response $txnDetails): void
@@ -383,7 +340,7 @@ class WebhookProcessor
             sprintf('Marking order %s failed', $order->getIncrementId())
         );
 
-        /** @var \Magento\Sales\Model\Order\Payment $payment */
+        /** @var Payment $payment */
         $payment = $order->getPayment();
         $payment->setData('parent_transaction_id', $txnDetails->getTransactionId());
         $payment->setIsTransactionDenied(true);
@@ -405,15 +362,14 @@ class WebhookProcessor
     /**
      * Mark the given order/transaction captured
      *
-     * @param \Magento\Sales\Api\Data\OrderInterface $order
-     * @param \ParadoxLabs\TokenBase\Model\Gateway\Response $txnDetails
+     * @param OrderInterface $order
+     * @param Response $txnDetails
      * @return void
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     protected function markCaptured(OrderInterface $order, Response $txnDetails): void
     {
-        /** @var \Magento\Sales\Model\Order $order */
-
+        /** @var Order $order */
         // Note: Invoices don't have a way to specify an amount independent of items/totals calculation. Could
         // theoretically calculate it ourselves, but not flawlessly. So: Full captures only.
         $uncoveredAmount = (float)$order->getTotalDue() - (float)$txnDetails->getData('amount_settled');
@@ -457,7 +413,7 @@ class WebhookProcessor
             sprintf('Marking order %s paid', $order->getIncrementId())
         );
 
-        /** @var \Magento\Sales\Model\Order\Payment $payment */
+        /** @var Payment $payment */
         $payment = $order->getPayment();
         $payment->setTransactionId($txnDetails->getTransactionId());
         $payment->setLastTransId($txnDetails->getTransactionId());
@@ -467,7 +423,7 @@ class WebhookProcessor
             array_replace_recursive($payment->getAdditionalInformation() ?? [], $txnDetails->getData())
         );
         $payment->setTransactionAdditionalInfo(
-            \Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS,
+            Transaction::RAW_DETAILS,
             $txnDetails->getData()
         );
         $payment->setData(
@@ -476,7 +432,7 @@ class WebhookProcessor
         );
 
         $payment->addTransaction(
-            \Magento\Sales\Model\Order\Payment\Transaction::TYPE_CAPTURE,
+            Transaction::TYPE_CAPTURE,
             $order,
             false
         );
@@ -496,14 +452,13 @@ class WebhookProcessor
     /**
      * Mark the given order/transaction refunded
      *
-     * @param \Magento\Sales\Api\Data\OrderInterface $order
-     * @param \ParadoxLabs\TokenBase\Model\Gateway\Response $txnDetails
+     * @param OrderInterface $order
+     * @param Response $txnDetails
      * @return void
      */
     protected function markRefunded(OrderInterface $order, Response $txnDetails): void
     {
-        /** @var \Magento\Sales\Model\Order $order */
-
+        /** @var Order $order */
         $invoice    = null;
         $amountPaid = $order->getTotalPaid();
 
@@ -563,7 +518,7 @@ class WebhookProcessor
             true
         );
 
-        if ($invoice instanceof \Magento\Sales\Model\Order\Invoice) {
+        if ($invoice instanceof Invoice) {
             $creditmemo = $this->creditmemoFactory->createByInvoice($invoice);
         } else {
             $creditmemo = $this->creditmemoFactory->createByOrder($order);

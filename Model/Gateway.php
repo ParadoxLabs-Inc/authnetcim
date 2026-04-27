@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,17 +15,41 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model;
 
+use Magento\Framework\HTTP\Client\Curl;
+use Magento\Framework\HTTP\Client\Socket;
+use Magento\Sales\Model\Order\Payment;
+use Magento\Sales\Model\Order\Item;
+use Magento\Customer\Api\Data\AddressInterface;
+use Magento\Framework\DataObject;
+use Magento\Framework\HTTP\ClientInterfaceFactory;
+use Magento\Framework\Module\Dir;
+use Magento\Framework\Registry;
 use Magento\Payment\Gateway\Command\CommandException;
+use Magento\Payment\Model\InfoInterface;
+use Magento\Sales\Api\Data\CreditmemoInterface;
+use Magento\Sales\Api\Data\OrderAddressInterface;
+use Magento\Sales\Model\Order\Invoice;
+use ParadoxLabs\TokenBase\Api\Data\CardInterface;
+use ParadoxLabs\TokenBase\Helper\Data;
+use ParadoxLabs\TokenBase\Model\AbstractGateway;
+use ParadoxLabs\TokenBase\Model\Gateway\Response;
+use ParadoxLabs\TokenBase\Model\Gateway\ResponseFactory;
+use ParadoxLabs\TokenBase\Model\Gateway\Xml;
+use Throwable;
+use const CURLOPT_CAINFO;
+use const CURLOPT_SSL_VERIFYHOST;
+use const CURLOPT_SSL_VERIFYPEER;
 
 /**
  * Authorize.Net CIM API Gateway - custom built for perfection.
  */
-class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
+class Gateway extends AbstractGateway
 {
     /**
      * Authorize.Net registered solution ID
@@ -90,97 +114,97 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      * @var array
      */
     protected $fields = [
-        'accountNumber'             => ['maxLength' => 17, 'charMask' => 'X\d'],
-        'accountType'               => ['enum' => ['checking', 'savings', 'businessChecking']],
-        'allowPartialAuth'          => ['enum' => ['true', 'false']],
-        'amount'                    => [],
-        'approvalCode'              => ['maxLength'],
-        'bankName'                  => ['maxLength' => 50],
-        'billToAddress'             => ['maxLength' => 60, 'noSymbols' => true],
-        'billToCity'                => ['maxLength' => 40, 'noSymbols' => true],
-        'billToCompany'             => ['maxLength' => 50, 'noSymbols' => true],
-        'billToCountry'             => ['maxLength' => 60, 'noSymbols' => true],
-        'billToFaxNumber'           => ['maxLength' => 25, 'charMask' => '\d\(\)\-\.'],
-        'billToFirstName'           => ['maxLength' => 50, 'noSymbols' => true],
-        'billToLastName'            => ['maxLength' => 50, 'noSymbols' => true],
-        'billToPhoneNumber'         => ['maxLength' => 25, 'charMask' => '\d\(\)\-\.'],
-        'billToState'               => ['maxLength' => 40, 'noSymbols' => true],
-        'billToZip'                 => ['maxLength' => 20, 'noSymbols' => true],
-        'cardCode'                  => ['maxLength' => 4, 'charMask' => '\d'],
-        'cardNumber'                => ['maxLength' => 16, 'charMask' => 'X\d'],
-        'centinelAuthIndicator'     => ['maxLength' => 2, 'charMask' => '\d'],
-        'centinelAuthValue'         => [],
-        'customerIp'                => [],
-        'customerPaymentProfileId'  => ['charMask' => '\d'],
-        'customerProfileId'         => ['charMask' => '\d'],
+        'accountNumber' => ['maxLength' => 17, 'charMask' => 'X\d'],
+        'accountType' => ['enum' => ['checking', 'savings', 'businessChecking']],
+        'allowPartialAuth' => ['enum' => ['true', 'false']],
+        'amount' => [],
+        'approvalCode' => ['maxLength'],
+        'bankName' => ['maxLength' => 50],
+        'billToAddress' => ['maxLength' => 60, 'noSymbols' => true],
+        'billToCity' => ['maxLength' => 40, 'noSymbols' => true],
+        'billToCompany' => ['maxLength' => 50, 'noSymbols' => true],
+        'billToCountry' => ['maxLength' => 60, 'noSymbols' => true],
+        'billToFaxNumber' => ['maxLength' => 25, 'charMask' => '\d\(\)\-\.'],
+        'billToFirstName' => ['maxLength' => 50, 'noSymbols' => true],
+        'billToLastName' => ['maxLength' => 50, 'noSymbols' => true],
+        'billToPhoneNumber' => ['maxLength' => 25, 'charMask' => '\d\(\)\-\.'],
+        'billToState' => ['maxLength' => 40, 'noSymbols' => true],
+        'billToZip' => ['maxLength' => 20, 'noSymbols' => true],
+        'cardCode' => ['maxLength' => 4, 'charMask' => '\d'],
+        'cardNumber' => ['maxLength' => 16, 'charMask' => 'X\d'],
+        'centinelAuthIndicator' => ['maxLength' => 2, 'charMask' => '\d'],
+        'centinelAuthValue' => [],
+        'customerIp' => [],
+        'customerPaymentProfileId' => ['charMask' => '\d'],
+        'customerProfileId' => ['charMask' => '\d'],
         'customerShippingAddressId' => ['charMask' => '\d'],
-        'customerType'              => ['enum' => ['individual', 'business']],
-        'dataDescriptor'            => ['noSymbols' => true],
-        'dataValue'                 => ['charMask' => 'a-zA-Z0-9+\/\\='],
-        'description'               => ['maxLength' => 255],
-        'deviceType'                => ['charMask' => '\d'],
-        'duplicateWindow'           => ['charMask' => '\d'],
-        'dutyAmount'                => [],
-        'dutyDescription'           => ['maxLength' => 255],
-        'dutyName'                  => ['maxLength' => 31],
-        'echeckType'                => ['enum' => ['CCD', 'PPD', 'TEL', 'WEB', 'ARC', 'BOC']],
-        'email'                     => ['maxLength' => 255],
-        'emailCustomer'             => ['enum' => ['true', 'false']],
-        'expirationDate'            => ['maxLength' => 7],
-        'hostedPaymentAddProfile'               => ['enum' => [true, false]],
-        'hostedPaymentCancelText'               => ['maxLength' => 31],
-        'hostedPaymentPayButtonText'            => ['maxLength' => 31],
-        'hostedPaymentCardCodeRequired'         => ['enum' => [true, false]],
-        'hostedPaymentShowCreditCard'           => ['enum' => [true, false]],
-        'hostedPaymentShowBankAccount'          => ['enum' => [true, false]],
-        'hostedPaymentShowMerchantName'         => ['enum' => [true, false]],
-        'hostedPaymentValidateCaptcha'          => ['enum' => [true, false]],
-        'hostedProfileSaveButtonText'           => ['maxLength' => 32, 'noSymbols' => true],
-        'hostedProfilePageBorderVisible'        => ['enum' => [true, false]],
-        'hostedProfileHeadingBgColor'           => ['maxLength' => 7, 'charMask' => 'a-zA-Z0-9#'],
-        'hostedProfileIFrameCommunicatorUrl'    => [],
-        'hostedProfilePaymentOptions'           => ['enum' => ['showAll', 'showCreditCard', 'showBankAccount']],
-        'hostedProfileBillingAddressRequired'   => ['enum' => [true, false]],
-        'hostedProfileCardCodeRequired'         => ['enum' => [true, false]],
-        'hostedProfileBillingAddressOptions'    => ['enum' => ['showBillingAddress', 'showNone']],
-        'hostedProfileManageOptions'            => ['enum' => ['showAll', 'showPayment', 'showShipping']],
-        'includeIssuerInfo'         => ['enum' => ['true', 'false']],
-        'invoiceNumber'             => ['maxLength' => 20, 'noSymbols' => true],
-        'isFirstRecurringPayment'   => ['enum' => ['true', 'false']],
-        'isFirstSubsequentAuth'     => ['enum' => ['true', 'false']],
-        'isStoredCredentials'       => ['enum' => ['true', 'false']],
-        'isSubsequentAuth'          => ['enum' => ['true', 'false']],
-        'itemName'                  => ['maxLength' => 31, 'noSymbols' => true],
-        'loginId'                   => ['maxLength' => 20],
-        'marketType'                => ['charMask' => '\d'],
-        'merchantCustomerId'        => ['maxLength' => 20],
-        'nameOnAccount'             => ['maxLength' => 22],
-        'profileType'               => ['enum' => ['guest', 'regular']],
-        'purchaseOrderNumber'       => ['maxLength' => 25, 'noSymbols' => true],
-        'recurringBilling'          => ['enum' => ['true', 'false']],
-        'refId'                     => ['maxLength' => 20],
-        'routingNumber'             => ['maxLength' => 9, 'charMask' => 'X\d'],
-        'shipAmount'                => [],
-        'shipDescription'           => ['maxLength' => 255],
-        'shipName'                  => ['maxLength' => 31],
-        'shipToAddress'             => ['maxLength' => 60, 'noSymbols' => true],
-        'shipToCity'                => ['maxLength' => 40, 'noSymbols' => true],
-        'shipToCompany'             => ['maxLength' => 50, 'noSymbols' => true],
-        'shipToCountry'             => ['maxLength' => 60, 'noSymbols' => true],
-        'shipToFaxNumber'           => ['maxLength' => 25, 'charMask' => '\d\(\)\-\.'],
-        'shipToFirstName'           => ['maxLength' => 50, 'noSymbols' => true],
-        'shipToLastName'            => ['maxLength' => 50, 'noSymbols' => true],
-        'shipToPhoneNumber'         => ['maxLength' => 25, 'charMask' => '\d\(\)\-\.'],
-        'shipToState'               => ['maxLength' => 40, 'noSymbols' => true],
-        'shipToZip'                 => ['maxLength' => 20, 'noSymbols' => true],
-        'splitTenderId'             => ['maxLength' => 6],
-        'subsequentAuthReason'      => ['enum' => ['delayedCharge', 'noShow', 'resubmission', 'reauthorization']],
-        'taxAmount'                 => [],
-        'taxDescription'            => ['maxLength' => 255],
-        'taxExempt'                 => ['enum' => ['true', 'false']],
-        'taxName'                   => ['maxLength' => 31],
-        'transactionKey'            => ['maxLength' => 16, 'noSymbols' => true],
-        'transactionType'           => [
+        'customerType' => ['enum' => ['individual', 'business']],
+        'dataDescriptor' => ['noSymbols' => true],
+        'dataValue' => ['charMask' => 'a-zA-Z0-9+\/\\='],
+        'description' => ['maxLength' => 255],
+        'deviceType' => ['charMask' => '\d'],
+        'duplicateWindow' => ['charMask' => '\d'],
+        'dutyAmount' => [],
+        'dutyDescription' => ['maxLength' => 255],
+        'dutyName' => ['maxLength' => 31],
+        'echeckType' => ['enum' => ['CCD', 'PPD', 'TEL', 'WEB', 'ARC', 'BOC']],
+        'email' => ['maxLength' => 255],
+        'emailCustomer' => ['enum' => ['true', 'false']],
+        'expirationDate' => ['maxLength' => 7],
+        'hostedPaymentAddProfile' => ['enum' => [true, false]],
+        'hostedPaymentCancelText' => ['maxLength' => 31],
+        'hostedPaymentPayButtonText' => ['maxLength' => 31],
+        'hostedPaymentCardCodeRequired' => ['enum' => [true, false]],
+        'hostedPaymentShowCreditCard' => ['enum' => [true, false]],
+        'hostedPaymentShowBankAccount' => ['enum' => [true, false]],
+        'hostedPaymentShowMerchantName' => ['enum' => [true, false]],
+        'hostedPaymentValidateCaptcha' => ['enum' => [true, false]],
+        'hostedProfileSaveButtonText' => ['maxLength' => 32, 'noSymbols' => true],
+        'hostedProfilePageBorderVisible' => ['enum' => [true, false]],
+        'hostedProfileHeadingBgColor' => ['maxLength' => 7, 'charMask' => 'a-zA-Z0-9#'],
+        'hostedProfileIFrameCommunicatorUrl' => [],
+        'hostedProfilePaymentOptions' => ['enum' => ['showAll', 'showCreditCard', 'showBankAccount']],
+        'hostedProfileBillingAddressRequired' => ['enum' => [true, false]],
+        'hostedProfileCardCodeRequired' => ['enum' => [true, false]],
+        'hostedProfileBillingAddressOptions' => ['enum' => ['showBillingAddress', 'showNone']],
+        'hostedProfileManageOptions' => ['enum' => ['showAll', 'showPayment', 'showShipping']],
+        'includeIssuerInfo' => ['enum' => ['true', 'false']],
+        'invoiceNumber' => ['maxLength' => 20, 'noSymbols' => true],
+        'isFirstRecurringPayment' => ['enum' => ['true', 'false']],
+        'isFirstSubsequentAuth' => ['enum' => ['true', 'false']],
+        'isStoredCredentials' => ['enum' => ['true', 'false']],
+        'isSubsequentAuth' => ['enum' => ['true', 'false']],
+        'itemName' => ['maxLength' => 31, 'noSymbols' => true],
+        'loginId' => ['maxLength' => 20],
+        'marketType' => ['charMask' => '\d'],
+        'merchantCustomerId' => ['maxLength' => 20],
+        'nameOnAccount' => ['maxLength' => 22],
+        'profileType' => ['enum' => ['guest', 'regular']],
+        'purchaseOrderNumber' => ['maxLength' => 25, 'noSymbols' => true],
+        'recurringBilling' => ['enum' => ['true', 'false']],
+        'refId' => ['maxLength' => 20],
+        'routingNumber' => ['maxLength' => 9, 'charMask' => 'X\d'],
+        'shipAmount' => [],
+        'shipDescription' => ['maxLength' => 255],
+        'shipName' => ['maxLength' => 31],
+        'shipToAddress' => ['maxLength' => 60, 'noSymbols' => true],
+        'shipToCity' => ['maxLength' => 40, 'noSymbols' => true],
+        'shipToCompany' => ['maxLength' => 50, 'noSymbols' => true],
+        'shipToCountry' => ['maxLength' => 60, 'noSymbols' => true],
+        'shipToFaxNumber' => ['maxLength' => 25, 'charMask' => '\d\(\)\-\.'],
+        'shipToFirstName' => ['maxLength' => 50, 'noSymbols' => true],
+        'shipToLastName' => ['maxLength' => 50, 'noSymbols' => true],
+        'shipToPhoneNumber' => ['maxLength' => 25, 'charMask' => '\d\(\)\-\.'],
+        'shipToState' => ['maxLength' => 40, 'noSymbols' => true],
+        'shipToZip' => ['maxLength' => 20, 'noSymbols' => true],
+        'splitTenderId' => ['maxLength' => 6],
+        'subsequentAuthReason' => ['enum' => ['delayedCharge', 'noShow', 'resubmission', 'reauthorization']],
+        'taxAmount' => [],
+        'taxDescription' => ['maxLength' => 255],
+        'taxExempt' => ['enum' => ['true', 'false']],
+        'taxName' => ['maxLength' => 31],
+        'transactionKey' => ['maxLength' => 16, 'noSymbols' => true],
+        'transactionType' => [
             'enum' => [
                 // Old types
                 'profileTransAuthCapture',
@@ -199,68 +223,52 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 'updateHeldTransaction',
             ],
         ],
-        'transId'                   => ['charMask' => '\d'],
-        'unmaskExpirationDate'      => ['enum' => ['true', 'false']],
-        'updateAction'              => ['enum' => ['approve', 'decline']],
-        'userFields'                => [],
-        'validationMode'            => ['enum' => ['liveMode', 'testMode']],
+        'transId' => ['charMask' => '\d'],
+        'unmaskExpirationDate' => ['enum' => ['true', 'false']],
+        'updateAction' => ['enum' => ['approve', 'decline']],
+        'userFields' => [],
+        'validationMode' => ['enum' => ['liveMode', 'testMode']],
     ];
 
     /**
      * @var array
      */
     protected $txnTypeMap = [
-        'authCaptureTransaction'      => 'auth_capture',
-        'authOnlyTransaction'         => 'auth_only',
-        'captureOnlyTransaction'      => 'capture_only',
+        'authCaptureTransaction' => 'auth_capture',
+        'authOnlyTransaction' => 'auth_only',
+        'captureOnlyTransaction' => 'capture_only',
         'priorAuthCaptureTransaction' => 'prior_auth_capture',
-        'refundTransaction'           => 'credit',
-        'voidTransaction'             => 'void',
-        'updateHeldTransaction'       => 'update_held_transaction',
+        'refundTransaction' => 'credit',
+        'voidTransaction' => 'void',
+        'updateHeldTransaction' => 'update_held_transaction',
     ];
-
-    /**
-     * @var \Magento\Framework\Module\Dir
-     */
-    protected $moduleDir;
-
-    /**
-     * @var \Magento\Framework\Registry
-     */
-    protected $registry;
 
     /**
      * Gateway constructor.
      *
-     * @param \ParadoxLabs\TokenBase\Helper\Data $helper
-     * @param \ParadoxLabs\TokenBase\Model\Gateway\Xml $xml
+     * @param Data $helper
+     * @param Xml $xml
      * @param \ParadoxLabs\TokenBase\Model\Gateway\ResponseFactory $responseFactory
-     * @param \Magento\Framework\HTTP\ZendClientFactory $httpClientFactory
-     * @param \Magento\Framework\Module\Dir $moduleDir
-     * @param \Magento\Framework\Registry $registry
+     * @param \Magento\Framework\HTTP\ClientInterfaceFactory $communicatorFactory
+     * @param Dir $moduleDir
+     * @param Registry $registry
      * @param array $data
-     * @param \Magento\Framework\HTTP\ClientInterfaceFactory|null $communicatorFactory
      */
     public function __construct(
-        \ParadoxLabs\TokenBase\Helper\Data $helper,
-        \ParadoxLabs\TokenBase\Model\Gateway\Xml $xml,
-        \ParadoxLabs\TokenBase\Model\Gateway\ResponseFactory $responseFactory,
-        \Magento\Framework\HTTP\ZendClientFactory $httpClientFactory,
-        \Magento\Framework\Module\Dir $moduleDir,
-        \Magento\Framework\Registry $registry,
+        Data $helper,
+        Xml $xml,
+        ResponseFactory $responseFactory,
+        ClientInterfaceFactory $communicatorFactory,
+        protected readonly Dir $moduleDir,
+        protected readonly Registry $registry,
         array $data = [],
-        ?\Magento\Framework\HTTP\ClientInterfaceFactory $communicatorFactory = null
     ) {
-        $this->moduleDir = $moduleDir;
-        $this->registry = $registry;
-
         parent::__construct(
             $helper,
             $xml,
             $responseFactory,
-            $httpClientFactory,
+            $communicatorFactory,
             $data,
-            $communicatorFactory
         );
     }
 
@@ -293,11 +301,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     protected function runTransaction($request, $params)
     {
         $auth = [
-            '@attributes'            => [
+            '@attributes' => [
                 'xmlns' => 'AnetApi/xml/v1/schema/AnetApiSchema.xsd',
             ],
             'merchantAuthentication' => [
-                'name'           => $this->getParameter('loginId'),
+                'name' => $this->getParameter('loginId'),
                 'transactionKey' => $this->getParameter('transactionKey'),
             ],
         ];
@@ -306,7 +314,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         $this->lastRequest = $xml;
 
-        /** @var \Magento\Framework\HTTP\Client\Curl|\Magento\Framework\HTTP\Client\Socket $communicator */
+        /** @var Curl|Socket $communicator */
         $communicator = $this->communicatorFactory->create();
 
         // If we are running a money transaction, we don't want to cut it off even if it takes too long.
@@ -316,14 +324,14 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $communicator->setTimeout(15);
         }
 
-        $communicator->setOption(\CURLOPT_SSL_VERIFYPEER, false);
-        $communicator->setOption(\CURLOPT_SSL_VERIFYHOST, 0);
+        $communicator->setOption(CURLOPT_SSL_VERIFYPEER, false);
+        $communicator->setOption(CURLOPT_SSL_VERIFYHOST, 0);
         if ($this->verifySsl === true) {
             $certificatePath = $this->moduleDir->getDir('ParadoxLabs_Authnetcim') . '/authorizenet-cert.pem';
 
-            $communicator->setOption(\CURLOPT_SSL_VERIFYPEER, true);
-            $communicator->setOption(\CURLOPT_SSL_VERIFYHOST, 2);
-            $communicator->setOption(\CURLOPT_CAINFO, $certificatePath);
+            $communicator->setOption(CURLOPT_SSL_VERIFYPEER, true);
+            $communicator->setOption(CURLOPT_SSL_VERIFYHOST, 2);
+            $communicator->setOption(CURLOPT_CAINFO, $certificatePath);
         }
 
         $communicator->addHeader('Content-Type', 'text/xml');
@@ -360,7 +368,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     __('Authorize.Net CIM Gateway Connection failed')
                 );
             }
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             $this->helper->log(
                 $this->code,
                 sprintf(
@@ -371,10 +379,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             );
 
             throw new CommandException(
-                __(sprintf(
-                    'Authorize.Net CIM Gateway Connection error: %s',
-                    $e->getMessage()
-                ))
+                __(
+                    sprintf(
+                        'Authorize.Net CIM Gateway Connection error: %s',
+                        $e->getMessage()
+                    )
+                )
             );
         }
 
@@ -389,7 +399,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      */
     protected function sanitizeLog($string)
     {
-        $maskAll = ['cardCode'];
+        $maskAll  = ['cardCode'];
         $maskFour = ['cardNumber', 'name', 'transactionKey', 'routingNumber', 'accountNumber'];
 
         foreach ($maskAll as $val) {
@@ -397,8 +407,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         foreach ($maskFour as $val) {
-            $start = strpos($string, '<' . $val . '>');
-            $end = strpos($string, '</' . $val . '>', $start);
+            $start  = strpos((string) $string, '<' . $val . '>');
+            $end    = strpos((string) $string, '</' . $val . '>', $start);
             $tagLen = strlen($val) + 2;
 
             if ($start !== false && $end > ($start + $tagLen + 4)) {
@@ -427,7 +437,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      * Turn transaction results and directResponse into a usable object.
      *
      * @param array $transactionResult
-     * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
+     * @return Response
      * @throws CommandException
      * @throws CommandException
      */
@@ -448,6 +458,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     /**
                      * We know the card is not valid, so hide and get rid of it. Except we're in the middle
                      * of a transaction... so any change will just be rolled back. Save it for a little later.
+                     *
                      * @see \ParadoxLabs\TokenBase\Observer\CardLoadProcessDeleteQueueObserver::execute()
                      */
                     $this->registry->unregister('queue_card_deletion');
@@ -460,8 +471,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 );
 
                 throw new CommandException(
-                    __('Sorry, we were unable to find your payment record. '
-                        . 'Please re-enter your payment info and try again.')
+                    __(
+                        'Sorry, we were unable to find your payment record. '
+                        . 'Please re-enter your payment info and try again.'
+                    )
                 );
             }
 
@@ -476,8 +489,13 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 );
 
                 throw new CommandException(
-                    __(sprintf('Authorize.Net CIM Gateway: %s Please contact support, or delete your '
-                        . 'shipping address in My Account and try again.', $errorText))
+                    __(
+                        sprintf(
+                            'Authorize.Net CIM Gateway: %s Please contact support, or delete your '
+                            . 'shipping address in My Account and try again.',
+                            $errorText
+                        )
+                    )
                 );
             }
         }
@@ -496,12 +514,14 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             );
 
             throw new CommandException(
-                __('Authorize.Net CIM Gateway: Transaction failed; no response. '
-                    . 'Please re-enter your payment info and try again.')
+                __(
+                    'Authorize.Net CIM Gateway: Transaction failed; no response. '
+                    . 'Please re-enter your payment info and try again.'
+                )
             );
         }
 
-        /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
+        /** @var Response $response */
         $response = $this->responseFactory->create();
         $response->setData($data);
 
@@ -557,15 +577,15 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Set billing address params from Address object
      *
-     * @param \Magento\Customer\Api\Data\AddressInterface|\Magento\Sales\Api\Data\OrderAddressInterface $address
+     * @param AddressInterface|OrderAddressInterface $address
      * @return $this
-     * @throws \Magento\Payment\Gateway\Command\CommandException
+     * @throws CommandException
      */
     public function setBillTo($address)
     {
-        if ($address instanceof \Magento\Customer\Api\Data\AddressInterface) {
+        if ($address instanceof AddressInterface) {
             $region = $address->getRegion()->getRegionCode() ?: $address->getRegion()->getRegion();
-        } elseif ($address instanceof \Magento\Sales\Api\Data\OrderAddressInterface) {
+        } elseif ($address instanceof OrderAddressInterface) {
             $region = $address->getRegionCode() ?: $address->getRegion();
         } else {
             return $this;
@@ -588,10 +608,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Set shipping address params from Address object
      *
-     * @param \Magento\Customer\Api\Data\AddressInterface $address
+     * @param AddressInterface $address
      * @return $this
      */
-    public function setShipTo(\Magento\Customer\Api\Data\AddressInterface $address)
+    public function setShipTo(AddressInterface $address)
     {
         $region = $address->getRegion()->getRegionCode() ?: $address->getRegion()->getRegion();
 
@@ -610,10 +630,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * These should be implemented by the child gateway.
      *
-     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterface $card
+     * @param CardInterface $card
      * @return $this
      */
-    public function setCard(\ParadoxLabs\TokenBase\Api\Data\CardInterface $card)
+    public function setCard(CardInterface $card)
     {
         $this->setParameter('email', $card->getCustomerEmail());
         $this->setParameter('merchantCustomerId', $card->getCustomerId());
@@ -629,11 +649,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Run an auth transaction for $amount with the given payment info
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @param float $amount
-     * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
+     * @return Response
      */
-    public function authorize(\Magento\Payment\Model\InfoInterface $payment, $amount)
+    public function authorize(InfoInterface $payment, $amount)
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
 
@@ -643,7 +663,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         if (in_array($payment->getAdditionalInformation('transaction_status'), static::AUTHORIZED_STATUSES, true)
             && !empty($payment->getAdditionalInformation('transaction_id'))
             && $this->getHaveAuthorized() !== true) {
-            /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
+            /** @var Response $response */
             $response = $this->responseFactory->create();
             $response->setData($payment->getAdditionalInformation());
 
@@ -691,18 +711,19 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         $result = $this->createTransaction();
+
         return $this->interpretTransaction($result);
     }
 
     /**
      * Run a capture transaction for $amount with the given payment info
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @param float $amount
      * @param string $transactionId
-     * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
+     * @return Response
      */
-    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount, $transactionId = null)
+    public function capture(InfoInterface $payment, $amount, $transactionId = null)
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
 
@@ -749,7 +770,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $this->setParameter('cardCode', $payment->getData('cc_cid'));
         }
 
-        $result = $this->createTransaction();
+        $result   = $this->createTransaction();
         $response = $this->interpretTransaction($result);
 
         /**
@@ -776,16 +797,15 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Run a refund transaction for $amount with the given payment info
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @param float $amount
      * @param string $transactionId
-     * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
+     * @return Response
      * @throws CommandException
      */
-    public function refund(\Magento\Payment\Model\InfoInterface $payment, $amount, $transactionId = null)
+    public function refund(InfoInterface $payment, $amount, $transactionId = null)
     {
-        /** @var \Magento\Sales\Model\Order\Payment $payment */
-
+        /** @var Payment $payment */
         $this->setParameter('transactionType', 'refundTransaction');
         $this->setParameter('amount', $amount);
         $this->setParameter('invoiceNumber', $payment->getOrder()->getIncrementId());
@@ -795,7 +815,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $this->setParameter('cardNumber', $payment->getCcLast4());
         }
 
-        if ($payment->getCreditmemo() instanceof \Magento\Sales\Api\Data\CreditmemoInterface) {
+        if ($payment->getCreditmemo() instanceof CreditmemoInterface) {
             if ($payment->getCreditmemo()->getBaseTaxAmount()) {
                 $this->setParameter('taxAmount', $payment->getCreditmemo()->getBaseTaxAmount());
             }
@@ -808,7 +828,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
              * Add billTo, in case the Authorize.Net payment form requires it.
              */
             $billingAddress = $payment->getCreditmemo()->getBillingAddress();
-            if ($billingAddress instanceof \Magento\Sales\Api\Data\OrderAddressInterface) {
+            if ($billingAddress instanceof OrderAddressInterface) {
                 $this->setBillTo($billingAddress);
             }
         }
@@ -819,7 +839,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $this->setParameter('transId', $payment->getTransactionId());
         }
 
-        $result = $this->createTransaction();
+        $result   = $this->createTransaction();
         $response = $this->interpretTransaction($result);
 
         /**
@@ -829,7 +849,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             /**
              * Is this a full refund? If so, just void it. Nobody will see the difference.
              */
-            if ($payment->getCreditmemo() instanceof \Magento\Sales\Api\Data\CreditmemoInterface
+            if ($payment->getCreditmemo() instanceof CreditmemoInterface
                 && $amount == $payment->getCreditmemo()->getInvoice()->getBaseGrandTotal()) {
                 $transactionId = $this->getParameter('transId');
 
@@ -861,14 +881,13 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Run a void transaction for the given payment info
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @param string $transactionId
-     * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
+     * @return Response
      */
-    public function void(\Magento\Payment\Model\InfoInterface $payment, $transactionId = null)
+    public function void(InfoInterface $payment, $transactionId = null)
     {
-        /** @var \Magento\Sales\Model\Order\Payment $payment */
-
+        /** @var Payment $payment */
         $this->setParameter('transactionType', 'voidTransaction');
 
         if ($transactionId !== null) {
@@ -878,20 +897,20 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         $result = $this->createTransaction();
+
         return $this->interpretTransaction($result);
     }
 
     /**
      * Approve a held transaction
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @param string $transactionId
-     * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
+     * @return Response
      */
-    public function acceptPayment(\Magento\Payment\Model\InfoInterface $payment, $transactionId = null)
+    public function acceptPayment(InfoInterface $payment, $transactionId = null)
     {
-        /** @var \Magento\Sales\Model\Order\Payment $payment */
-
+        /** @var Payment $payment */
         $this->setParameter('transactionType', 'updateHeldTransaction');
         $this->setParameter('updateAction', 'approve');
 
@@ -901,10 +920,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $this->setParameter('transId', $payment->getLastTransId());
         }
 
-        $result = $this->updateHeldTransaction();
+        $result     = $this->updateHeldTransaction();
         $resultData = $this->getDataFromTransactionResponse($result['transactionResponse']);
 
-        /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
+        /** @var Response $response */
         $response = $this->responseFactory->create();
         $response->setData($resultData + ['is_approved' => false, 'is_denied' => false]);
 
@@ -932,14 +951,13 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Deny a held transaction
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @param string $transactionId
-     * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
+     * @return Response
      */
-    public function denyPayment(\Magento\Payment\Model\InfoInterface $payment, $transactionId = null)
+    public function denyPayment(InfoInterface $payment, $transactionId = null)
     {
-        /** @var \Magento\Sales\Model\Order\Payment $payment */
-
+        /** @var Payment $payment */
         $this->setParameter('transactionType', 'updateHeldTransaction');
         $this->setParameter('updateAction', 'decline');
 
@@ -949,10 +967,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $this->setParameter('transId', $payment->getLastTransId());
         }
 
-        $result = $this->updateHeldTransaction();
+        $result     = $this->updateHeldTransaction();
         $resultData = $this->getDataFromTransactionResponse($result['transactionResponse']);
 
-        /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
+        /** @var Response $response */
         $response = $this->responseFactory->create();
         $response->setData($resultData + ['is_approved' => false, 'is_denied' => false]);
 
@@ -980,11 +998,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Fetch a transaction status update
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @param string $transactionId
-     * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
+     * @return Response
      */
-    public function fraudUpdate(\Magento\Payment\Model\InfoInterface $payment, $transactionId)
+    public function fraudUpdate(InfoInterface $payment, $transactionId)
     {
         $this->setParameter('transId', $transactionId);
 
@@ -1008,7 +1026,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             }
         }
 
-        /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
+        /** @var Response $response */
         $response = $this->responseFactory->create();
         $response->setData($result + ['is_approved' => false, 'is_denied' => false]);
 
@@ -1078,8 +1096,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $params = [
             'profile' => [
                 'merchantCustomerId' => (int)$this->getParameter('merchantCustomerId'),
-                'description'        => $this->getParameter('description'),
-                'email'              => $this->getParameter('email'),
+                'description' => $this->getParameter('description'),
+                'email' => $this->getParameter('email'),
             ],
         ];
 
@@ -1090,7 +1108,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         $text = (string)$this->helper->getArrayValue($result, 'messages/message/text');
-        if (strpos($text, 'duplicate') !== false) {
+        if (str_contains($text, 'duplicate')) {
             return preg_replace('/[^0-9]/', '', $text);
         }
 
@@ -1115,22 +1133,22 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         $params = [
             'customerProfileId' => $this->getParameter('customerProfileId'),
-            'paymentProfile'    => [
-                'billTo'  => [
-                    'firstName'   => $this->getParameter('billToFirstName'),
-                    'lastName'    => $this->getParameter('billToLastName'),
-                    'company'     => $this->getParameter('billToCompany'),
-                    'address'     => $this->getParameter('billToAddress'),
-                    'city'        => $this->getParameter('billToCity'),
-                    'state'       => $this->getParameter('billToState'),
-                    'zip'         => $this->getParameter('billToZip'),
-                    'country'     => $this->getParameter('billToCountry'),
+            'paymentProfile' => [
+                'billTo' => [
+                    'firstName' => $this->getParameter('billToFirstName'),
+                    'lastName' => $this->getParameter('billToLastName'),
+                    'company' => $this->getParameter('billToCompany'),
+                    'address' => $this->getParameter('billToAddress'),
+                    'city' => $this->getParameter('billToCity'),
+                    'state' => $this->getParameter('billToState'),
+                    'zip' => $this->getParameter('billToZip'),
+                    'country' => $this->getParameter('billToCountry'),
                     'phoneNumber' => $this->getParameter('billToPhoneNumber'),
-                    'faxNumber'   => $this->getParameter('billToFaxNumber'),
+                    'faxNumber' => $this->getParameter('billToFaxNumber'),
                 ],
                 'payment' => [],
             ],
-            'validationMode'    => $this->getParameter('validationMode', 'testMode'),
+            'validationMode' => $this->getParameter('validationMode', 'testMode'),
         ];
 
         if ($this->hasParameter('customerType')) {
@@ -1141,7 +1159,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         $params = $this->createCustomerPaymentProfileAddPaymentInfo($params);
 
-        $result = $this->runTransaction('createCustomerPaymentProfileRequest', $params);
+        $result    = $this->runTransaction('createCustomerPaymentProfileRequest', $params);
         $paymentId = null;
 
         if (isset($result['customerPaymentProfileId'])) {
@@ -1150,7 +1168,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         $text = $this->helper->getArrayValue($result, 'messages/message/text');
 
-        if (strpos($text, 'duplicate') !== false) {
+        if (str_contains((string) $text, 'duplicate')) {
             /**
              * Handle duplicate card errors. Painful process.
              */
@@ -1197,17 +1215,17 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         $params = [
             'customerProfileId' => $this->getParameter('customerProfileId'),
-            'address'           => [
-                'firstName'   => $this->getParameter('shipToFirstName'),
-                'lastName'    => $this->getParameter('shipToLastName'),
-                'company'     => $this->getParameter('shipToCompany'),
-                'address'     => $this->getParameter('shipToAddress'),
-                'city'        => $this->getParameter('shipToCity'),
-                'state'       => $this->getParameter('shipToState'),
-                'zip'         => $this->getParameter('shipToZip'),
-                'country'     => $this->getParameter('shipToCountry'),
+            'address' => [
+                'firstName' => $this->getParameter('shipToFirstName'),
+                'lastName' => $this->getParameter('shipToLastName'),
+                'company' => $this->getParameter('shipToCompany'),
+                'address' => $this->getParameter('shipToAddress'),
+                'city' => $this->getParameter('shipToCity'),
+                'state' => $this->getParameter('shipToState'),
+                'zip' => $this->getParameter('shipToZip'),
+                'country' => $this->getParameter('shipToCountry'),
                 'phoneNumber' => $this->getParameter('shipToPhoneNumber'),
-                'faxNumber'   => $this->getParameter('shipToFaxNumber'),
+                'faxNumber' => $this->getParameter('shipToFaxNumber'),
             ],
         ];
 
@@ -1218,7 +1236,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         $text = (string)$this->helper->getArrayValue($result, 'messages/message/text');
-        if (strpos($text, 'duplicate') !== false) {
+        if (str_contains($text, 'duplicate')) {
             /**
              * Handle duplicate address errors. blah.
              */
@@ -1252,13 +1270,14 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      */
     public function findDuplicateCard()
     {
-        $profile = $this->getCustomerProfile();
+        $profile  = $this->getCustomerProfile();
         $lastFour = substr((string)$this->getParameter('cardNumber'), -4);
 
         if (isset($profile['profile']['paymentProfiles']) && !empty($profile['profile']['paymentProfiles'])) {
             // If there's only one, just stop. It has to be the match.
             if (isset($profile['profile']['paymentProfiles']['billTo'])) {
                 $card = $profile['profile']['paymentProfiles'];
+
                 return $card['customerPaymentProfileId'];
             }
 
@@ -1286,7 +1305,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $type = $this->getParameter('transactionType');
 
         $params = [
-            'transaction'  => [
+            'transaction' => [
                 $type => [
                 ],
             ],
@@ -1294,7 +1313,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         ];
 
         if ($this->hasParameter('amount')) {
-            $params['transaction'][$type]['amount'] = static::formatAmount($this->getParameter('amount'));
+            $params['transaction'][ $type ]['amount'] = static::formatAmount($this->getParameter('amount'));
         }
 
         // Add customer IP?
@@ -1304,27 +1323,27 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         // Add tax amount?
         if ($this->hasParameter('taxAmount')) {
-            $params['transaction'][$type]['tax'] = [
-                'amount'      => static::formatAmount($this->getParameter('taxAmount')),
-                'name'        => $this->getParameter('taxName'),
+            $params['transaction'][ $type ]['tax'] = [
+                'amount' => static::formatAmount($this->getParameter('taxAmount')),
+                'name' => $this->getParameter('taxName'),
                 'description' => $this->getParameter('taxDescription'),
             ];
         }
 
         // Add shipping amount?
         if ($this->hasParameter('shipAmount')) {
-            $params['transaction'][$type]['shipping'] = [
-                'amount'      => static::formatAmount($this->getParameter('shipAmount')),
-                'name'        => $this->getParameter('shipName'),
+            $params['transaction'][ $type ]['shipping'] = [
+                'amount' => static::formatAmount($this->getParameter('shipAmount')),
+                'name' => $this->getParameter('shipName'),
                 'description' => $this->getParameter('shipDescription'),
             ];
         }
 
         // Add duty amount?
         if ($this->hasParameter('dutyAmount')) {
-            $params['transaction'][$type]['duty'] = [
-                'amount'      => static::formatAmount($this->getParameter('dutyAmount')),
-                'name'        => $this->getParameter('dutyName'),
+            $params['transaction'][ $type ]['duty'] = [
+                'amount' => static::formatAmount($this->getParameter('dutyAmount')),
+                'name' => $this->getParameter('dutyName'),
                 'description' => $this->getParameter('dutyDescription'),
             ];
         }
@@ -1332,8 +1351,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         // Add line items?
         $params = $this->createCustomerProfileTransactionAddItemInfo($params, $type);
 
-        $params['transaction'][$type]['customerProfileId'] = $this->getParameter('customerProfileId');
-        $params['transaction'][$type]['customerPaymentProfileId'] = $this->getParameter('customerPaymentProfileId');
+        $params['transaction'][ $type ]['customerProfileId']        = $this->getParameter('customerProfileId');
+        $params['transaction'][ $type ]['customerPaymentProfileId'] = $this->getParameter('customerPaymentProfileId');
 
         // Various other optional or conditional fields
         $params = $this->createCustomerProfileTransactionAddConditionalInfo($params, $type);
@@ -1386,8 +1405,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $params = $this->createTransactionAddTransactionInfo($params, $type, $isNewTxn);
 
         // Most of the data does not matter for follow-ups (capture, void, refund).
-        if ($isNewTxn === true ||
-            ($isRefund === true
+        if ($isNewTxn === true
+            || ($isRefund === true
                 && $this->hasParameter('cardNumber') === false
                 && $this->hasParameter('accountNumber') === false)) {
             /**
@@ -1432,7 +1451,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             // Add 3D Secure token?
             if ($this->hasParameter('centinelAuthIndicator') && $this->hasParameter('centinelAuthValue')) {
                 $params['cardholderAuthentication'] = [
-                    'authenticationIndicator'       => $this->getParameter('centinelAuthIndicator'),
+                    'authenticationIndicator' => $this->getParameter('centinelAuthIndicator'),
                     'cardholderAuthenticationValue' => urlencode((string)$this->getParameter('centinelAuthValue')),
                 ];
             }
@@ -1448,17 +1467,17 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             ];
 
             $params['transactionSettings']['setting'][] = [
-                'settingName'  => 'allowPartialAuth',
+                'settingName' => 'allowPartialAuth',
                 'settingValue' => $this->getParameter('allowPartialAuth', 'false'),
             ];
 
             $params['transactionSettings']['setting'][] = [
-                'settingName'  => 'duplicateWindow',
+                'settingName' => 'duplicateWindow',
                 'settingValue' => $this->getParameter('duplicateWindow', static::DUPLICATE_WINDOW),
             ];
 
             $params['transactionSettings']['setting'][] = [
-                'settingName'  => 'emailCustomer',
+                'settingName' => 'emailCustomer',
                 'settingValue' => $this->getParameter('emailCustomer', 'false'),
             ];
 
@@ -1472,7 +1491,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
                 foreach ($this->getParameter('userFields') as $key => $value) {
                     $params['userFields']['userField'][] = [
-                        'name'  => $key,
+                        'name' => $key,
                         'value' => $value,
                     ];
                 }
@@ -1512,7 +1531,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     public function deleteCustomerPaymentProfile()
     {
         $params = [
-            'customerProfileId'        => $this->getParameter('customerProfileId'),
+            'customerProfileId' => $this->getParameter('customerProfileId'),
             'customerPaymentProfileId' => $this->getParameter('customerPaymentProfileId'),
         ];
 
@@ -1527,7 +1546,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     public function deleteCustomerShippingAddress()
     {
         $params = [
-            'customerProfileId'         => $this->getParameter('customerProfileId'),
+            'customerProfileId' => $this->getParameter('customerProfileId'),
             'customerShippingAddressId' => $this->getParameter('customerShippingAddressId'),
         ];
 
@@ -1552,9 +1571,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     public function getCustomerProfile()
     {
         $params = [
-            'customerProfileId'    => $this->getParameter('customerProfileId'),
+            'customerProfileId' => $this->getParameter('customerProfileId'),
             'unmaskExpirationDate' => $this->getParameter('unmaskExpirationDate', 'false'),
-            'includeIssuerInfo'    => $this->getParameter('includeIssuerInfo', 'false'),
+            'includeIssuerInfo' => $this->getParameter('includeIssuerInfo', 'false'),
         ];
 
         return $this->runTransaction('getCustomerProfileRequest', $params);
@@ -1568,10 +1587,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     public function getCustomerPaymentProfile()
     {
         $params = [
-            'customerProfileId'        => $this->getParameter('customerProfileId'),
+            'customerProfileId' => $this->getParameter('customerProfileId'),
             'customerPaymentProfileId' => $this->getParameter('customerPaymentProfileId'),
-            'unmaskExpirationDate'     => $this->getParameter('unmaskExpirationDate', 'false'),
-            'includeIssuerInfo'        => $this->getParameter('includeIssuerInfo', 'false'),
+            'unmaskExpirationDate' => $this->getParameter('unmaskExpirationDate', 'false'),
+            'includeIssuerInfo' => $this->getParameter('includeIssuerInfo', 'false'),
         ];
 
         return $this->runTransaction('getCustomerPaymentProfileRequest', $params);
@@ -1585,7 +1604,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     public function getCustomerShippingAddress()
     {
         $params = [
-            'customerProfileId'         => $this->getParameter('customerProfileId'),
+            'customerProfileId' => $this->getParameter('customerProfileId'),
             'customerShippingAddressId' => $this->getParameter('customerShippingAddressId'),
         ];
 
@@ -1596,7 +1615,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      * Get the token for an Accept Hosted payment form page
      *
      * @return array
-     * @throws \Magento\Payment\Gateway\Command\CommandException
+     * @throws CommandException
      */
     public function getHostedPaymentPage(): array
     {
@@ -1699,28 +1718,28 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         if ($this->getParameter('billToFirstName') !== null) {
             $params['transactionRequest']['billTo'] = [
-                'firstName'   => $this->getParameter('billToFirstName'),
-                'lastName'    => $this->getParameter('billToLastName'),
-                'company'     => $this->getParameter('billToCompany'),
-                'address'     => $this->getParameter('billToAddress'),
-                'city'        => $this->getParameter('billToCity'),
-                'state'       => $this->getParameter('billToState'),
-                'zip'         => $this->getParameter('billToZip'),
-                'country'     => $this->getParameter('billToCountry'),
+                'firstName' => $this->getParameter('billToFirstName'),
+                'lastName' => $this->getParameter('billToLastName'),
+                'company' => $this->getParameter('billToCompany'),
+                'address' => $this->getParameter('billToAddress'),
+                'city' => $this->getParameter('billToCity'),
+                'state' => $this->getParameter('billToState'),
+                'zip' => $this->getParameter('billToZip'),
+                'country' => $this->getParameter('billToCountry'),
                 'phoneNumber' => $this->getParameter('billToPhoneNumber'),
-                'faxNumber'   => $this->getParameter('billToFaxNumber'),
+                'faxNumber' => $this->getParameter('billToFaxNumber'),
             ];
         }
         if ($this->getParameter('shipToFirstName') !== null) {
             $params['transactionRequest']['shipTo'] = [
-                'firstName'   => $this->getParameter('shipToFirstName'),
-                'lastName'    => $this->getParameter('shipToLastName'),
-                'company'     => $this->getParameter('shipToCompany'),
-                'address'     => $this->getParameter('shipToAddress'),
-                'city'        => $this->getParameter('shipToCity'),
-                'state'       => $this->getParameter('shipToState'),
-                'zip'         => $this->getParameter('shipToZip'),
-                'country'     => $this->getParameter('shipToCountry'),
+                'firstName' => $this->getParameter('shipToFirstName'),
+                'lastName' => $this->getParameter('shipToLastName'),
+                'company' => $this->getParameter('shipToCompany'),
+                'address' => $this->getParameter('shipToAddress'),
+                'city' => $this->getParameter('shipToCity'),
+                'state' => $this->getParameter('shipToState'),
+                'zip' => $this->getParameter('shipToZip'),
+                'country' => $this->getParameter('shipToCountry'),
             ];
         }
 
@@ -1731,7 +1750,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      * Get the token for an Accept Customer hosted profile form page
      *
      * @return array
-     * @throws \Magento\Payment\Gateway\Command\CommandException
+     * @throws CommandException
      */
     public function getHostedProfilePage(): array
     {
@@ -1802,13 +1821,13 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Get current details for a given transaction ID, in Response object form.
      *
-     * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
+     * @return Response
      */
-    public function getTransactionDetailsObject(): \ParadoxLabs\TokenBase\Model\Gateway\Response
+    public function getTransactionDetailsObject(): Response
     {
         $data = $this->getTransactionDetails();
 
-        /** @var \ParadoxLabs\TokenBase\Model\Gateway\Response $response */
+        /** @var Response $response */
         $response = $this->responseFactory->create();
         $response->setData($data);
 
@@ -1825,9 +1844,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $params = [
             'profile' => [
                 'merchantCustomerId' => $this->getParameter('merchantCustomerId'),
-                'description'        => $this->getParameter('description'),
-                'email'              => $this->getParameter('email'),
-                'customerProfileId'  => $this->getParameter('customerProfileId'),
+                'description' => $this->getParameter('description'),
+                'email' => $this->getParameter('email'),
+                'customerProfileId' => $this->getParameter('customerProfileId'),
             ],
         ];
 
@@ -1843,20 +1862,20 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         $params = [
             'customerProfileId' => $this->getParameter('customerProfileId'),
-            'paymentProfile'    => [
-                'billTo'                   => [
-                    'firstName'   => $this->getParameter('billToFirstName'),
-                    'lastName'    => $this->getParameter('billToLastName'),
-                    'company'     => $this->getParameter('billToCompany'),
-                    'address'     => $this->getParameter('billToAddress'),
-                    'city'        => $this->getParameter('billToCity'),
-                    'state'       => $this->getParameter('billToState'),
-                    'zip'         => $this->getParameter('billToZip'),
-                    'country'     => $this->getParameter('billToCountry'),
+            'paymentProfile' => [
+                'billTo' => [
+                    'firstName' => $this->getParameter('billToFirstName'),
+                    'lastName' => $this->getParameter('billToLastName'),
+                    'company' => $this->getParameter('billToCompany'),
+                    'address' => $this->getParameter('billToAddress'),
+                    'city' => $this->getParameter('billToCity'),
+                    'state' => $this->getParameter('billToState'),
+                    'zip' => $this->getParameter('billToZip'),
+                    'country' => $this->getParameter('billToCountry'),
                     'phoneNumber' => $this->getParameter('billToPhoneNumber'),
-                    'faxNumber'   => $this->getParameter('billToFaxNumber'),
+                    'faxNumber' => $this->getParameter('billToFaxNumber'),
                 ],
-                'payment'                  => [],
+                'payment' => [],
                 'customerPaymentProfileId' => $this->getParameter('customerPaymentProfileId'),
             ],
             'validationMode' => $this->getParameter('validationMode', 'testMode'),
@@ -1880,17 +1899,17 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         $params = [
             'customerProfileId' => $this->getParameter('customerProfileId'),
-            'address'           => [
-                'firstName'                 => $this->getParameter('shipToFirstName'),
-                'lastName'                  => $this->getParameter('shipToLastName'),
-                'company'                   => $this->getParameter('shipToCompany'),
-                'address'                   => $this->getParameter('shipToAddress'),
-                'city'                      => $this->getParameter('shipToCity'),
-                'state'                     => $this->getParameter('shipToState'),
-                'zip'                       => $this->getParameter('shipToZip'),
-                'country'                   => $this->getParameter('shipToCountry'),
-                'phoneNumber'               => $this->getParameter('shipToPhoneNumber'),
-                'faxNumber'                 => $this->getParameter('shipToFaxNumber'),
+            'address' => [
+                'firstName' => $this->getParameter('shipToFirstName'),
+                'lastName' => $this->getParameter('shipToLastName'),
+                'company' => $this->getParameter('shipToCompany'),
+                'address' => $this->getParameter('shipToAddress'),
+                'city' => $this->getParameter('shipToCity'),
+                'state' => $this->getParameter('shipToState'),
+                'zip' => $this->getParameter('shipToZip'),
+                'country' => $this->getParameter('shipToCountry'),
+                'phoneNumber' => $this->getParameter('shipToPhoneNumber'),
+                'faxNumber' => $this->getParameter('shipToFaxNumber'),
                 'customerShippingAddressId' => $this->getParameter('customerShippingAddressId'),
             ],
         ];
@@ -1907,7 +1926,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     {
         $params = [
             'heldTransactionRequest' => [
-                'action'     => $this->getParameter('updateAction'),
+                'action' => $this->getParameter('updateAction'),
                 'refTransId' => $this->getParameter('transId'),
             ],
         ];
@@ -1923,8 +1942,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     public function validateCustomerPaymentProfile()
     {
         $params = [
-            'customerProfileId'         => $this->getParameter('customerProfileId'),
-            'customerPaymentProfileId'  => $this->getParameter('customerPaymentProfileId'),
+            'customerProfileId' => $this->getParameter('customerProfileId'),
+            'customerPaymentProfileId' => $this->getParameter('customerPaymentProfileId'),
         ];
 
         if ($this->hasParameter('customerShippingAddressId')) {
@@ -1964,7 +1983,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             'paging' => [
                 'limit' => $size,
                 'offset' => $page,
-            ]
+            ],
         ];
 
         return $this->runTransaction('getAUJobDetailsRequest', $params);
@@ -1995,8 +2014,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             );
 
             throw new CommandException(
-                __('Authorize.Net CIM Gateway: Transaction failed; no direct response. '
-                    . 'Please re-enter your payment info and try again.')
+                __(
+                    'Authorize.Net CIM Gateway: Transaction failed; no direct response. '
+                    . 'Please re-enter your payment info and try again.'
+                )
             );
         }
 
@@ -2004,31 +2025,31 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
          * Turn the array into a keyed object and infer some things.
          */
         $data = [
-            'response_code'           => (int)$directResponse[0],
-            'response_subcode'        => (int)$directResponse[1],
-            'response_reason_code'    => (int)$directResponse[2],
-            'response_reason_text'    => $directResponse[3],
-            'approval_code'           => $directResponse[4],
-            'auth_code'               => $directResponse[4],
-            'avs_result_code'         => $directResponse[5],
-            'transaction_id'          => $directResponse[6],
-            'invoice_number'          => $directResponse[7],
-            'description'             => $directResponse[8],
-            'amount'                  => $directResponse[9],
-            'method'                  => $directResponse[10],
-            'transaction_type'        => $directResponse[11],
-            'customer_id'             => $directResponse[12],
+            'response_code' => (int)$directResponse[0],
+            'response_subcode' => (int)$directResponse[1],
+            'response_reason_code' => (int)$directResponse[2],
+            'response_reason_text' => $directResponse[3],
+            'approval_code' => $directResponse[4],
+            'auth_code' => $directResponse[4],
+            'avs_result_code' => $directResponse[5],
+            'transaction_id' => $directResponse[6],
+            'invoice_number' => $directResponse[7],
+            'description' => $directResponse[8],
+            'amount' => $directResponse[9],
+            'method' => $directResponse[10],
+            'transaction_type' => $directResponse[11],
+            'customer_id' => $directResponse[12],
             'card_code_response_code' => $directResponse[38],
-            'cavv_response_code'      => $directResponse[39],
-            'acc_number'              => $directResponse[50],
-            'card_type'               => $directResponse[51],
-            'split_tender_id'         => $directResponse[52],
-            'requested_amount'        => $directResponse[53],
-            'balance_on_card'         => $directResponse[54],
-            'profile_id'              => $this->getParameter('customerProfileId'),
-            'payment_id'              => $this->getParameter('customerPaymentProfileId'),
-            'is_fraud'                => false,
-            'is_error'                => false,
+            'cavv_response_code' => $directResponse[39],
+            'acc_number' => $directResponse[50],
+            'card_type' => $directResponse[51],
+            'split_tender_id' => $directResponse[52],
+            'requested_amount' => $directResponse[53],
+            'balance_on_card' => $directResponse[54],
+            'profile_id' => $this->getParameter('customerProfileId'),
+            'payment_id' => $this->getParameter('customerPaymentProfileId'),
+            'is_fraud' => false,
+            'is_error' => false,
         ];
 
         return $data;
@@ -2050,8 +2071,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             );
 
             throw new CommandException(
-                __('Authorize.Net CIM Gateway: Transaction failed; no response. '
-                    . 'Please re-enter your payment info and try again.')
+                __(
+                    'Authorize.Net CIM Gateway: Transaction failed; no response. '
+                    . 'Please re-enter your payment info and try again.'
+                )
             );
         }
 
@@ -2060,36 +2083,36 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
          * We try to keep the values consistent with the directResponse data. Some translation required.
          */
         $data = [
-            'response_code'            => (int)$this->helper->getArrayValue($response, 'responseCode'),
-            'response_subcode'         => '',
-            'response_reason_code'     => (int)$this->helper->getArrayValue($response, 'errors/error/errorCode')
+            'response_code' => (int)$this->helper->getArrayValue($response, 'responseCode'),
+            'response_subcode' => '',
+            'response_reason_code' => (int)$this->helper->getArrayValue($response, 'errors/error/errorCode')
                 ?: (int)$this->helper->getArrayValue($response, 'messages/message/code'),
-            'response_reason_text'     => $this->helper->getArrayValue($response, 'errors/error/errorText')
+            'response_reason_text' => $this->helper->getArrayValue($response, 'errors/error/errorText')
                 ?: $this->helper->getArrayValue($response, 'messages/message/description'),
-            'approval_code'            => $this->helper->getArrayValue($response, 'authCode'),
-            'auth_code'                => $this->helper->getArrayValue($response, 'authCode'),
-            'avs_result_code'          => $this->helper->getArrayValue($response, 'avsResultCode'),
-            'transaction_id'           => $this->helper->getArrayValue($response, 'transId'),
+            'approval_code' => $this->helper->getArrayValue($response, 'authCode'),
+            'auth_code' => $this->helper->getArrayValue($response, 'authCode'),
+            'avs_result_code' => $this->helper->getArrayValue($response, 'avsResultCode'),
+            'transaction_id' => $this->helper->getArrayValue($response, 'transId'),
             'reference_transaction_id' => $this->helper->getArrayValue($response, 'refTransId'),
-            'invoice_number'           => $this->getParameter('invoiceNumber'),
-            'description'              => $this->getParameter('description'),
-            'amount'                   => $this->getParameter('amount'),
-            'method'                   => $this->helper->getArrayValue($response, 'accountType') === 'eCheck'
+            'invoice_number' => $this->getParameter('invoiceNumber'),
+            'description' => $this->getParameter('description'),
+            'amount' => $this->getParameter('amount'),
+            'method' => $this->helper->getArrayValue($response, 'accountType') === 'eCheck'
                 ? 'ECHECK'
                 : 'CC',
-            'transaction_type'         => $this->txnTypeMap[ $this->getParameter('transactionType') ],
-            'customer_id'              => $this->getParameter('merchantCustomerId'),
-            'card_code_response_code'  => $this->helper->getArrayValue($response, 'cvvResultCode'),
-            'cavv_response_code'       => $this->helper->getArrayValue($response, 'cavvResultCode'),
-            'acc_number'               => $this->helper->getArrayValue($response, 'accountNumber'),
-            'card_type'                => $this->helper->getArrayValue($response, 'accountType'),
-            'split_tender_id'          => '',
-            'requested_amount'         => '',
-            'balance_on_card'          => '',
-            'profile_id'               => $this->getParameter('customerProfileId'),
-            'payment_id'               => $this->getParameter('customerPaymentProfileId'),
-            'is_fraud'                 => false,
-            'is_error'                 => false,
+            'transaction_type' => $this->txnTypeMap[ $this->getParameter('transactionType') ],
+            'customer_id' => $this->getParameter('merchantCustomerId'),
+            'card_code_response_code' => $this->helper->getArrayValue($response, 'cvvResultCode'),
+            'cavv_response_code' => $this->helper->getArrayValue($response, 'cavvResultCode'),
+            'acc_number' => $this->helper->getArrayValue($response, 'accountNumber'),
+            'card_type' => $this->helper->getArrayValue($response, 'accountType'),
+            'split_tender_id' => '',
+            'requested_amount' => '',
+            'balance_on_card' => '',
+            'profile_id' => $this->getParameter('customerProfileId'),
+            'payment_id' => $this->getParameter('customerPaymentProfileId'),
+            'is_fraud' => false,
+            'is_error' => false,
         ];
 
         /**
@@ -2126,7 +2149,6 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                     'profileResponse/customerShippingAddressIdList/numericString'
                 );
             }
-
             /**
              * Handle error cases
              *
@@ -2157,8 +2179,10 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             );
 
             throw new CommandException(
-                __('Authorize.Net CIM Gateway: Transaction failed; no response. '
-                    . 'Please re-enter your payment info and try again.')
+                __(
+                    'Authorize.Net CIM Gateway: Transaction failed; no response. '
+                    . 'Please re-enter your payment info and try again.'
+                )
             );
         }
 
@@ -2180,64 +2204,64 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             );
         }
 
-        $txn     = $response['transaction'] ?? [];
-        $eCheck  = $this->helper->getArrayValue($txn, 'payment/bankAccount', false) !== false;
+        $txn    = $response['transaction'] ?? [];
+        $eCheck = $this->helper->getArrayValue($txn, 'payment/bankAccount', false) !== false;
 
         // Map data.
-        $data    = [
-            'response_code'            => (int)$this->helper->getArrayValue($txn, 'responseCode'),
-            'response_reason_code'     => (int)$this->helper->getArrayValue($txn, 'responseReasonCode'),
-            'response_reason_text'     => $this->helper->getArrayValue($txn, 'responseReasonDescription'),
-            'transaction_status'       => $this->helper->getArrayValue($txn, 'transactionStatus'),
-            'approval_code'            => $this->helper->getArrayValue($txn, 'authCode'),
-            'auth_code'                => $this->helper->getArrayValue($txn, 'authCode'),
-            'avs_result_code'          => $this->helper->getArrayValue($txn, 'AVSResponse'),
-            'transaction_id'           => $this->helper->getArrayValue($txn, 'transId'),
+        $data = [
+            'response_code' => (int)$this->helper->getArrayValue($txn, 'responseCode'),
+            'response_reason_code' => (int)$this->helper->getArrayValue($txn, 'responseReasonCode'),
+            'response_reason_text' => $this->helper->getArrayValue($txn, 'responseReasonDescription'),
+            'transaction_status' => $this->helper->getArrayValue($txn, 'transactionStatus'),
+            'approval_code' => $this->helper->getArrayValue($txn, 'authCode'),
+            'auth_code' => $this->helper->getArrayValue($txn, 'authCode'),
+            'avs_result_code' => $this->helper->getArrayValue($txn, 'AVSResponse'),
+            'transaction_id' => $this->helper->getArrayValue($txn, 'transId'),
             'reference_transaction_id' => $this->helper->getArrayValue($txn, 'refTransId'),
-            'invoice_number'           => $this->helper->getArrayValue($txn, 'order/invoiceNumber'),
-            'description'              => $this->helper->getArrayValue($txn, 'order/description'),
-            'amount'                   => $this->helper->getArrayValue($txn, 'authAmount'),
-            'method'                   => $eCheck ? 'ECHECK' : 'CC',
-            'transaction_type'         => $this->helper->getArrayValue(
+            'invoice_number' => $this->helper->getArrayValue($txn, 'order/invoiceNumber'),
+            'description' => $this->helper->getArrayValue($txn, 'order/description'),
+            'amount' => $this->helper->getArrayValue($txn, 'authAmount'),
+            'method' => $eCheck ? 'ECHECK' : 'CC',
+            'transaction_type' => $this->helper->getArrayValue(
                 $this->txnTypeMap,
                 $this->helper->getArrayValue($txn, 'transactionType')
             ),
-            'customer_id'              => $this->helper->getArrayValue($txn, 'customer/id'),
-            'card_code_response_code'  => $this->helper->getArrayValue($txn, 'cardCodeResponse'),
-            'cavv_response_code'       => $this->helper->getArrayValue($txn, 'CAVVResponse'),
-            'acc_number'               => $this->helper->getArrayValue(
+            'customer_id' => $this->helper->getArrayValue($txn, 'customer/id'),
+            'card_code_response_code' => $this->helper->getArrayValue($txn, 'cardCodeResponse'),
+            'cavv_response_code' => $this->helper->getArrayValue($txn, 'CAVVResponse'),
+            'acc_number' => $this->helper->getArrayValue(
                 $txn,
                 $eCheck ? 'payment/bankAccount/accountNumber' : 'payment/creditCard/cardNumber'
             ),
-            'card_type'                => $this->helper->getArrayValue(
+            'card_type' => $this->helper->getArrayValue(
                 $txn,
                 $eCheck ? 'payment/bankAccount/echeckType' : 'payment/creditCard/accountType'
             ),
-            'submit_time_utc'          => $this->helper->getArrayValue($txn, 'submitTimeUTC'),
-            'amount_settled'           => $this->helper->getArrayValue($txn, 'settleAmount'),
-            'amount_tax'               => $this->helper->getArrayValue($txn, 'tax/amount'),
-            'amount_shipping'          => $this->helper->getArrayValue($txn, 'shipping/amount'),
-            'amount_duty'              => $this->helper->getArrayValue($txn, 'duty/amount'),
-            'line_items'               => $this->helper->getArrayValue(
+            'submit_time_utc' => $this->helper->getArrayValue($txn, 'submitTimeUTC'),
+            'amount_settled' => $this->helper->getArrayValue($txn, 'settleAmount'),
+            'amount_tax' => $this->helper->getArrayValue($txn, 'tax/amount'),
+            'amount_shipping' => $this->helper->getArrayValue($txn, 'shipping/amount'),
+            'amount_duty' => $this->helper->getArrayValue($txn, 'duty/amount'),
+            'line_items' => $this->helper->getArrayValue(
                 $txn,
                 'lineItems/lineItem/itemId',
                 false
             ) !== false
                 ? [$this->helper->getArrayValue($txn, 'lineItems/lineItem')]
                 : $this->helper->getArrayValue($txn, 'lineItems/lineItem'),
-            'tax_exempt'               => $this->helper->getArrayValue($txn, 'taxExempt'),
-            'expiration_date'          => $this->helper->getArrayValue($txn, 'payment/creditCard/expirationDate'),
-            'customer_email'           => str_replace( // Handle reports of Authnet changing + to space in emails
+            'tax_exempt' => $this->helper->getArrayValue($txn, 'taxExempt'),
+            'expiration_date' => $this->helper->getArrayValue($txn, 'payment/creditCard/expirationDate'),
+            'customer_email' => str_replace( // Handle reports of Authnet changing + to space in emails
                 ' ',
                 '+',
                 (string)$this->helper->getArrayValue($txn, 'customer/email')
             ),
-            'customer_ip'              => $this->helper->getArrayValue($txn, 'customerIP'),
-            'batch_id'                 => $this->helper->getArrayValue($txn, 'batch/batchId'),
-            'settlement_time_utc'      => $this->helper->getArrayValue($txn, 'batch/settlementTimeUTC'),
-            'settlement_state'         => $this->helper->getArrayValue($txn, 'batch/settlementState'),
-            'fraud_filter_action'      => $this->helper->getArrayValue($txn, 'FDSFilterAction'),
-            'fraud_filter'             => $this->helper->getArrayValue($txn, 'FDSFilters'),
+            'customer_ip' => $this->helper->getArrayValue($txn, 'customerIP'),
+            'batch_id' => $this->helper->getArrayValue($txn, 'batch/batchId'),
+            'settlement_time_utc' => $this->helper->getArrayValue($txn, 'batch/settlementTimeUTC'),
+            'settlement_state' => $this->helper->getArrayValue($txn, 'batch/settlementState'),
+            'fraud_filter_action' => $this->helper->getArrayValue($txn, 'FDSFilterAction'),
+            'fraud_filter' => $this->helper->getArrayValue($txn, 'FDSFilters'),
         ];
 
         // Clean out empties.
@@ -2358,7 +2382,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             if ($this->hasParameter('cardNumber')) {
                 $params['payment'] = [
                     'creditCard' => [
-                        'cardNumber'     => $this->getParameter('cardNumber'),
+                        'cardNumber' => $this->getParameter('cardNumber'),
                         'expirationDate' => $this->getParameter('expirationDate'),
                     ],
                 ];
@@ -2370,18 +2394,18 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 $params['paymentProfile']['payment'] = [
                     'opaqueData' => [
                         'dataDescriptor' => $this->getParameter('dataDescriptor'),
-                        'dataValue'      => $this->getParameter('dataValue'),
+                        'dataValue' => $this->getParameter('dataValue'),
                     ],
                 ];
             } elseif ($this->hasParameter('accountNumber')) {
                 $params['payment'] = [
                     'bankAccount' => [
-                        'accountType'   => $this->getParameter('accountType'),
+                        'accountType' => $this->getParameter('accountType'),
                         'routingNumber' => $this->getParameter('routingNumber'),
                         'accountNumber' => $this->getParameter('accountNumber'),
                         'nameOnAccount' => $this->getParameter('nameOnAccount'),
-                        'echeckType'    => $this->getParameter('echeckType'),
-                        'bankName'      => $this->getParameter('bankName'),
+                        'echeckType' => $this->getParameter('echeckType'),
+                        'bankName' => $this->getParameter('bankName'),
                     ],
                 ];
             }
@@ -2392,7 +2416,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
              * Otherwise, send the tokens we already have.
              */
             $params['profile']['customerProfileId'] = $this->getParameter('customerProfileId');
-            $params['profile']['paymentProfile'] = [
+            $params['profile']['paymentProfile']    = [
                 'paymentProfileId' => $this->getParameter('customerPaymentProfileId'),
             ];
 
@@ -2458,7 +2482,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
             $params['order'] = [
                 'invoiceNumber' => $this->getParameter('invoiceNumber'),
-                'description'   => $this->getParameter('description'),
+                'description' => $this->getParameter('description'),
             ];
         }
 
@@ -2481,9 +2505,9 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             ];
 
             $count = 0;
-            /** @var \Magento\Sales\Model\Order\Item $item */
+            /** @var Item $item */
             foreach ($this->lineItems as $item) {
-                if (($item instanceof \Magento\Framework\DataObject) === false) {
+                if (($item instanceof DataObject) === false) {
                     continue;
                 }
 
@@ -2509,12 +2533,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     /**
      * Build param array for a single order/invoice/refund item.
      *
-     * @param \Magento\Framework\DataObject $item
+     * @param DataObject $item
      * @return array|false
      */
-    protected function createTransactionAddItemInfoBuildItem(\Magento\Framework\DataObject $item)
+    protected function createTransactionAddItemInfoBuildItem(DataObject $item)
     {
-        /** @var \Magento\Sales\Model\Order\Item $item */
+        /** @var Item $item */
         if ($item->getData('qty') > 0) {
             $qty = $item->getData('qty');
         } else {
@@ -2522,7 +2546,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         }
 
         // We're sending SKU and name through parameters to filter characters and length.
-        $sku = $this->setParameter('itemName', $item->getSku())->getParameter('itemName');
+        $sku  = $this->setParameter('itemName', $item->getSku())->getParameter('itemName');
         $name = $this->setParameter('itemName', $item->getName())->getParameter('itemName');
 
         if ($qty < 1 || $item->getPrice() <= 0 || empty($sku)) {
@@ -2533,11 +2557,11 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         $unitPrice = max(0, $item->getPrice() - ($item->getDiscountAmount() / $qty));
 
         $itemData = [
-            'itemId'    => $sku,
-            'name'      => !empty($name) ? $name : $sku,
-            'quantity'  => static::formatAmount($qty),
+            'itemId' => $sku,
+            'name' => !empty($name) ? $name : $sku,
+            'quantity' => static::formatAmount($qty),
             'unitPrice' => static::formatAmount($unitPrice),
-            'taxable'   => $item->getData('tax_amount') > 0 ? 'true' : 'false',
+            'taxable' => $item->getData('tax_amount') > 0 ? 'true' : 'false',
         ];
 
         return $itemData;
@@ -2556,8 +2580,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         // Add tax amount?
         if ($this->hasParameter('taxAmount')) {
             $params['tax'] = [
-                'amount'      => static::formatAmount($this->getParameter('taxAmount')),
-                'name'        => $this->getParameter('taxName'),
+                'amount' => static::formatAmount($this->getParameter('taxAmount')),
+                'name' => $this->getParameter('taxName'),
                 'description' => $this->getParameter('taxDescription'),
             ];
         }
@@ -2565,8 +2589,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         // Add duty amount?
         if ($this->hasParameter('dutyAmount')) {
             $params['duty'] = [
-                'amount'      => static::formatAmount($this->getParameter('dutyAmount')),
-                'name'        => $this->getParameter('dutyName'),
+                'amount' => static::formatAmount($this->getParameter('dutyAmount')),
+                'name' => $this->getParameter('dutyName'),
                 'description' => $this->getParameter('dutyDescription'),
             ];
         }
@@ -2574,8 +2598,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         // Add shipping amount?
         if ($this->hasParameter('shipAmount')) {
             $params['shipping'] = [
-                'amount'      => static::formatAmount($this->getParameter('shipAmount')),
-                'name'        => $this->getParameter('shipName'),
+                'amount' => static::formatAmount($this->getParameter('shipAmount')),
+                'name' => $this->getParameter('shipName'),
                 'description' => $this->getParameter('shipDescription'),
             ];
         }
@@ -2601,7 +2625,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     protected function createTransactionAddCustomerInfo($params, $isNewCard, $isRefund = false)
     {
         $params['customer'] = [
-            'id'    => $this->getParameter('merchantCustomerId'),
+            'id' => $this->getParameter('merchantCustomerId'),
             'email' => $this->getParameter('email'),
         ];
 
@@ -2615,16 +2639,16 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         if (($isNewCard === true || ($isRefund === true && $this->hasParameter('cardNumber')))
             && $this->hasParameter('billToFirstName')) {
             $params['billTo'] = [
-                'firstName'   => $this->getParameter('billToFirstName'),
-                'lastName'    => $this->getParameter('billToLastName'),
-                'company'     => $this->getParameter('billToCompany'),
-                'address'     => $this->getParameter('billToAddress'),
-                'city'        => $this->getParameter('billToCity'),
-                'state'       => $this->getParameter('billToState'),
-                'zip'         => $this->getParameter('billToZip'),
-                'country'     => $this->getParameter('billToCountry'),
+                'firstName' => $this->getParameter('billToFirstName'),
+                'lastName' => $this->getParameter('billToLastName'),
+                'company' => $this->getParameter('billToCompany'),
+                'address' => $this->getParameter('billToAddress'),
+                'city' => $this->getParameter('billToCity'),
+                'state' => $this->getParameter('billToState'),
+                'zip' => $this->getParameter('billToZip'),
+                'country' => $this->getParameter('billToCountry'),
                 'phoneNumber' => $this->getParameter('billToPhoneNumber'),
-                'faxNumber'   => $this->getParameter('billToFaxNumber'),
+                'faxNumber' => $this->getParameter('billToFaxNumber'),
             ];
         }
 
@@ -2632,13 +2656,13 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         if (!$this->hasParameter('customerShippingAddressId') && $this->hasParameter('shipToAddress')) {
             $params['shipTo'] = [
                 'firstName' => $this->getParameter('shipToFirstName'),
-                'lastName'  => $this->getParameter('shipToLastName'),
-                'company'   => $this->getParameter('shipToCompany'),
-                'address'   => $this->getParameter('shipToAddress'),
-                'city'      => $this->getParameter('shipToCity'),
-                'state'     => $this->getParameter('shipToState'),
-                'zip'       => $this->getParameter('shipToZip'),
-                'country'   => $this->getParameter('shipToCountry'),
+                'lastName' => $this->getParameter('shipToLastName'),
+                'company' => $this->getParameter('shipToCompany'),
+                'address' => $this->getParameter('shipToAddress'),
+                'city' => $this->getParameter('shipToCity'),
+                'state' => $this->getParameter('shipToState'),
+                'zip' => $this->getParameter('shipToZip'),
+                'country' => $this->getParameter('shipToCountry'),
             ];
         }
 
@@ -2662,39 +2686,39 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     protected function createCustomerProfileTransactionAddConditionalInfo($params, $type)
     {
         if ($this->hasParameter('customerShippingAddressId')) {
-            $params['transaction'][$type]['customerShippingAddressId']
+            $params['transaction'][ $type ]['customerShippingAddressId']
                 = $this->getParameter('customerShippingAddressId');
         }
 
         if ($type !== 'profileTransPriorAuthCapture' && $this->hasParameter('invoiceNumber')) {
-            $params['transaction'][$type]['order'] = [
-                'invoiceNumber'       => $this->getParameter('invoiceNumber'),
-                'description'         => $this->getParameter('description'),
+            $params['transaction'][ $type ]['order'] = [
+                'invoiceNumber' => $this->getParameter('invoiceNumber'),
+                'description' => $this->getParameter('description'),
                 'purchaseOrderNumber' => $this->getParameter('purchaseOrderNumber'),
             ];
         }
 
         if ($type !== 'profileTransPriorAuthCapture' && $this->hasParameter('taxExempt')) {
-            $params['transaction'][$type]['taxExempt'] = $this->getParameter('taxExempt');
+            $params['transaction'][ $type ]['taxExempt'] = $this->getParameter('taxExempt');
         }
 
         if ($type !== 'profileTransPriorAuthCapture' && $this->hasParameter('cardCode')) {
-            $params['transaction'][$type]['cardCode'] = $this->getParameter('cardCode');
+            $params['transaction'][ $type ]['cardCode'] = $this->getParameter('cardCode');
         }
 
         if ($type !== 'profileTransAuthOnly' && $this->hasParameter('transId')) {
-            $params['transaction'][$type]['transId'] = $this->getParameter('transId');
+            $params['transaction'][ $type ]['transId'] = $this->getParameter('transId');
         }
 
         if ($this->hasParameter('splitTenderId')) {
-            $params['transaction'][$type]['splitTenderId'] = $this->getParameter('splitTenderId');
+            $params['transaction'][ $type ]['splitTenderId'] = $this->getParameter('splitTenderId');
         }
 
         if ($this->hasParameter('approvalCode')
             && strlen((string)$this->getParameter('approvalCode')) === 6
             && !in_array($type, ['profileTransRefund', 'profileTransPriorAuthCapture', 'profileTransAuthOnly'], true)
         ) {
-            $params['transaction'][$type]['approvalCode'] = $this->getParameter('approvalCode');
+            $params['transaction'][ $type ]['approvalCode'] = $this->getParameter('approvalCode');
         }
 
         return $params;
@@ -2712,12 +2736,12 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     protected function createCustomerProfileTransactionAddItemInfo($params, $type)
     {
         if ($this->lineItems !== null && !empty($this->lineItems)) {
-            $params['transaction'][$type]['lineItems'] = [];
+            $params['transaction'][ $type ]['lineItems'] = [];
 
             $count = 0;
-            /** @var \Magento\Sales\Model\Order\Item $item */
+            /** @var Item $item */
             foreach ($this->lineItems as $item) {
-                if (($item instanceof \Magento\Framework\DataObject) === false) {
+                if (($item instanceof DataObject) === false) {
                     continue;
                 }
 
@@ -2732,8 +2756,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
                 }
             }
 
-            if (empty($params['transaction'][$type]['lineItems'])) {
-                unset($params['transaction'][$type]['lineItems']);
+            if (empty($params['transaction'][ $type ]['lineItems'])) {
+                unset($params['transaction'][ $type ]['lineItems']);
             }
         }
 
@@ -2745,16 +2769,15 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
      *
      * Split out to reduce that method's cyclomatic complexity.
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @return $this
      */
-    protected function captureGetAmountInfo(\Magento\Payment\Model\InfoInterface $payment)
+    protected function captureGetAmountInfo(InfoInterface $payment)
     {
-        /** @var \Magento\Sales\Model\Order\Payment $payment */
-
+        /** @var Payment $payment */
         // Grab shipping and tax info from the invoice if possible. Should always be true.
         if ($payment->hasData('invoice')
-            && $payment->getData('invoice') instanceof \Magento\Sales\Model\Order\Invoice
+            && $payment->getData('invoice') instanceof Invoice
         ) {
             if ($payment->getData('invoice')->getBaseTaxAmount()) {
                 $this->setParameter('taxAmount', $payment->getData('invoice')->getBaseTaxAmount());
@@ -2786,14 +2809,15 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     protected function isAddressDuplicate($address1, $address2)
     {
         $isDuplicate = true;
-        $fields = ['firstName', 'lastName', 'address', 'zip', 'phoneNumber'];
+        $fields      = ['firstName', 'lastName', 'address', 'zip', 'phoneNumber'];
 
         foreach ($fields as $field) {
-            if ($address1[$field] != $address2[$field]) {
+            if ($address1[ $field ] != $address2[ $field ]) {
                 $isDuplicate = false;
                 break;
             }
         }
+
         return $isDuplicate;
     }
 
@@ -2808,8 +2832,8 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
     protected function handleTransactionError()
     {
         if ($this->lastResponse['messages']['resultCode'] !== 'Ok') {
-            $errorCode = $this->helper->getArrayValue($this->lastResponse, 'messages/message/code');
-            $errorText = $this->helper->getArrayValue($this->lastResponse, 'messages/message/text');
+            $errorCode  = $this->helper->getArrayValue($this->lastResponse, 'messages/message/code');
+            $errorText  = $this->helper->getArrayValue($this->lastResponse, 'messages/message/text');
             $errorText2 = $this->helper->getArrayValue(
                 $this->lastResponse,
                 'transactionResponse/errors/error/errorText'
@@ -2862,7 +2886,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         if ($this->hasParameter('cardNumber')) {
             $params['paymentProfile']['payment'] = [
                 'creditCard' => [
-                    'cardNumber'     => $this->getParameter('cardNumber'),
+                    'cardNumber' => $this->getParameter('cardNumber'),
                     'expirationDate' => $this->getParameter('expirationDate'),
                 ],
             ];
@@ -2874,18 +2898,18 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
             $params['paymentProfile']['payment'] = [
                 'opaqueData' => [
                     'dataDescriptor' => $this->getParameter('dataDescriptor'),
-                    'dataValue'      => $this->getParameter('dataValue'),
+                    'dataValue' => $this->getParameter('dataValue'),
                 ],
             ];
         } elseif ($this->hasParameter('accountNumber')) {
             $params['paymentProfile']['payment'] = [
                 'bankAccount' => [
-                    'accountType'   => $this->getParameter('accountType'),
+                    'accountType' => $this->getParameter('accountType'),
                     'routingNumber' => $this->getParameter('routingNumber'),
                     'accountNumber' => $this->getParameter('accountNumber'),
                     'nameOnAccount' => $this->getParameter('nameOnAccount'),
-                    'echeckType'    => $this->getParameter('echeckType'),
-                    'bankName'      => $this->getParameter('bankName'),
+                    'echeckType' => $this->getParameter('echeckType'),
+                    'bankName' => $this->getParameter('bankName'),
                 ],
             ];
         }
@@ -2906,6 +2930,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         /**
          * Card-On-File indicators convey the transaction context to the card processor. Mandated for stored card
          * transactions by certain processors.
+         *
          * @see https://developer.authorize.net/api/reference/features/card-on-file.html
          */
 
@@ -2923,7 +2948,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
         ];
         foreach ($processingOptionKeys as $key) {
             if ($this->hasParameter($key)) {
-                $processingOptions[$key] = $this->getParameter($key);
+                $processingOptions[ $key ] = $this->getParameter($key);
             }
         }
         if (!empty($processingOptions)) {
@@ -2937,7 +2962,7 @@ class Gateway extends \ParadoxLabs\TokenBase\Model\AbstractGateway
 
         if ($this->hasParameter('recurringBilling')) {
             $params['transactionSettings']['setting'][] = [
-                'settingName'  => 'recurringBilling',
+                'settingName' => 'recurringBilling',
                 'settingValue' => $this->getParameter('recurringBilling', 'false'),
             ];
         }

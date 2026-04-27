@@ -1,9 +1,11 @@
 <?php
 /** @var \ParadoxLabs\TokenBase\Block\Form\Cc $block */
 
-$code           = $block->escapeHtmlAttr($block->getMethodCode());
-$image          = $block->getBrandingImage();
-$storedCards    = $block->getStoredCards();
+use Magento\Framework\View\Helper\SecureHtmlRenderer;
+
+$code        = $block->escapeHtmlAttr($block->getMethodCode());
+$image       = $block->getBrandingImage();
+$storedCards = $block->getStoredCards();
 ?>
 <fieldset class="fieldset payment items ccard <?= /* @noEscape */ $code ?>" id="payment_form_<?= /* @noEscape */ $code ?>">
     <?php if ($block->getTokenbaseMethod()->isAcceptJsEnabled() === true): ?>
@@ -142,7 +144,7 @@ $storedCards    = $block->getStoredCards();
         }
     }
 </script>
-<?php if (isset($secureRenderer) && $secureRenderer instanceof \Magento\Framework\View\Helper\SecureHtmlRenderer): ?>
+<?php if (isset($secureRenderer) && $secureRenderer instanceof SecureHtmlRenderer): ?>
     <?= /* @noEscape */ $secureRenderer->renderStyleAsTag('display:none', '#payment_form_' . $code) ?>
 <?php else: ?>
     <script>

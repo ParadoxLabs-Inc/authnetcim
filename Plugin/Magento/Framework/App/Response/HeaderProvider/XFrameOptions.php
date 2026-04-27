@@ -15,27 +15,23 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Plugin\Magento\Framework\App\Response\HeaderProvider;
 
+use Magento\Framework\App\RequestInterface;
+
 class XFrameOptions
 {
     /**
-     * @var \Magento\Framework\App\Request\Http
-     */
-    protected $request;
-
-    /**
      * XFrameOptions constructor.
      *
-     * @param \Magento\Framework\App\RequestInterface $request
+     * @param RequestInterface $request
      */
-    public function __construct(
-        \Magento\Framework\App\RequestInterface $request
-    ) {
-        $this->request = $request;
+    public function __construct(protected readonly RequestInterface $request)
+    {
     }
 
     /**

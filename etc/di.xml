@@ -169,7 +169,7 @@
         </arguments>
     </virtualType>
 
-    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualStoredAchValidator" type="ParadoxLabs\TokenBase\Gateway\Validator\StoredAch" />
+    <virtualType name="ParadoxLabs\Authnetcim\Gateway\Ach\VirtualStoredAchValidator" type="ParadoxLabs\TokenBase\Gateway\Validator\StoredAch"/>
 
     <virtualType name="ParadoxLabs\Authnetcim\Gateway\VirtualCreditCardValidator" type="ParadoxLabs\Authnetcim\Gateway\Validator\CreditCard">
         <arguments>

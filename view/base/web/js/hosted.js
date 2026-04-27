@@ -138,11 +138,11 @@ define([
             form.submit();
 
             // Reload the hosted form when it expires
-            setTimeout(this.reloadExpiredHostedForm.bind(this), 15*60*1000);
+            setTimeout(this.reloadExpiredHostedForm.bind(this), 15 * 60 * 1000);
 
             // Verify communicator connected
             this.communicatorActive = false;
-            setTimeout(this.checkCommunicator.bind(this), 20*1000);
+            setTimeout(this.checkCommunicator.bind(this), 20 * 1000);
 
             var iframe = this.element.find('#' + this.options.target);
             // There's an awkward break between 400-750px; set max width to avoid scrolling.
@@ -164,7 +164,7 @@ define([
          * @param error
          */
         handleAjaxError: function (jqXHR, status, error) {
-            var iframe  = this.element.find('#' + this.options.target);
+            var iframe = this.element.find('#' + this.options.target);
             var message = $.mage.__('A server error occurred. Please try again.');
 
             iframe.trigger('processStop');
@@ -244,7 +244,7 @@ define([
             }
 
             var message = $.mage.__('Payment gateway failed to connect. Please reload and try again. If the problem'
-                                + ' continues, please seek support.');
+                                    + ' continues, please seek support.');
 
             console.error('No message received from communicator.', message);
 
@@ -360,14 +360,14 @@ define([
                 return;
             }
 
-            var card   = data.card;
+            var card = data.card;
             var option = $('<option>');
             option.val(card.id)
-                  .text(card.label)
-                  .data('new', card.new)
-                  .data('type', card.cc_type)
-                  .data('cc_bin', card.cc_bin)
-                  .data('cc_last4', card.cc_last4);
+                .text(card.label)
+                .data('new', card.new)
+                .data('type', card.cc_type)
+                .data('cc_bin', card.cc_bin)
+                .data('cc_last4', card.cc_last4);
 
             this.element.find(this.options.cardSelector).append(option).val(card.id).trigger('change');
 

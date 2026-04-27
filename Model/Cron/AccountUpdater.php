@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,12 +15,24 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model\Cron;
 
+use ParadoxLabs\TokenBase\Api\MethodInterface;
+use ParadoxLabs\Authnetcim\Model\Card;
+use Magento\Framework\Exception\LocalizedException;
+use ParadoxLabs\Authnetcim\Model\Method;
+use ParadoxLabs\TokenBase\Api\GatewayInterface;
+use ParadoxLabs\Authnetcim\Model\Gateway;
+use ParadoxLabs\TokenBase\Model\ResourceModel\Card\Collection;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
+use ParadoxLabs\TokenBase\Api\CardRepositoryInterface;
+use ParadoxLabs\TokenBase\Helper\Data;
+use ParadoxLabs\TokenBase\Model\Method\Factory;
+use ParadoxLabs\TokenBase\Model\ResourceModel\Card\CollectionFactory;
 
 class AccountUpdater
 {
@@ -28,27 +40,7 @@ class AccountUpdater
     const MAX_PAGES = 1000;
 
     /**
-     * @var \ParadoxLabs\TokenBase\Helper\Data
-     */
-    protected $tokenbaseHelper;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Model\ResourceModel\Card\CollectionFactory
-     */
-    protected $cardCollectionFactory;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Api\CardRepositoryInterface
-     */
-    protected $cardRepository;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Model\Method\Factory
-     */
-    protected $methodFactory;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Api\MethodInterface
+     * @var MethodInterface
      */
     protected $method;
 
@@ -60,21 +52,17 @@ class AccountUpdater
     /**
      * AccountUpdater constructor.
      *
-     * @param \ParadoxLabs\TokenBase\Helper\Data $tokenbaseHelper
+     * @param Data $tokenbaseHelper
      * @param \ParadoxLabs\TokenBase\Model\ResourceModel\Card\CollectionFactory $cardCollectionFactory
-     * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
-     * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
+     * @param CardRepositoryInterface $cardRepository
+     * @param Factory $methodFactory
      */
     public function __construct(
-        \ParadoxLabs\TokenBase\Helper\Data $tokenbaseHelper,
-        \ParadoxLabs\TokenBase\Model\ResourceModel\Card\CollectionFactory $cardCollectionFactory,
-        \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
-        \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
+        protected readonly Data $tokenbaseHelper,
+        protected readonly CollectionFactory $cardCollectionFactory,
+        protected readonly CardRepositoryInterface $cardRepository,
+        protected readonly Factory $methodFactory
     ) {
-        $this->tokenbaseHelper = $tokenbaseHelper;
-        $this->cardCollectionFactory = $cardCollectionFactory;
-        $this->cardRepository = $cardRepository;
-        $this->methodFactory = $methodFactory;
     }
 
     /**
@@ -164,11 +152,11 @@ class AccountUpdater
         $cards = $this->loadCards($change['customerProfileID'], $change['customerPaymentProfileID']);
 
         if (count($cards) > 0) {
-            /** @var \ParadoxLabs\Authnetcim\Model\Card $card */
+            /** @var Card $card */
             foreach ($cards as $card) {
                 $changed = false;
 
-                $last4  = substr((string)$change['newCreditCard']['cardNumber'], -4);
+                $last4 = substr((string)$change['newCreditCard']['cardNumber'], -4);
                 if ($last4 != $card->getAdditional('cc_last4')) {
                     $card->setAdditional('cc_last4', $last4);
 
@@ -210,7 +198,7 @@ class AccountUpdater
         $cards = $this->loadCards($change['customerProfileID'], $change['customerPaymentProfileID']);
 
         if (count($cards) > 0) {
-            /** @var \ParadoxLabs\Authnetcim\Model\Card $card */
+            /** @var Card $card */
             foreach ($cards as $card) {
                 // Clear data to prevent deletion queuing or syncing -- the token's already gone.
                 $card->setPaymentId('');
@@ -225,12 +213,12 @@ class AccountUpdater
     /**
      * Get the payment method instance.
      *
-     * @return \ParadoxLabs\TokenBase\Api\MethodInterface
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @return MethodInterface
+     * @throws LocalizedException
      */
     protected function getMethod()
     {
-        /** @var \ParadoxLabs\Authnetcim\Model\Method $method */
+        /** @var Method $method */
         $this->method = $this->methodFactory->getMethodInstance(ConfigProvider::CODE);
 
         return $this->method;
@@ -239,12 +227,12 @@ class AccountUpdater
     /**
      * Get the payment gateway instance.
      *
-     * @return \ParadoxLabs\TokenBase\Api\GatewayInterface
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @return GatewayInterface
+     * @throws LocalizedException
      */
     protected function getGateway()
     {
-        /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
+        /** @var Gateway $gateway */
         return $this->getMethod()->gateway();
     }
 
@@ -253,7 +241,7 @@ class AccountUpdater
      *
      * @param int $profileId
      * @param int $paymentId
-     * @return \ParadoxLabs\TokenBase\Model\ResourceModel\Card\Collection
+     * @return Collection
      */
     protected function loadCards($profileId, $paymentId)
     {

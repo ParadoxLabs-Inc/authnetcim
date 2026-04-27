@@ -15,38 +15,28 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model\Service\AcceptHosted;
 
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Customer\Api\CustomerRepositoryInterface;
+use Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException;
+use Magento\Framework\GraphQl\Exception\GraphQlNoSuchEntityException;
 use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
+use Magento\Framework\HTTP\PhpEnvironment\RemoteAddress;
 use Magento\Quote\Api\Data\AddressInterface;
+use Magento\Quote\Api\Data\CartInterface;
+use Magento\Quote\Model\ResourceModel\Quote\Payment;
 use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider as ConfigProviderAch;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider as ConfigProviderCc;
+use ParadoxLabs\Authnetcim\Model\Gateway;
+use ParadoxLabs\TokenBase\Model\Api\GraphQL;
 
 class GraphQLRequest extends AbstractRequestHandler
 {
-    /**
-     * @var \Magento\Framework\HTTP\PhpEnvironment\RemoteAddress
-     */
-    protected $remoteAddress;
-
-    /**
-     * @var \Magento\Customer\Api\CustomerRepositoryInterface
-     */
-    protected $customerRepository;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Model\Api\GraphQL
-     */
-    protected $graphQL;
-
-    /**
-     * @var \Magento\Quote\Model\ResourceModel\Quote\Payment
-     */
-    protected $paymentResource;
-
     /**
      * @var \Magento\GraphQl\Model\Query\Resolver\Context
      */
@@ -58,7 +48,7 @@ class GraphQLRequest extends AbstractRequestHandler
     protected $graphQlArgs;
 
     /**
-     * @var \Magento\Quote\Api\Data\CartInterface
+     * @var CartInterface
      */
     protected $quote;
 
@@ -70,45 +60,40 @@ class GraphQLRequest extends AbstractRequestHandler
     /**
      * GraphQLRequest constructor.
      *
-     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\Context $context
-     * @param \Magento\Framework\HTTP\PhpEnvironment\RemoteAddress $remoteAddress
-     * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
-     * @param \ParadoxLabs\TokenBase\Model\Api\GraphQL $graphQL
-     * @param \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
+     * @param Context $context
+     * @param RemoteAddress $remoteAddress
+     * @param CustomerRepositoryInterface $customerRepository
+     * @param GraphQL $graphQL
+     * @param Payment $paymentResource
      */
     public function __construct(
         Context $context,
-        \Magento\Framework\HTTP\PhpEnvironment\RemoteAddress $remoteAddress,
-        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
-        \ParadoxLabs\TokenBase\Model\Api\GraphQL $graphQL,
-        \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
+        protected readonly RemoteAddress $remoteAddress,
+        protected readonly CustomerRepositoryInterface $customerRepository,
+        protected readonly GraphQL $graphQL,
+        protected readonly Payment $paymentResource
     ) {
         parent::__construct($context);
-
-        $this->remoteAddress = $remoteAddress;
-        $this->customerRepository = $customerRepository;
-        $this->graphQL = $graphQL;
-        $this->paymentResource = $paymentResource;
     }
 
     /**
      * Set GraphQL request info/args on the object
      *
-     * @param \Magento\Framework\GraphQl\Query\Resolver\ContextInterface $context
+     * @param ContextInterface $context
      * @param array $args
      * @return void
      */
     public function setGraphQLContext(ContextInterface $context, array $args): void
     {
         $this->graphQlContext = $context;
-        $this->graphQlArgs = $args;
+        $this->graphQlArgs    = $args;
     }
 
     /**
      * Get the CIM customer profile ID for the current session/context.
      *
      * @return string
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     public function getCustomerProfileId(): string
     {
@@ -131,7 +116,7 @@ class GraphQLRequest extends AbstractRequestHandler
         }
 
         // Otherwise, create a new profile
-        /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
+        /** @var Gateway $gateway */
         $gateway = $this->getMethod()->gateway();
 
         $gateway->setParameter('email', $email);
@@ -177,11 +162,11 @@ class GraphQLRequest extends AbstractRequestHandler
     /**
      * Get quote for the GraphQL request
      *
-     * @return \Magento\Quote\Api\Data\CartInterface
+     * @return CartInterface
      */
-    protected function getQuote(): \Magento\Quote\Api\Data\CartInterface
+    protected function getQuote(): CartInterface
     {
-        if ($this->quote instanceof \Magento\Quote\Api\Data\CartInterface) {
+        if ($this->quote instanceof CartInterface) {
             return $this->quote;
         }
 
@@ -223,8 +208,8 @@ class GraphQLRequest extends AbstractRequestHandler
      * If we're given a customer profile ID, make sure the user is authorized (info matches the profile).
      *
      * @return void
-     * @throws \Magento\Framework\GraphQl\Exception\GraphQlNoSuchEntityException
-     * @throws \Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException
+     * @throws GraphQlNoSuchEntityException
+     * @throws GraphQlAuthorizationException
      */
     protected function validateAndSetProfileId(): void
     {
@@ -234,7 +219,7 @@ class GraphQLRequest extends AbstractRequestHandler
             return;
         }
 
-        /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
+        /** @var Gateway $gateway */
         $gateway = $this->getMethod()->gateway();
         $gateway->setParameter('customerProfileId', (string)$profileId);
 
@@ -242,7 +227,7 @@ class GraphQLRequest extends AbstractRequestHandler
 
         if (!empty($response['messages']['message']['text'])
             && $response['messages']['message']['text'] !== 'Successful.') {
-            throw new \Magento\Framework\GraphQl\Exception\GraphQlNoSuchEntityException(
+            throw new GraphQlNoSuchEntityException(
                 __($response['messages']['message']['text'])
             );
         }
@@ -250,7 +235,7 @@ class GraphQLRequest extends AbstractRequestHandler
         if ($response['profile']['email'] === $this->getEmail()) {
             $this->profileId = $response['profile']['customerProfileId'];
         } else {
-            throw new \Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException(
+            throw new GraphQlAuthorizationException(
                 __('Invalid iframeSessionId')
             );
         }
@@ -259,11 +244,11 @@ class GraphQLRequest extends AbstractRequestHandler
     /**
      * Set billing address parameters on the Gateway
      *
-     * @param \ParadoxLabs\Authnetcim\Model\Gateway $gateway
+     * @param Gateway $gateway
      * @return void
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
-    protected function setBillingParams(\ParadoxLabs\Authnetcim\Model\Gateway $gateway): void
+    protected function setBillingParams(Gateway $gateway): void
     {
         $billing = $this->getQuote()->getBillingAddress();
         if ($billing instanceof AddressInterface) {

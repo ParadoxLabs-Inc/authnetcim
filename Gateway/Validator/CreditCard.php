@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,66 +15,69 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Gateway\Validator;
 
+use Magento\Payment\Gateway\Validator\ResultInterface;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use Magento\Payment\Gateway\ConfigInterface;
+use Magento\Payment\Gateway\Validator\ResultInterfaceFactory;
+use Magento\Payment\Model\InfoInterface;
 use Magento\Quote\Model\Quote\Payment as QuotePayment;
 use Magento\Sales\Model\Order\Payment as OrderPayment;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
+use ParadoxLabs\TokenBase\Gateway\Validator\CreditCard\Types;
+use ParadoxLabs\TokenBase\Model\Method\Factory;
+use Throwable;
 
 class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
 {
     /**
-     * @var \ParadoxLabs\TokenBase\Model\Method\Factory
-     */
-    protected $methodFactory;
-
-    /**
-     * @param \Magento\Payment\Gateway\Validator\ResultInterfaceFactory $resultFactory
-     * @param \Magento\Payment\Gateway\ConfigInterface $config
-     * @param \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard\Types $ccTypes
-     * @param \Magento\Framework\Stdlib\DateTime\TimezoneInterface $dateProcessor
-     * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
+     * @param ResultInterfaceFactory $resultFactory
+     * @param ConfigInterface $config
+     * @param Types $ccTypes
+     * @param TimezoneInterface $dateProcessor
+     * @param Factory $methodFactory
      */
     public function __construct(
-        \Magento\Payment\Gateway\Validator\ResultInterfaceFactory $resultFactory,
-        \Magento\Payment\Gateway\ConfigInterface $config,
-        \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard\Types $ccTypes,
-        \Magento\Framework\Stdlib\DateTime\TimezoneInterface $dateProcessor,
-        \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
+        ResultInterfaceFactory $resultFactory,
+        ConfigInterface $config,
+        Types $ccTypes,
+        TimezoneInterface $dateProcessor,
+        protected readonly Factory $methodFactory
     ) {
         parent::__construct($resultFactory, $config, $ccTypes, $dateProcessor);
-
-        $this->methodFactory = $methodFactory;
     }
 
     /**
      * Performs domain-related validation for business object
      *
      * @param array $validationSubject
-     * @return \Magento\Payment\Gateway\Validator\ResultInterface
+     * @return ResultInterface
      */
     public function validate(array $validationSubject)
     {
         $isValid = true;
         $fails   = [];
 
-        /** @var \Magento\Payment\Model\InfoInterface $payment */
+        /** @var InfoInterface $payment */
         $payment = $validationSubject['payment'];
         $storeId = (int)$validationSubject['storeId'];
 
         try {
             $this->validateAcceptJs($payment);
-        } catch (\Exception $exception) {
+        } catch (Throwable $exception) {
             $isValid = false;
             $fails[] = $exception->getMessage();
         }
 
         try {
             $this->validateHostedTransaction($payment, $storeId);
-        } catch (\Exception $exception) {
+        } catch (Throwable $exception) {
             $isValid = false;
             $fails[] = $exception->getMessage();
         }
@@ -84,7 +87,7 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
          */
         try {
             $this->validateCcType($payment);
-        } catch (\Exception $exception) {
+        } catch (Throwable $exception) {
             $isValid = false;
             $fails[] = $exception->getMessage();
         }
@@ -118,11 +121,11 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
     /**
      * If Accept.js is enabled, make sure we didn't receive raw CC info.
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @return void
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
-    protected function validateAcceptJs(\Magento\Payment\Model\InfoInterface $payment): void
+    protected function validateAcceptJs(InfoInterface $payment): void
     {
         if ($this->isAcceptJsEnabled() !== true) {
             return;
@@ -131,22 +134,24 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
         if (strlen(str_replace(['X', '-'], '', (string)$payment->getData('cc_number'))) > 4) {
             // This gets triggered if Accept.js is enabled but we received raw credit card data anyway.
             // We don't ever want that, so refuse to process it. Whatever happened must be fixed.
-            throw new \Magento\Framework\Exception\LocalizedException(__(
-                'We did not receive the expected Accept.js data. Please verify payment details and try again.'
-                . ' If you get this error twice, contact support.'
-            ));
+            throw new LocalizedException(
+                __(
+                    'We did not receive the expected Accept.js data. Please verify payment details and try again.'
+                    . ' If you get this error twice, contact support.'
+                )
+            );
         }
     }
 
     /**
      * If Hosted form is enabled, fetch and validate the transaction info.
      *
-     * @param \Magento\Payment\Model\InfoInterface|OrderPayment|QuotePayment $payment
+     * @param InfoInterface|OrderPayment|QuotePayment $payment
      * @param int $storeId
      * @return void
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
-    protected function validateHostedTransaction(\Magento\Payment\Model\InfoInterface $payment, int $storeId): void
+    protected function validateHostedTransaction(InfoInterface $payment, int $storeId): void
     {
         if ($this->config->getValue('form_type') !== ConfigProvider::FORM_HOSTED
             || $payment instanceof OrderPayment === false
@@ -158,32 +163,32 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
         $transactionDetails = $payment->getAdditionalInformation();
 
         if (!in_array((int)$transactionDetails['response_code'], [1, 4], true)) {
-            throw new \Magento\Framework\Exception\LocalizedException(__('Transaction was declined.'));
+            throw new LocalizedException(__('Transaction was declined.'));
         }
 
-        $order = $payment->getOrder();
+        $order           = $payment->getOrder();
         $uncoveredAmount = (float)$order->getBaseGrandTotal() - (float)$transactionDetails['amount'];
 
         if ($transactionDetails['customer_email'] !== $order->getCustomerEmail()
             || $transactionDetails['invoice_number'] !== $order->getIncrementId()
             || $uncoveredAmount > 0.001) {
-            throw new \Magento\Framework\Exception\LocalizedException(__('Transaction failed, please try again.'));
+            throw new LocalizedException(__('Transaction failed, please try again.'));
         }
 
-        $submitTime = strtotime($transactionDetails['submit_time_utc']);
+        $submitTime = strtotime((string) $transactionDetails['submit_time_utc']);
         $window     = 15 * 60; // Disallow transaction completion after 15 minutes
         if ($submitTime < (time() - $window)) {
-            throw new \Magento\Framework\Exception\LocalizedException(__('Transaction expired, please try again.'));
+            throw new LocalizedException(__('Transaction expired, please try again.'));
         }
     }
 
     /**
      * Make sure we received a valid CC type.
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @return void
      */
-    protected function validateCcType(\Magento\Payment\Model\InfoInterface $payment): void
+    protected function validateCcType(InfoInterface $payment): void
     {
         if ($this->config->getValue('form_type') === ConfigProvider::FORM_HOSTED) {
             // This type check doesn't apply to the hosted form -- we don't know the type at this time.
@@ -191,12 +196,14 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
         }
 
         $typeInfo       = $payment->getData('cc_type');
-        $availableTypes = explode(',', $this->config->getValue('cctypes'));
+        $availableTypes = explode(',', (string) $this->config->getValue('cctypes'));
         if (isset($typeInfo) && in_array($typeInfo, $availableTypes, true) === false) {
             // Is the type allowed?
-            throw new \Magento\Framework\Exception\LocalizedException(__(
-                'This credit card type is not allowed for this payment method.'
-            ));
+            throw new LocalizedException(
+                __(
+                    'This credit card type is not allowed for this payment method.'
+                )
+            );
         }
     }
 }

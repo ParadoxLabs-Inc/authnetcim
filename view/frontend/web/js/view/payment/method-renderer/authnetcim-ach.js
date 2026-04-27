@@ -24,7 +24,7 @@ define(
     ],
     function (ko, Component) {
         'use strict';
-        var config=window.checkoutConfig.payment.authnetcim_ach;
+        var config = window.checkoutConfig.payment.authnetcim_ach;
         return Component.extend({
             defaults: {
                 save: config ? config.canSaveCard && config.defaultSaveCard : false,
@@ -35,9 +35,9 @@ define(
                 achImage: config ? config.achImage : false
             },
 
-            initVars: function() {
-                this.canSaveCard     = config ? config.canSaveCard : false;
-                this.forceSaveCard   = config ? config.forceSaveCard : false;
+            initVars: function () {
+                this.canSaveCard = config ? config.canSaveCard : false;
+                this.forceSaveCard = config ? config.forceSaveCard : false;
                 this.defaultSaveCard = config ? config.defaultSaveCard : false;
             }
         });

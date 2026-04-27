@@ -15,12 +15,19 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model\Api\GraphQL\Hosted;
 
-class GetPaymentParams implements \Magento\Framework\GraphQl\Query\ResolverInterface
+use Magento\Framework\GraphQl\Config\Element\Field;
+use Magento\Framework\GraphQl\Query\ResolverInterface;
+use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
+use ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\GraphQLRequest;
+use ParadoxLabs\TokenBase\Model\Api\GraphQL;
+
+class GetPaymentParams implements ResolverInterface
 {
     /**
      * @var \ParadoxLabs\TokenBase\Model\Api\GraphQL
@@ -39,10 +46,10 @@ class GetPaymentParams implements \Magento\Framework\GraphQl\Query\ResolverInter
      * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\GraphQLRequest $hostedForm
      */
     public function __construct(
-        \ParadoxLabs\TokenBase\Model\Api\GraphQL $graphQL,
-        \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\GraphQLRequest $hostedForm
+        GraphQL $graphQL,
+        GraphQLRequest $hostedForm
     ) {
-        $this->graphQL = $graphQL;
+        $this->graphQL    = $graphQL;
         $this->hostedForm = $hostedForm;
     }
 
@@ -54,20 +61,20 @@ class GetPaymentParams implements \Magento\Framework\GraphQl\Query\ResolverInter
      * @param \Magento\Framework\GraphQl\Schema\Type\ResolveInfo $info
      * @param array|null $value
      * @param array|null $args
-     * @throws \Exception
      * @return mixed|\Magento\Framework\GraphQl\Query\Resolver\Value
+     * @throws \Exception
      */
     public function resolve(
-        \Magento\Framework\GraphQl\Config\Element\Field $field,
+        Field $field,
         $context,
-        \Magento\Framework\GraphQl\Schema\Type\ResolveInfo $info,
+        ResolveInfo $info,
         ?array $value = null,
         ?array $args = null
     ) {
         $this->graphQL->authenticate($context, true);
         $this->hostedForm->setGraphQLContext($context, $args['input']);
 
-        $payload = $this->hostedForm->getParams();
+        $payload                 = $this->hostedForm->getParams();
         $payload['iframeParams'] = json_encode($payload['iframeParams']);
 
         return $payload;

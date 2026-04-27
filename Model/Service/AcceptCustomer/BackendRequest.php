@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,68 +15,53 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer;
 
+use Magento\Payment\Gateway\Command\CommandException;
+use ParadoxLabs\Authnetcim\Model\Gateway;
+use Magento\Backend\Model\Session\Quote;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\DataObject;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Model\Quote\Payment as QuotePayment;
+use Magento\Quote\Model\ResourceModel\Quote\Payment;
 use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider as ConfigProviderAch;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider as ConfigProviderCc;
 use ParadoxLabs\TokenBase\Api\Data\CardInterface;
+use ParadoxLabs\TokenBase\Helper\Data;
+use Throwable;
 
 class BackendRequest extends AbstractRequestHandler
 {
     /**
-     * @var \Magento\Backend\Model\Session\Quote
-     */
-    protected $backendSession;
-
-    /**
-     * @var \Magento\Framework\App\RequestInterface
-     */
-    protected $request;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Helper\Data
-     */
-    protected $tokenbaseHelper;
-
-    /**
-     * @var \Magento\Quote\Model\ResourceModel\Quote\Payment
-     */
-    protected $paymentResource;
-
-    /**
      * AbstractRequestHandler constructor.
      *
-     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\Context $context
-     * @param \Magento\Backend\Model\Session\Quote $backendSession *Proxy
-     * @param \Magento\Framework\App\RequestInterface $request
-     * @param \ParadoxLabs\TokenBase\Helper\Data $tokenbaseHelper
+     * @param Context $context
+     * @param Quote $backendSession *Proxy
+     * @param RequestInterface $request
+     * @param Data $tokenbaseHelper
      * @param \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
      */
     public function __construct(
         Context $context,
-        \Magento\Backend\Model\Session\Quote $backendSession,
-        \Magento\Framework\App\RequestInterface $request,
-        \ParadoxLabs\TokenBase\Helper\Data $tokenbaseHelper,
-        \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
+        protected readonly Quote $backendSession,
+        protected readonly RequestInterface $request,
+        protected readonly Data $tokenbaseHelper,
+        protected readonly Payment $paymentResource
     ) {
         parent::__construct($context);
-
-        $this->backendSession = $backendSession;
-        $this->request = $request;
-        $this->tokenbaseHelper = $tokenbaseHelper;
-        $this->paymentResource = $paymentResource;
     }
 
     /**
      * Get the CIM customer profile ID for the current session/context.
      *
      * @return string
-     * @throws \Magento\Payment\Gateway\Command\CommandException
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws CommandException
+     * @throws LocalizedException
      */
     public function getCustomerProfileId(): string
     {
@@ -88,7 +73,7 @@ class BackendRequest extends AbstractRequestHandler
                 $card = $this->cardRepository->getByHash($cardId);
 
                 if ($card->hasOwner((int)$this->getCustomerId()) === false) {
-                    throw new \Magento\Framework\Exception\LocalizedException(__('Could not load payment profile'));
+                    throw new LocalizedException(__('Could not load payment profile'));
                 }
 
                 return (string)$card->getProfileId();
@@ -105,7 +90,7 @@ class BackendRequest extends AbstractRequestHandler
             }
         }
 
-        /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
+        /** @var Gateway $gateway */
         $gateway = $this->getMethod()->gateway();
         $gateway->setParameter('email', $this->getEmail());
         $gateway->setParameter('merchantCustomerId', $this->getCustomerId());
@@ -127,7 +112,7 @@ class BackendRequest extends AbstractRequestHandler
      * Get the CIM payment ID for the current session/context.
      *
      * @return string|null
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     public function getCustomerPaymentId(): ?string
     {
@@ -139,7 +124,7 @@ class BackendRequest extends AbstractRequestHandler
                 $card = $this->cardRepository->getByHash($cardId);
 
                 if ($card->hasOwner((int)$this->getCustomerId()) === false) {
-                    throw new \Magento\Framework\Exception\LocalizedException(__('Could not load payment profile'));
+                    throw new LocalizedException(__('Could not load payment profile'));
                 }
 
                 return (string)$card->getPaymentId();
@@ -162,7 +147,7 @@ class BackendRequest extends AbstractRequestHandler
             }
 
             return $this->backendSession->getQuote()->getBillingAddress()->getEmail();
-        } catch (\Exception $exception) {
+        } catch (Throwable) {
             return null;
         }
     }
@@ -190,7 +175,7 @@ class BackendRequest extends AbstractRequestHandler
             }
 
             return (int)$this->backendSession->getQuote()->getStoreId();
-        } catch (\Exception $exception) {
+        } catch (Throwable) {
             return (int)$this->tokenbaseHelper->getCurrentStoreId();
         }
     }
@@ -227,7 +212,7 @@ class BackendRequest extends AbstractRequestHandler
      * @param CardInterface $card
      * @return void
      */
-    protected function saveCardToQuote(\ParadoxLabs\TokenBase\Api\Data\CardInterface $card): void
+    protected function saveCardToQuote(CardInterface $card): void
     {
         if ($this->request->getParam('source') === 'paymentinfo') {
             return;
@@ -235,8 +220,8 @@ class BackendRequest extends AbstractRequestHandler
 
         $payment = $this->backendSession->getQuote()->getPayment();
         $payment->setMethod($this->getMethodCode());
-        $method  = $payment->getMethodInstance();
-        $method->assignData(new \Magento\Framework\DataObject(['card_id' => $card->getHash()]));
+        $method = $payment->getMethodInstance();
+        $method->assignData(new DataObject(['card_id' => $card->getHash()]));
 
         $this->paymentResource->save($payment);
     }

@@ -15,14 +15,16 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Block\Adminhtml\Customer\Form;
 
 use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider;
+use ParadoxLabs\TokenBase\Block\Adminhtml\Customer\Form;
 
-class Ach extends \ParadoxLabs\TokenBase\Block\Adminhtml\Customer\Form
+class Ach extends Form
 {
     /**
      * @var string

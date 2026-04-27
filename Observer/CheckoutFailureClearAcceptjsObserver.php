@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,47 +15,48 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Observer;
 
-class CheckoutFailureClearAcceptjsObserver implements \Magento\Framework\Event\ObserverInterface
+use Magento\Framework\Event\Observer;
+use Magento\Framework\Event\ObserverInterface;
+use Magento\Payment\Model\InfoInterface;
+use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Quote\Api\Data\CartInterface;
+use Magento\Quote\Api\Data\PaymentInterface;
+use Magento\Quote\Model\Quote;
+use Magento\Sales\Api\Data\OrderPaymentInterface;
+use Magento\Sales\Api\OrderPaymentRepositoryInterface;
+use Magento\Sales\Model\Order;
+use Throwable;
+
+class CheckoutFailureClearAcceptjsObserver implements ObserverInterface
 {
     /**
-     * @var \Magento\Sales\Api\OrderPaymentRepositoryInterface
-     */
-    private $orderPaymentRepository;
-
-    /**
-     * @var \Magento\Quote\Api\CartRepositoryInterface
-     */
-    private $quoteRepository;
-
-    /**
-     * @param \Magento\Sales\Api\OrderPaymentRepositoryInterface $orderPaymentRepository
-     * @param \Magento\Quote\Api\CartRepositoryInterface $quoteRepository
+     * @param OrderPaymentRepositoryInterface $orderPaymentRepository
+     * @param CartRepositoryInterface $quoteRepository
      */
     public function __construct(
-        \Magento\Sales\Api\OrderPaymentRepositoryInterface $orderPaymentRepository,
-        \Magento\Quote\Api\CartRepositoryInterface $quoteRepository
+        private readonly OrderPaymentRepositoryInterface $orderPaymentRepository,
+        private readonly CartRepositoryInterface $quoteRepository
     ) {
-        $this->orderPaymentRepository = $orderPaymentRepository;
-        $this->quoteRepository = $quoteRepository;
     }
 
     /**
      * Assign data to the payment instance for our methods.
      *
-     * @param \Magento\Framework\Event\Observer $observer
+     * @param Observer $observer
      * @return void
      */
-    public function execute(\Magento\Framework\Event\Observer $observer)
+    public function execute(Observer $observer)
     {
         try {
             $this->clearAcceptJsTokens($observer->getEvent()->getData('order'));
             $this->clearAcceptJsTokens($observer->getEvent()->getData('quote'));
-        } catch (\Exception $e) {
+        } catch (Throwable) {
             // Ignore any errors; we don't want to throw them in this context.
         }
     }
@@ -63,15 +64,14 @@ class CheckoutFailureClearAcceptjsObserver implements \Magento\Framework\Event\O
     /**
      * Unset payment object values, to ensure they will not be reused.
      *
-     * @param mixed $object
      * @return $this
      */
-    protected function clearAcceptJsTokens($object)
+    protected function clearAcceptJsTokens(mixed $object)
     {
-        if ($object instanceof \Magento\Quote\Model\Quote || $object instanceof \Magento\Sales\Model\Order) {
+        if ($object instanceof Quote || $object instanceof Order) {
             $payment = $object->getPayment();
 
-            if ($payment instanceof \Magento\Payment\Model\InfoInterface) {
+            if ($payment instanceof InfoInterface) {
                 $acceptJsKey = $payment->getAdditionalInformation('acceptjs_key');
                 $acceptJsValue = $payment->getAdditionalInformation('acceptjs_value');
 
@@ -80,10 +80,10 @@ class CheckoutFailureClearAcceptjsObserver implements \Magento\Framework\Event\O
                     $payment->setAdditionalInformation('acceptjs_value', null);
 
                     if ($payment->getId() > 0) {
-                        if ($payment instanceof \Magento\Sales\Api\Data\OrderPaymentInterface) {
+                        if ($payment instanceof OrderPaymentInterface) {
                             $this->orderPaymentRepository->save($payment);
-                        } elseif ($payment instanceof \Magento\Quote\Api\Data\PaymentInterface
-                            && $payment->getQuote() instanceof \Magento\Quote\Api\Data\CartInterface
+                        } elseif ($payment instanceof PaymentInterface
+                            && $payment->getQuote() instanceof CartInterface
                         ) {
                             $this->quoteRepository->save($payment->getQuote());
                         }

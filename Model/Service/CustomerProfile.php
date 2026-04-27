@@ -15,60 +15,51 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model\Service;
 
+use Magento\Payment\Gateway\Command\CommandException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Exception\LocalizedException;
+use ParadoxLabs\Authnetcim\Helper\Data;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
+use ParadoxLabs\Authnetcim\Model\Gateway;
+use ParadoxLabs\TokenBase\Api\CardRepositoryInterface;
 use ParadoxLabs\TokenBase\Api\Data\CardInterface;
+use ParadoxLabs\TokenBase\Api\MethodInterface;
+use ParadoxLabs\TokenBase\Model\Method\Factory;
 
 class CustomerProfile
 {
     /**
-     * @var \ParadoxLabs\Authnetcim\Helper\Data
-     */
-    protected $helper;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Api\CardRepositoryInterface
-     */
-    protected $cardRepository;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Model\Method\Factory
-     */
-    protected $methodFactory;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Api\MethodInterface
+     * @var MethodInterface
      */
     protected $method;
 
     /**
      * CustomerProfile constructor.
      *
-     * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
-     * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
-     * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
+     * @param Data $helper
+     * @param CardRepositoryInterface $cardRepository
+     * @param Factory $methodFactory
      */
     public function __construct(
-        \ParadoxLabs\Authnetcim\Helper\Data $helper,
-        \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
-        \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
+        protected readonly Data $helper,
+        protected readonly CardRepositoryInterface $cardRepository,
+        protected readonly Factory $methodFactory,
     ) {
-        $this->helper = $helper;
-        $this->cardRepository = $cardRepository;
-        $this->methodFactory = $methodFactory;
     }
 
     /**
      * Set the active payment method instance
      *
-     * @param \ParadoxLabs\TokenBase\Api\MethodInterface $method
+     * @param MethodInterface $method
      * @return void
      */
-    public function setMethod(\ParadoxLabs\TokenBase\Api\MethodInterface $method): void
+    public function setMethod(MethodInterface $method): void
     {
         $this->method = $method;
     }
@@ -76,15 +67,15 @@ class CustomerProfile
     /**
      * Get API gateway instance
      *
-     * @return \ParadoxLabs\Authnetcim\Model\Gateway
+     * @return Gateway
      */
-    protected function getGateway(): \ParadoxLabs\Authnetcim\Model\Gateway
+    protected function getGateway(): Gateway
     {
         if (!isset($this->method)) {
             $this->method = $this->methodFactory->getMethodInstance(ConfigProvider::CODE);
         }
 
-        /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
+        /** @var Gateway $gateway */
         $gateway = $this->method->gateway();
 
         return $gateway;
@@ -95,8 +86,8 @@ class CustomerProfile
      *
      * @param string $profileId
      * @return array
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Payment\Gateway\Command\CommandException
+     * @throws LocalizedException
+     * @throws CommandException
      */
     public function fetchAddedCard(string $profileId): array
     {
@@ -111,7 +102,7 @@ class CustomerProfile
 
         if (!empty($response['messages']['message']['text'])
             && $response['messages']['message']['text'] !== 'Successful.') {
-            throw new \Magento\Framework\Exception\LocalizedException(__($response['messages']['message']['text']));
+            throw new LocalizedException(__($response['messages']['message']['text']));
         }
 
         if (!isset($response['profile']['paymentProfiles'])) {
@@ -120,7 +111,7 @@ class CustomerProfile
                 sprintf('Unable to load payment record for CIM profile "%s"', $profileId)
             );
 
-            throw new \Magento\Framework\Exception\LocalizedException(__('Unable to find payment record.'));
+            throw new LocalizedException(__('Unable to find payment record.'));
         }
 
         $newestCard = $response['profile']['paymentProfiles'] ?? [];
@@ -140,10 +131,10 @@ class CustomerProfile
     /**
      * Set data from a CIM payment profile onto the given TokenBase Card
      *
-     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterface $card
+     * @param CardInterface $card
      * @param array $paymentProfile
      * @return CardInterface
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     public function importPaymentProfile(CardInterface $card, array $paymentProfile): CardInterface
     {
@@ -177,13 +168,13 @@ class CustomerProfile
      *
      * @param CardInterface $card
      * @return CardInterface
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
-     * @throws \Magento\Payment\Gateway\Command\CommandException
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     * @throws CommandException
      */
     public function updateCardFromPaymentProfile(CardInterface $card): CardInterface
     {
-        /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
+        /** @var Gateway $gateway */
         $gateway = $this->getGateway();
 
         // Get CIM payment profile
@@ -196,7 +187,7 @@ class CustomerProfile
 
         if (!empty($response['messages']['message']['text'])
             && $response['messages']['message']['text'] !== 'Successful.') {
-            throw new \Magento\Framework\Exception\LocalizedException(__($response['messages']['message']['text']));
+            throw new LocalizedException(__($response['messages']['message']['text']));
         }
 
         $paymentProfile = $response['paymentProfile'];
@@ -231,9 +222,9 @@ class CustomerProfile
 
         if (isset($paymentProfile['payment']['creditCard'])) {
             $creditCard = $paymentProfile['payment']['creditCard'];
-            [$yr, $mo]  = explode('-', (string)$creditCard['expirationDate'], 2);
-            $day        = date('t', strtotime($yr . '-' . $mo));
-            $type       = $this->helper->mapCcTypeToMagento($creditCard['cardType']);
+            [$yr, $mo] = explode('-', (string)$creditCard['expirationDate'], 2);
+            $day  = date('t', strtotime($yr . '-' . $mo));
+            $type = $this->helper->mapCcTypeToMagento($creditCard['cardType']);
 
             $paymentData = [
                 'cc_type' => $type,

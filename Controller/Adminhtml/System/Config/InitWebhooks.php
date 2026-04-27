@@ -15,63 +15,51 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Controller\Adminhtml\System\Config;
 
-use \Magento\Backend\App\Action\Context;
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\App\ResponseInterface;
+use Magento\Framework\Exception\NotFoundException;
+use Magento\Framework\Controller\Result\Json;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
+use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Url;
+use ParadoxLabs\Authnetcim\Block\Adminhtml\Config\AchApiTest;
+use ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ApiTest;
+use ParadoxLabs\Authnetcim\Model\Service\RestClient;
 use ParadoxLabs\Authnetcim\Model\Service\WebhookProcessor;
+use Throwable;
 
-class InitWebhooks extends \Magento\Backend\App\Action
+class InitWebhooks extends Action
 {
     /**
-     * @var \ParadoxLabs\Authnetcim\Model\Service\WebhookProcessor
-     */
-    protected $webhookProcessor;
-
-    /**
-     * @var \ParadoxLabs\Authnetcim\Model\Service\RestClient
-     */
-    protected $restClient;
-
-    /**
-     * @var \ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ApiTest
-     */
-    protected $apiTester;
-
-    /**
-     * @var \Magento\Framework\Url
-     */
-    protected $frontendUrl;
-
-    /**
-     * @var \ParadoxLabs\Authnetcim\Block\Adminhtml\Config\AchApiTest
+     * @var AchApiTest
      */
     protected $achApiTest;
 
     /**
      * @param Context $context
-     * @param \ParadoxLabs\Authnetcim\Model\Service\WebhookProcessor $webhookProcessor
-     * @param \ParadoxLabs\Authnetcim\Model\Service\RestClient $restClient
-     * @param \ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ApiTest $apiTester
-     * @param \ParadoxLabs\Authnetcim\Block\Adminhtml\Config\AchApiTest $achApiTester
-     * @param \Magento\Framework\Url $frontendUrl
+     * @param WebhookProcessor $webhookProcessor
+     * @param RestClient $restClient
+     * @param ApiTest $apiTester
+     * @param AchApiTest $achApiTester
+     * @param Url $frontendUrl
      */
     public function __construct(
         Context $context,
-        \ParadoxLabs\Authnetcim\Model\Service\WebhookProcessor $webhookProcessor,
-        \ParadoxLabs\Authnetcim\Model\Service\RestClient $restClient,
-        \ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ApiTest $apiTester,
-        \ParadoxLabs\Authnetcim\Block\Adminhtml\Config\AchApiTest $achApiTester,
-        \Magento\Framework\Url $frontendUrl
+        protected readonly WebhookProcessor $webhookProcessor,
+        protected readonly RestClient $restClient,
+        protected readonly ApiTest $apiTester,
+        AchApiTest $achApiTester,
+        protected readonly Url $frontendUrl
     ) {
         parent::__construct($context);
-
-        $this->webhookProcessor = $webhookProcessor;
-        $this->restClient = $restClient;
-        $this->apiTester = $apiTester;
-        $this->frontendUrl = $frontendUrl;
 
         if ($this->getRequest()->getParam('method') === 'authnetcim_ach') {
             $this->apiTester = $achApiTester;
@@ -81,13 +69,13 @@ class InitWebhooks extends \Magento\Backend\App\Action
     /**
      * Execute action based on request and return result
      *
-     * @return \Magento\Framework\Controller\ResultInterface|\Magento\Framework\App\ResponseInterface
-     * @throws \Magento\Framework\Exception\NotFoundException
+     * @return ResultInterface|ResponseInterface
+     * @throws NotFoundException
      */
     public function execute()
     {
-        /** @var \Magento\Framework\Controller\Result\Json $resultJson */
-        $resultJson = $this->resultFactory->create(\Magento\Framework\Controller\ResultFactory::TYPE_JSON);
+        /** @var Json $resultJson */
+        $resultJson = $this->resultFactory->create(ResultFactory::TYPE_JSON);
 
         try {
             $this->initRestClient();
@@ -112,9 +100,9 @@ class InitWebhooks extends \Magento\Backend\App\Action
                 'message' => __(
                     'API Login ID and Transaction Key work. Webhooks connected for your store: %1',
                     $webhookUrl
-                )
+                ),
             ]);
-        } catch (\Exception $exception) {
+        } catch (Throwable $exception) {
             $resultJson->setStatusHeader(400);
             $resultJson->setData([
                 'message' => sprintf('%s (%s)', $exception->getMessage(), $exception->getCode()),
@@ -146,7 +134,7 @@ class InitWebhooks extends \Magento\Backend\App\Action
      * Get the site URL the webhook should connect to -- must be web accessible to Authorize.net.
      *
      * @return string
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     protected function getScopedWebhookUrl(): string
     {
@@ -168,7 +156,7 @@ class InitWebhooks extends \Magento\Backend\App\Action
      * (yes, this is highly temporally coupled, deal with it)
      *
      * @return void
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     protected function initRestClient(): void
     {
@@ -188,7 +176,7 @@ class InitWebhooks extends \Magento\Backend\App\Action
      * Get the current config store scope
      *
      * @return int
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     protected function getStore(): int
     {
@@ -200,7 +188,7 @@ class InitWebhooks extends \Magento\Backend\App\Action
      *
      * @param string $key
      * @return mixed
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     protected function getConfigData(string $key)
     {

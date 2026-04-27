@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,10 +15,15 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Block\Info;
+
+use ParadoxLabs\TokenBase\Helper\Data;
+use Magento\Framework\DataObject;
+use Magento\Sales\Model\Order\Payment\Info;
 
 /**
  * Credit card info block
@@ -28,21 +33,21 @@ class Cc extends \ParadoxLabs\TokenBase\Block\Info\Cc
     /**
      * @var \ParadoxLabs\Authnetcim\Helper\Data
      */
-    protected $helper;
+    protected readonly Data $helper;
 
     /**
      * Prepare credit card related payment info
      *
-     * @param \Magento\Framework\DataObject|array $transport
-     * @return \Magento\Framework\DataObject
+     * @param DataObject|array $transport
+     * @return DataObject
      */
     protected function _prepareSpecificInformation($transport = null)
     {
-        $transport  = parent::_prepareSpecificInformation($transport);
-        $data       = [];
+        $transport = parent::_prepareSpecificInformation($transport);
+        $data      = [];
 
         if ($this->getIsSecureMode() === false && $this->isEcheck() === false) {
-            /** @var \Magento\Sales\Model\Order\Payment\Info $info */
+            /** @var Info $info */
             $info = $this->getInfo();
 
             if ($info->getData('cc_avs_status')) {
@@ -64,15 +69,15 @@ class Cc extends \ParadoxLabs\TokenBase\Block\Info\Cc
             }
 
             if (!empty($avs)) {
-                $data[(string)__('AVS Response')]   = $this->helper->translateAvs($avs);
+                $data[ (string)__('AVS Response') ] = $this->helper->translateAvs($avs);
             }
 
             if (!empty($ccv)) {
-                $data[(string)__('CCV Response')]   = $this->helper->translateCcv($ccv);
+                $data[ (string)__('CCV Response') ] = $this->helper->translateCcv($ccv);
             }
 
             if (!empty($cavv)) {
-                $data[(string)__('CAVV Response')]  = $this->helper->translateCavv($cavv);
+                $data[ (string)__('CAVV Response') ] = $this->helper->translateCavv($cavv);
             }
         }
 

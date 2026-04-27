@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,12 +15,19 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Block\Adminhtml\Config;
 
+use ParadoxLabs\Authnetcim\Model\Method;
+use Magento\Framework\Phrase;
+use ParadoxLabs\Authnetcim\Model\Gateway;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Data\Form\Element\AbstractElement;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
+use Throwable;
 
 class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
 {
@@ -30,14 +37,14 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
     protected $code = 'authnetcim';
 
     /**
-     * @var \ParadoxLabs\Authnetcim\Model\Method
+     * @var Method
      */
     protected $method;
 
     /**
      * Test the API connection and report common errors.
      *
-     * @return \Magento\Framework\Phrase|string
+     * @return Phrase|string
      */
     public function testApi()
     {
@@ -59,7 +66,7 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
             return __('Accept.js is enabled, but you have not entered your Client Key.');
         }
 
-        /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
+        /** @var Gateway $gateway */
         $gateway = $method->gateway();
 
         try {
@@ -70,12 +77,12 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
             return __('Authorize.Net CIM connected successfully.') . ($method->getConfigData('test')
                     ? __(' (SANDBOX)')
                     : __(' (PRODUCTION)'));
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             /**
              * Handle common configuration errors.
              */
 
-            $result       = $gateway->getLastResponse();
+            $result = $gateway->getLastResponse();
 
             if (is_array($result)) {
                 $errorCode = $this->helper->getArrayValue($result, 'message/message/code');
@@ -110,30 +117,30 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
     /**
      * Before rendering html, but after trying to load cache
      *
-     * @param \Magento\Framework\Data\Form\Element\AbstractElement $element
+     * @param AbstractElement $element
      * @return string
      */
-    protected function _getElementHtml(\Magento\Framework\Data\Form\Element\AbstractElement $element)
+    protected function _getElementHtml(AbstractElement $element)
     {
         $html = parent::_getElementHtml($element);
 
         // If API creds work and Accept.js is enabled, output Accept.js test (must be done client-side in JS).
-        if (strpos((string)$html, '#0a0') !== false
+        if (str_contains((string)$html, '#0a0')
             && $this->getMethodInstance()->isAcceptJsEnabled()) {
             $acceptJsTest = $this->getLayout()->createBlock(AcceptjsTest::class, 'acceptjs_test');
-            $html .= $acceptJsTest->toHtml();
+            $html         .= $acceptJsTest->toHtml();
         }
 
         return $html;
     }
 
     /**
-     * @return \ParadoxLabs\Authnetcim\Model\Method
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @return Method
+     * @throws LocalizedException
      */
     public function getMethodInstance()
     {
-        /** @var \ParadoxLabs\Authnetcim\Model\Method $method */
+        /** @var Method $method */
         $this->method = $this->methodFactory->getMethodInstance($this->code);
         $this->method->setStore($this->getStoreId());
 

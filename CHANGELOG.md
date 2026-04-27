@@ -1,7 +1,9 @@
 # ParadoxLabs_Authnetcim Changelog
 
 ## 5.2.0 - Jan 7, 2026
-- Added ability to use a different CIM customer profile for each new checkout, to bypass 10-payment-profile limit errors.
+
+- Added ability to use a different CIM customer profile for each new checkout, to bypass 10-payment-profile limit
+  errors.
 - Added intermediate star certificate (DigiCert SHA2 Secure Server CA) to SSL bundle.
 - Changed GraphQL to hard dependency, removing compatibility for Magento 2.2.
 - Fixed ACH refund to reference masked account data when possible for hosted form compatibility.
@@ -15,6 +17,7 @@
 - Removed Entrust chain certificates from cert bundle.
 
 ## 5.1.4 - Apr 23, 2025
+
 - Added support for Magento 2.4.8.
 - Fixed error handling if Accept Hosted returns an invalid JSON response.
 - Fixed Hosted form failing to reload on address or totals change on Luma checkout. (#16)
@@ -24,6 +27,7 @@
 - Fixed sending billTo data when no card data is present.
 
 ## 5.1.3 - Jan 13, 2025
+
 - Fixed billing address errors when refunding to a stored card.
 - Fixed a slow order query on legacy card import if no cards need to be imported. (Fixes #13; thanks Steven Hoffman)
 - Fixed a PHP 7.1-7.2 compatibility issue (regression in 5.1.0).
@@ -31,13 +35,16 @@
 - Fixed possible transaction error if customer email includes "+" and the API changed that to " " on response.
 
 ## 5.1.2 - Oct 16, 2024
+
 - Updated SSL certificate bundle.
 - Fixed an invalid template reference with the ACH inline form.
-- Fixed checkout agreement validation with the hosted payment form; the payment form will no longer display until any required terms are accepted.
+- Fixed checkout agreement validation with the hosted payment form; the payment form will no longer display until any
+  required terms are accepted.
 - Fixed CVV help tooltip showing up at the end of the page after open.
 - Fixed input validation on the hosted customer form.
 
 ## 5.1.1 - Sept 30, 2024
+
 - Added a help bar to the settings page for manual, support, and requests.
 - Updated packaged SSL certificates for the upcoming DigiCert SSL Certificate Migration.
 - Fixed CC Type validation errors with the hosted payment form.
@@ -47,13 +54,15 @@
 - Fixed webhooks approving an order when the resulting transaction gets declined.
 
 ## 5.1.0 - Jun 28, 2024
+
 - Added ability to set custom communicator URL for headless frontends.
 - Added approve/deny suspected fraud payments from the Magento order details.
 - Added card persistence upon processing of a hosted-form order that was held-for-review.
 - Added CSP/SRI secure mode support for 2.4.0+ (2.4.7 checkout compatibility).
 - Added validation mode option to Hosted forms for Payment Options and save-info checkout.
 - Changed payment form default to Accept.js due to differing behaviors of Hosted form for longtime users.
-- Changed the default validation mode to testMode going forward (fewer txn fees; redundant with typical Hosted configuration).
+- Changed the default validation mode to testMode going forward (fewer txn fees; redundant with typical Hosted
+  configuration).
 - Changed the hosted form cancel button to reload the page, rather than reset the payment form.
 - Fixed hosted form card updates from fetching profile details from CIM unnecessarily.
 - Fixed legacy card imports failing to set card type.
@@ -63,13 +72,16 @@
 - Removed the deprecated 'none' validation mode.
 
 ## 5.0.1 - Jan 23, 2024
+
 - Added Instant Purchase support for customers with active stored cards.
 - Fixed a reported error on subscription rebilling with hosted forms enabled.
 - Fixed the inline form type loading the wrong form component on checkout.
 
 ## 5.0.0 - Dec 7, 2023
+
 - Added Hosted Form support (Authorize.net Accept Hosted / Accept Customer) for PCI SAQ A security.
-- Added Hyva Checkout support via Hosted Forms. Please install additional composer package: `paradoxlabs/authnetcim-hyva-checkout`
+- Added Hyva Checkout support via Hosted Forms. Please install additional composer package:
+  `paradoxlabs/authnetcim-hyva-checkout`
 - Added payment captcha support via Hosted Forms.
 - Added device type indicator (website) to transaction requests.
 - Added item 'taxable' flag to transaction requests.
@@ -78,17 +90,20 @@
 - DEPRECATION NOTICE: Inline credit card form support will be removed in a future release.
 
 ## 4.5.3 - Nov 9, 2023
+
 - Changed CC BIN storage to enabled by default.
 - Fixed payment info incorrectly persisting and preventing new card entry after a payment decline or admin reorder.
 - Fixed PHP 8.2 compatibility.
 - Fixed possible infinite spinner upon failure in virtual checkout.
 
 ## 4.5.2 - May 11, 2023
+
 - Changed license from proprietary to Apache 2.0. Issues and contributions are welcome on GitHub.
 - Fixed hyphenated transaction IDs possibly being sent to payment gateway on refund.
 - Fixed possible Cloud deploy pipeline error from DI constants.
 
 ## 4.5.1 - March 10, 2023
+
 - Added compatibility for Magento 2.4.6.
 - Added UnionPay support.
 - Changed GraphQL data assignment to allow order placement in a separate mutation. (Thanks Alfredo)
@@ -97,17 +112,21 @@
 - Fixed possible duplicate checkout submission by keyboard input.
 - Fixed potential PHP 8.1 errors.
 - Fixed potential setup errors.
-- Fixed transaction being voided in error if 'quote failure' event runs despite the order saving successfully. (Thanks Michael)
+- Fixed transaction being voided in error if 'quote failure' event runs despite the order saving successfully. (Thanks
+  Michael)
 - Fixed zero-total checkout handling.
 
 ## 4.5.0 - April 8, 2022
-- **Removed compatibility for Magento 2.2 and below. For anyone updating from Magento 2.2 or below, update this extension to the previous version before updating Magento, then update Magento and the latest extension version.**
+
+- **Removed compatibility for Magento 2.2 and below. For anyone updating from Magento 2.2 or below, update this
+  extension to the previous version before updating Magento, then update Magento and the latest extension version.**
 - Changed card pruning delay from 120 to 180 days to reflect new Authorize.net policy.
 - Fixed ACH to send personal account types as PPD rather than WEB, to allow ACH refunds/reversals.
 - Fixed GraphQL ordering with Accept.js not recording card last 4.
 - Fixed handling of payment methods on free orders.
 
 ## 4.4.0 - February 16, 2022
+
 - Added compatibility for Magento 2.4.4 + PHP 8.1.
 - Added auto voiding of transactions at checkout when third party code throws an order processing exception.
 - Added configuration to change the delay for inactive card pruning.
@@ -121,7 +140,9 @@
 - Fixed possible PHP notice in address input processing.
 
 ## 4.3.8 - August 23, 2021
-- Fixed 'please enter CVV' validation error when capturing a card modified since order placement, with require CVV enabled.
+
+- Fixed 'please enter CVV' validation error when capturing a card modified since order placement, with require CVV
+  enabled.
 - Fixed card info not displaying in My Payment Data on `Magento/blank` and derived themes.
 - Fixed expired cards not showing any indicator.
 - Fixed GraphQL card create/save not syncing to the payment gateway.
@@ -130,13 +151,16 @@
 - Fixed transaction info not showing on admin order view on Magento 2.4.2+.
 
 ## 4.3.7 - May 17, 2021
+
 - Fixed Visa card declines on capture for some MSPs due to incorrect COF flags in version 4.3.6.
 
 ## 4.3.6 - April 21, 2021
+
 - Added Card-On-File API indicators to transactions for COF mandate.
 - Fixed validation error after invoice.
 
 ## 4.3.5 - March 31, 2021
+
 - Changed 'Payment Data'/'My Payment Data' to 'Payment Options'/'My Payment Options'.
 - Fixed checkout validation errors on Magento 2.3.3-2.4 resulting from core bug #28161.
 - Fixed errors on void/cancel if card no longer exists.
@@ -145,17 +169,21 @@
 - Updated Authorize.Net logo.
 
 ## 4.3.4 - December 24, 2020
+
 - Added selected-card data to GraphQL cart SelectedPaymentMethod.
 - Fixed card association and authorization issues when changing the email on admin checkout.
 - Fixed IE11 compatibility issue on checkout form.
 - Fixed Magento 2.2 compatibility issue since 4.3.2 (GraphQL reference).
-- Fixed payment failed emails by changing checkout exceptions from PaymentException to LocalizedException, to follow core behavior.
+- Fixed payment failed emails by changing checkout exceptions from PaymentException to LocalizedException, to follow
+  core behavior.
 - Fixed server-side card type validation when using Accept.js.
 
 ## 4.3.3 - October 27, 2020
+
 - Fixed "Credit card number does not match credit card type" on admin checkout.
 
 ## 4.3.2 - October 20, 2020
+
 - Fixed compatibility issue with Magento 2.4.1 and Klarna 7.1.0 that broke cart and checkout.
 - Fixed CSP policies for Accept.js on checkout.
 - Fixed CVV type validation for stored cards.
@@ -164,6 +192,7 @@
 - Fixed stored cards syncing to gateway after refund.
 
 ## 4.3.1 - August 5, 2020
+
 - Added CSP allowed hosts.
 - Added Magento 2.4 compatibility.
 - Fixed 'Invalid payment data' errors with new ACH info on multishipping checkout.
@@ -171,6 +200,7 @@
 - Fixed admin checkout with total discounted to $0 not allowing submit until refresh.
 
 ## 4.3.0 - May 20, 2020
+
 - Added Authorize.Net Account Updater support.
 - Fixed "Email already exists" error after placing an admin order for a new customer and getting a payment failure.
 - Fixed customer attributes appearing on admin edit on Magento 2.3.
@@ -178,6 +208,7 @@
 - Fixed unnecessary Authorizenet module dependency.
 
 ## 4.2.5 - January 30, 2020
+
 - Fixed GraphQL ACH checkout.
 - Fixed card association with register-after-checkout flow on recent Magento 2.2/2.3 versions.
 - Fixed Magento 2.3.4 GraphQL compatibility.
@@ -187,9 +218,11 @@
 - Fixed potential admin card edit issues with AJAX requests failing to update the page.
 
 ## 4.2.4 - October 31, 2019
+
 - Fixed a checkout error when Magento is configured with a database prefix.
 
 ## 4.2.3 - May 10, 2023
+
 - Added GraphQL checkout support.
 - Added store name and URL to transaction info.
 - Changed duplicate transaction window from 15 to 30 seconds.
@@ -201,6 +234,7 @@
 - Fixed reserved order ID not persisting upon error for customer checkouts.
 
 ## 4.2.2 - August 29, 2019
+
 - Fixed 'enter' submitting checkout despite disabled button.
 - Fixed a PHP error on order view with Klarna enabled on Magento 2.3.
 - Fixed checkout validation issues and related conflicts with some custom checkouts.
@@ -209,6 +243,7 @@
 - Fixed potential errors on legacy CIM card import when processing incomplete records.
 
 ## 4.2.1 - July 11, 2019
+
 - Fixed admin order form validation issues.
 - Fixed admin order submit buttons staying disabled when switching to the 'free' payment method.
 - Fixed deprecated md5_hash references.
@@ -220,6 +255,7 @@
 - Fixed unescaped output on configuration page.
 
 ## 4.2.0 - April 29, 2019
+
 - Added Accept.js test to admin configuration.
 - Added CC type detection to all payment forms.
 - Added GraphQL API support for customer card management.
@@ -236,20 +272,24 @@
 - Fixed server-side CC validator in the absence of Accept.js data.
 
 ## 4.1.4 - January 2, 2019
+
 - Fixed missing billing address on expired transaction recaptures.
 - Fixed template loading on composer installs.
 
 ## 4.1.3 - November 28, 2018
+
 - Updated composer dependency versions for Magento 2.3.
 - Fixed Magento 2.3 compatibility issue in upgrade script.
 
 ## 4.1.2 - October 5, 2018
+
 - Added CC number input formatting.
 - Fixed AFDS 'do not authorize, hold for review' response handling.
 - Fixed API delete not reaching payment gateway.
 - Fixed partial invoicing with reauthorization disabled.
 
 ## 4.1.1 - May 15, 2018
+
 - Updated Authorize.Net certificate authorities for changed sandbox SSL.
 - Fixed incorrect OrderCommand argument with 'save info' payment action.
 - Fixed non-digit characters throwing off last4 numbers on checkout submit with Accept.js.
@@ -258,6 +298,7 @@
 - Fixed required indicator when phone number is set to not required.
 
 ## 4.1.0 - March 27, 2018
+
 - Added support for $0 checkout.
 - Improved currency handling.
 - Improved handling of expiration date when loading cards from CIM.
@@ -278,6 +319,7 @@
 - Changed param type of setMethodInstance() in ParadoxLabs\TokenBase\Api\Data\CardInterface.
 
 ## 4.0.0 - September 25, 2017
+
 - Compatibility fixes for Magento 2.2.
 - Improved API support, particularly for card create/update.
 - Changed DI proxy argument handling for Magento 2.2 compatibility.
@@ -291,7 +333,8 @@
 - Fixed REST API permission handling.
 - Fixed restricted order statuses being selectable as payment method 'New Order Status'.
   **BACKWARDS-INCOMPATIBLE CHANGES:**
-- This release adds support for Magento 2.2. It is still compatible with Magento 2.0 and 2.1, but there are some notable code changes from earlier releases. If you have customizations around the extension, these may be significant:
+- This release adds support for Magento 2.2. It is still compatible with Magento 2.0 and 2.1, but there are some notable
+  code changes from earlier releases. If you have customizations around the extension, these may be significant:
 -
 - Added getAdditionalObject() to ParadoxLabs\TokenBase\Api\Data\CardInterface.
 - Added saveExtended() to ParadoxLabs\TokenBase\Api\CardRepositoryInterface.
@@ -302,8 +345,10 @@
 - Removed Unserialize constructor argument from ParadoxLabs\TokenBase\Model\Card\Context.
 
 ## 3.1.4 - August 7, 2017
+
 - Added browser CC autofill attributes to form fields.
-- Added protection to frontend My Payment Data page to help prevent abuse. (Will now require order history to use, and block after numerous failures.)
+- Added protection to frontend My Payment Data page to help prevent abuse. (Will now require order history to use, and
+  block after numerous failures.)
 - Added settings check for corrupted API credentials.
 - Added split database support.
 - Fixed Accept.js error with CCV disabled.
@@ -314,6 +359,7 @@
 - Fixed validation error on admin checkout with new card.
 
 ## 3.1.3 - May 24, 2017
+
 - Fixed a possible PHP error on card edit.
 - Fixed Accept.js not rebinding properly, causing issues on some custom checkouts.
 - Fixed admin fraud update button (workaround for a core bug).
@@ -330,13 +376,17 @@
 - Fixed potential checkout JS errors if Accept.js is not configured/enabled.
 
 ## 3.1.2 - March 3, 2017
+
 - Fixed errors caused by Accept.js nonce format change.
 
 ## 3.1.1 - March 2, 2017
+
 - Fixed Magento 2.0 compatibility issues.
 
 ## 3.1.0 - February 22, 2017
-- Improved code for Marketplace Level 2 validation. If you have any features built on our extension, be sure to check for compatibility issues.
+
+- Improved code for Marketplace Level 2 validation. If you have any features built on our extension, be sure to check
+  for compatibility issues.
 - Added Accept.js support.
 - Added 'save info' payment action to save payment info on checkout without authorizing or capturing funds.
 - Changed profile_id, payment_id columns to varchar(32) for better gateway support.
@@ -350,6 +400,7 @@
 - Fixed a card synchronization issue when a checkout error happens after updating billing address.
 
 ## 3.0.4 - October 4, 2016
+
 - Fixed 2.1 checkout not displaying payment errors.
 - Fixed CCV validation issue on multishipping checkout.
 - Fixed transaction info being included on admin-triggered order emails.
@@ -357,14 +408,17 @@
 - Added TokenBase card interface compatibility with Magento Vault (2.1+).
 
 ## 3.0.3 - July 22, 2016
+
 - Compatibility fixes for Magento 2.1.
-- Fixed a core bug with Magento failing to apply sort order to transactions, breaking ability to perform online partial captures.
+- Fixed a core bug with Magento failing to apply sort order to transactions, breaking ability to perform online partial
+  captures.
 - Fixed a potential API error.
 - Fixed a card type error on multishipping checkout.
 - Fixed ability to use stored ACH accounts on checkout.
 - Fixed refund transactions being run as unlinked.
 
 ## 3.0.2 - May 18, 2016
+
 - Fixed compilation errors in 2.0.6.
 - Fixed AmEx cards potentially being misidentified.
 - Fixed adding a new card on checkout that was previously stored failing to restore it as active.
@@ -374,6 +428,7 @@
 - Refactored code to ignore sales_order.ext_order_id field.
 
 ## 3.0.1 - January 26, 2016
+
 - Added Admin Panel customer card management.
 - Added basic Magento API support.
 - Synced various fixes from Magento 1 to bring in line with CIM 2.2.4.
@@ -381,4 +436,5 @@
 - Fixed composer registration files.
 
 ## 3.0.0 - November 16, 2015
+
 - Initial release for Magento 2.

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,10 +15,13 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Helper;
+
+use Magento\Framework\Phrase;
 
 /**
  * Authorize.Net CIM Helper -- response translation maps et al.
@@ -89,12 +92,12 @@ class Data extends \ParadoxLabs\TokenBase\Helper\Data
      * Translate AVS response codes shown on admin order pages.
      *
      * @param string $code
-     * @return \Magento\Framework\Phrase|string
+     * @return Phrase|string
      */
     public function translateAvs($code)
     {
-        if (isset($this->avsResponses[$code])) {
-            return __(sprintf('%s (%s)', $code, $this->avsResponses[$code]));
+        if (isset($this->avsResponses[ $code ])) {
+            return __(sprintf('%s (%s)', $code, $this->avsResponses[ $code ]));
         }
 
         return $code;
@@ -104,12 +107,12 @@ class Data extends \ParadoxLabs\TokenBase\Helper\Data
      * Translate CCV response codes shown on admin order pages.
      *
      * @param string $code
-     * @return \Magento\Framework\Phrase|string
+     * @return Phrase|string
      */
     public function translateCcv($code)
     {
-        if (isset($this->ccvResponses[$code])) {
-            return __(sprintf('%s (%s)', $code, $this->ccvResponses[$code]));
+        if (isset($this->ccvResponses[ $code ])) {
+            return __(sprintf('%s (%s)', $code, $this->ccvResponses[ $code ]));
         }
 
         return $code;
@@ -119,12 +122,12 @@ class Data extends \ParadoxLabs\TokenBase\Helper\Data
      * Translate CAVV response codes shown on admin order pages.
      *
      * @param string $code
-     * @return \Magento\Framework\Phrase|string
+     * @return Phrase|string
      */
     public function translateCavv($code)
     {
-        if (isset($this->cavvResponses[$code])) {
-            return __(sprintf('%s (%s)', $code, $this->cavvResponses[$code]));
+        if (isset($this->cavvResponses[ $code ])) {
+            return __(sprintf('%s (%s)', $code, $this->cavvResponses[ $code ]));
         }
 
         return $code;
@@ -138,8 +141,8 @@ class Data extends \ParadoxLabs\TokenBase\Helper\Data
      */
     public function mapCcTypeToMagento($type)
     {
-        if (!empty($type) && isset($this->cimCardTypeMap[$type])) {
-            return $this->cimCardTypeMap[$type];
+        if (!empty($type) && isset($this->cimCardTypeMap[ $type ])) {
+            return $this->cimCardTypeMap[ $type ];
         }
 
         return null;

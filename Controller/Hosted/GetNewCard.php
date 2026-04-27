@@ -15,54 +15,50 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Controller\Hosted;
 
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\CsrfAwareActionInterface;
+use Magento\Framework\App\Request\InvalidRequestException;
+use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Data\Form\FormKey\Validator;
+use ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\FrontendRequest;
+use Throwable;
 
 class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostActionInterface
 {
     /**
-     * @var \Magento\Framework\Data\Form\FormKey\Validator
-     */
-    protected $formKey;
-
-    /**
-     * @var \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\FrontendRequest
-     */
-    protected $hostedForm;
-
-    /**
      * GetNewCard constructor.
      *
-     * @param \Magento\Framework\App\Action\Context $context
-     * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey
-     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\FrontendRequest $hostedForm
+     * @param Context $context
+     * @param Validator $formKey
+     * @param FrontendRequest $hostedForm
      */
     public function __construct(
-        \Magento\Framework\App\Action\Context $context,
-        \Magento\Framework\Data\Form\FormKey\Validator $formKey,
-        \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\FrontendRequest $hostedForm
+        Context $context,
+        protected readonly Validator $formKey,
+        protected readonly FrontendRequest $hostedForm
     ) {
         parent::__construct($context);
-
-        $this->formKey = $formKey;
-        $this->hostedForm = $hostedForm;
     }
 
     /**
      * Fetch, save, and return newly added card from hosted form
      *
-     * @return \Magento\Framework\Controller\ResultInterface
+     * @return ResultInterface
      */
     public function execute()
     {
-        /** @var \Magento\Framework\Controller\Result\Json $result */
+        /** @var Json $result */
         $result = $this->resultFactory->create(ResultFactory::TYPE_JSON);
 
         try {
@@ -82,7 +78,7 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
             ];
 
             $result->setData($message);
-        } catch (\Exception $exception) {
+        } catch (Throwable $exception) {
             $result->setHttpResponseCode(400);
             $result->setData([
                 'message' => $exception->getMessage(),
@@ -95,23 +91,23 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
     /**
      * Create exception in case CSRF validation failed.
      *
-     * @param \Magento\Framework\App\RequestInterface $request
+     * @param RequestInterface $request
      *
-     * @return \Magento\Framework\App\Request\InvalidRequestException|null
+     * @return InvalidRequestException|null
      */
     public function createCsrfValidationException(
-        \Magento\Framework\App\RequestInterface $request
-    ): ?\Magento\Framework\App\Request\InvalidRequestException {
+        RequestInterface $request
+    ): ?InvalidRequestException {
         $message = __('Invalid Form Key. Please refresh the page.');
 
-        /** @var \Magento\Framework\Controller\Result\Json $result */
+        /** @var Json $result */
         $result = $this->resultFactory->create(ResultFactory::TYPE_JSON);
         $result->setHttpResponseCode(403);
         $result->setData([
             'message' => $message,
         ]);
 
-        return new \Magento\Framework\App\Request\InvalidRequestException(
+        return new InvalidRequestException(
             $result,
             [$message]
         );
@@ -120,11 +116,11 @@ class GetNewCard extends Action implements CsrfAwareActionInterface, HttpPostAct
     /**
      * Perform custom request validation.
      *
-     * @param \Magento\Framework\App\RequestInterface $request
+     * @param RequestInterface $request
      *
      * @return bool|null
      */
-    public function validateForCsrf(\Magento\Framework\App\RequestInterface $request): ?bool
+    public function validateForCsrf(RequestInterface $request): ?bool
     {
         return $this->formKey->validate($request);
     }

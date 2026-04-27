@@ -15,14 +15,16 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Block\Customer\Form;
 
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
+use ParadoxLabs\TokenBase\Block\Customer\Form;
 
-class Cc extends \ParadoxLabs\TokenBase\Block\Customer\Form
+class Cc extends Form
 {
     /**
      * @var string

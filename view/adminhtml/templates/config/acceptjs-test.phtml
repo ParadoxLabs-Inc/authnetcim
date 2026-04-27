@@ -1,4 +1,6 @@
-<?php /** @var \ParadoxLabs\Authnetcim\Block\Adminhtml\Config\AcceptjsTest $block */ ?>
+<?php /** @var \ParadoxLabs\Authnetcim\Block\Adminhtml\Config\AcceptjsTest $block */
+
+use Magento\Framework\View\Helper\SecureHtmlRenderer; ?>
 
 <div id="authnetcim-accept-test"><?= $block->escapeHtml(__('Testing Accept.js...')) ?></div>
 <?php $library = $block->getMethodInstance()->getConfigData('test') ? 'authorizeNetAcceptjsSandbox' : 'authorizeNetAcceptjs'; ?>
@@ -82,7 +84,7 @@ JS;
 CSS;
 ?>
 
-<?php if (isset($secureRenderer) && $secureRenderer instanceof \Magento\Framework\View\Helper\SecureHtmlRenderer): ?>
+<?php if (isset($secureRenderer) && $secureRenderer instanceof SecureHtmlRenderer): ?>
     <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $inlineScript, false) ?>
     <?= /* @noEscape */ $secureRenderer->renderTag('style', [], $inlineStyle, false) ?>
 <?php else: ?>

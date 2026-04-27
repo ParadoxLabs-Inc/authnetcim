@@ -1,9 +1,11 @@
 <?php
 /** @var \ParadoxLabs\Authnetcim\Block\Form\Cc $block */
 
-$code           = $block->escapeHtmlAttr($block->getMethodCode());
-$image          = $block->getBrandingImage();
-$storedCards    = $block->getStoredCards();
+use Magento\Framework\View\Helper\SecureHtmlRenderer;
+
+$code        = $block->escapeHtmlAttr($block->getMethodCode());
+$image       = $block->getBrandingImage();
+$storedCards = $block->getStoredCards();
 ?>
 <fieldset class="fieldset payment items ccard <?= /* @noEscape */ $code ?>" id="payment_form_<?= /* @noEscape */ $code ?>">
     <?= /* @noEscape */ $block->getBlockHtml('formkey') ?>
@@ -98,7 +100,7 @@ $storedCards    = $block->getStoredCards();
     }
 CSS;
 ?>
-<?php if (isset($secureRenderer) && $secureRenderer instanceof \Magento\Framework\View\Helper\SecureHtmlRenderer): ?>
+<?php if (isset($secureRenderer) && $secureRenderer instanceof SecureHtmlRenderer): ?>
     <?= /* @noEscape */ $secureRenderer->renderTag('style', [], $inlineStyle, false) ?>
     <?= /* @noEscape */ $secureRenderer->renderStyleAsTag('display:none', '#payment_form_' . $code) ?>
 <?php else: ?>

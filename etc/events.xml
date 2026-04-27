@@ -1,20 +1,20 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
     <event name="tokenbase_before_load_active_cards">
-        <observer name="authnetcim_loaded_cards" instance="ParadoxLabs\Authnetcim\Observer\ConvertLegacyStoredDataObserver" />
+        <observer name="authnetcim_loaded_cards" instance="ParadoxLabs\Authnetcim\Observer\ConvertLegacyStoredDataObserver"/>
     </event>
     <event name="tokenbase_before_load_payment_info">
-        <observer name="authnetcim_loaded_cards" instance="ParadoxLabs\Authnetcim\Observer\ConvertLegacyStoredDataObserver" />
+        <observer name="authnetcim_loaded_cards" instance="ParadoxLabs\Authnetcim\Observer\ConvertLegacyStoredDataObserver"/>
     </event>
     <event name="payment_method_assign_data_authnetcim">
-        <observer name="authnetcim_assign_data" instance="ParadoxLabs\Authnetcim\Observer\PaymentMethodAssignDataObserver" />
+        <observer name="authnetcim_assign_data" instance="ParadoxLabs\Authnetcim\Observer\PaymentMethodAssignDataObserver"/>
     </event>
     <event name="payment_method_assign_data_authnetcim_ach">
-        <observer name="authnetcim_assign_data" instance="ParadoxLabs\Authnetcim\Observer\PaymentMethodAssignDataObserver" />
-        <observer name="authnetcim_ach_assign_data" instance="ParadoxLabs\TokenBase\Observer\PaymentMethodAssignAchDataObserver" />
+        <observer name="authnetcim_assign_data" instance="ParadoxLabs\Authnetcim\Observer\PaymentMethodAssignDataObserver"/>
+        <observer name="authnetcim_ach_assign_data" instance="ParadoxLabs\TokenBase\Observer\PaymentMethodAssignAchDataObserver"/>
     </event>
     <event name="sales_model_service_quote_submit_failure">
-        <observer name="authnetcim_failure_clear_acceptjs" instance="ParadoxLabs\Authnetcim\Observer\CheckoutFailureClearAcceptjsObserver" />
-        <observer name="authnetcim_failure_clear_profileid" instance="ParadoxLabs\Authnetcim\Observer\CheckoutFailureClearProfileIdObserver" />
+        <observer name="authnetcim_failure_clear_acceptjs" instance="ParadoxLabs\Authnetcim\Observer\CheckoutFailureClearAcceptjsObserver"/>
+        <observer name="authnetcim_failure_clear_profileid" instance="ParadoxLabs\Authnetcim\Observer\CheckoutFailureClearProfileIdObserver"/>
     </event>
 </config>

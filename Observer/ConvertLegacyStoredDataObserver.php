@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,102 +15,67 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Observer;
 
+use ParadoxLabs\Authnetcim\Model\Gateway;
+use Magento\Sales\Model\Order;
+use ParadoxLabs\TokenBase\Model\Card;
+use Magento\Customer\Api\CustomerRepositoryInterface;
+use Magento\Customer\Api\Data\CustomerInterface;
+use Magento\Customer\Model\Customer;
+use Magento\Directory\Model\RegionFactory;
+use Magento\Framework\Api\AttributeInterface;
+use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\Event\Observer;
+use Magento\Framework\Event\ObserverInterface;
+use Magento\Sales\Api\OrderPaymentRepositoryInterface;
+use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
+use ParadoxLabs\Authnetcim\Helper\Data;
+use ParadoxLabs\TokenBase\Api\CardRepositoryInterface;
+use ParadoxLabs\TokenBase\Model\CardFactory;
+use ParadoxLabs\TokenBase\Model\Method\Factory;
+
 /**
  * Convert old CIM 1.x data to 2.x+ (on demand at runtime, for practicality).
  */
-class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\ObserverInterface
+class ConvertLegacyStoredDataObserver implements ObserverInterface
 {
     /**
-     * @var \ParadoxLabs\Authnetcim\Helper\Data
-     */
-    protected $helper;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Model\Method\Factory
-     */
-    protected $methodFactory;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Model\CardFactory
-     */
-    protected $cardFactory;
-
-    /**
-     * @var \Magento\Sales\Model\ResourceModel\Order\CollectionFactory
-     */
-    protected $orderCollectionFactory;
-
-    /**
-     * @var \Magento\Directory\Model\RegionFactory
-     */
-    protected $regionFactory;
-
-    /**
-     * @var \Magento\Customer\Api\CustomerRepositoryInterface
-     */
-    protected $customerRepository;
-
-    /**
-     * @var \Magento\Sales\Api\OrderPaymentRepositoryInterface
-     */
-    protected $paymentRepository;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Api\CardRepositoryInterface
-     */
-    protected $cardRepository;
-
-    /**
-     * @var \Magento\Framework\Api\SearchCriteriaBuilder
-     */
-    protected $searchCriteriaBuilder;
-
-    /**
-     * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
-     * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
+     * @param Data $helper
+     * @param Factory $methodFactory
      * @param \ParadoxLabs\TokenBase\Model\CardFactory $cardFactory
-     * @param \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory
-     * @param \Magento\Directory\Model\RegionFactory $regionFactory
-     * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
-     * @param \Magento\Sales\Api\OrderPaymentRepositoryInterface $paymentRepository
-     * @param \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository
-     * @param \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param CollectionFactory $orderCollectionFactory
+     * @param RegionFactory $regionFactory
+     * @param CustomerRepositoryInterface $customerRepository
+     * @param OrderPaymentRepositoryInterface $paymentRepository
+     * @param CardRepositoryInterface $cardRepository
+     * @param SearchCriteriaBuilder $searchCriteriaBuilder
      */
     public function __construct(
-        \ParadoxLabs\Authnetcim\Helper\Data $helper,
-        \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
-        \ParadoxLabs\TokenBase\Model\CardFactory $cardFactory,
-        \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory,
-        \Magento\Directory\Model\RegionFactory $regionFactory,
-        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
-        \Magento\Sales\Api\OrderPaymentRepositoryInterface $paymentRepository,
-        \ParadoxLabs\TokenBase\Api\CardRepositoryInterface $cardRepository,
-        \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
+        protected readonly Data $helper,
+        protected readonly Factory $methodFactory,
+        protected readonly CardFactory $cardFactory,
+        protected readonly CollectionFactory $orderCollectionFactory,
+        protected readonly RegionFactory $regionFactory,
+        protected readonly CustomerRepositoryInterface $customerRepository,
+        protected readonly OrderPaymentRepositoryInterface $paymentRepository,
+        protected readonly CardRepositoryInterface $cardRepository,
+        protected readonly SearchCriteriaBuilder $searchCriteriaBuilder
     ) {
-        $this->helper                   = $helper;
-        $this->methodFactory            = $methodFactory;
-        $this->cardFactory              = $cardFactory;
-        $this->orderCollectionFactory   = $orderCollectionFactory;
-        $this->regionFactory            = $regionFactory;
-        $this->customerRepository       = $customerRepository;
-        $this->paymentRepository        = $paymentRepository;
-        $this->cardRepository           = $cardRepository;
-        $this->searchCriteriaBuilder    = $searchCriteriaBuilder;
     }
 
     /**
      * Check if the customer has been converted before returning stored cards.
      * If they have not, run the conversion process inline.
      *
-     * @param \Magento\Framework\Event\Observer $observer
+     * @param Observer $observer
      * @return void
      */
-    public function execute(\Magento\Framework\Event\Observer $observer)
+    public function execute(Observer $observer)
     {
         /** @var string $method */
         $method = $observer->getEvent()->getData('method');
@@ -125,14 +90,14 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
         /**
          * Short circuit if no customer.
          */
-        /** @var \Magento\Customer\Api\Data\CustomerInterface $customer */
+        /** @var CustomerInterface $customer */
         $customer = $observer->getEvent()->getData('customer');
 
-        if ($customer instanceof \Magento\Customer\Model\Customer) {
+        if ($customer instanceof Customer) {
             $customer = $customer->getDataModel();
         }
 
-        if (!($customer instanceof \Magento\Customer\Api\Data\CustomerInterface) || $customer->getId() < 1) {
+        if (!($customer instanceof CustomerInterface) || $customer->getId() < 1) {
             return;
         }
 
@@ -140,12 +105,12 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
          * Short circuit if no profile ID, or already converted.
          */
         $profileId = $customer->getCustomAttribute('authnetcim_profile_id');
-        if ($profileId instanceof \Magento\Framework\Api\AttributeInterface) {
+        if ($profileId instanceof AttributeInterface) {
             $profileId = $profileId->getValue();
         }
 
         $profileVersion = $customer->getCustomAttribute('authnetcim_profile_version');
-        if ($profileVersion instanceof \Magento\Framework\Api\AttributeInterface) {
+        if ($profileVersion instanceof AttributeInterface) {
             $profileVersion = $profileVersion->getValue();
         }
 
@@ -161,12 +126,10 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
          * - Create card records for each
          * - Update any orders or profiles attached to those cards
          */
-
         /**
          * Fetch profile data from Authorize.Net
          */
-
-        /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
+        /** @var Gateway $gateway */
         $gateway = $this->methodFactory->getMethodInstance('authnetcim')->gateway();
         $gateway->setParameter('customerProfileId', $profileId);
         $gateway->setParameter('unmaskExpirationDate', 'true');
@@ -174,7 +137,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
         $profile = $gateway->getCustomerProfile();
 
         $affectedCards = 0;
-        $affectedRps = 0;
+        $affectedRps   = 0;
 
         $cards = $this->getCardsFromProfile($profile);
 
@@ -224,10 +187,10 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
         $orders = $this->orderCollectionFactory->create();
         $orders->addFieldToFilter('ext_customer_id', ['in' => array_keys($cards)]);
 
-        /** @var \Magento\Sales\Model\Order $order */
+        /** @var Order $order */
         foreach ($orders as $order) {
             $payment = $order->getPayment();
-            $payment->setData('tokenbase_id', $cards[$order->getExtCustomerId()]['tokenbase_id']);
+            $payment->setData('tokenbase_id', $cards[ $order->getExtCustomerId() ]['tokenbase_id']);
 
             $this->paymentRepository->save($payment);
 
@@ -241,25 +204,25 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
      * Create a tokenbase card for each legacy record.
      *
      * @param array $cards
-     * @param \Magento\Customer\Api\Data\CustomerInterface $customer
+     * @param CustomerInterface $customer
      * @param string $profileId
      * @param int $affectedCards
      * @return void
      */
     protected function convertCards(
         &$cards,
-        \Magento\Customer\Api\Data\CustomerInterface $customer,
+        CustomerInterface $customer,
         $profileId,
         &$affectedCards
     ) {
         foreach ($cards as $k => $card) {
             if (!isset($card['payment']['creditCard'], $card['billTo']['country'])
                 || $this->cardAlreadyExists($customer->getId(), $profileId, $card['customerPaymentProfileId'])) {
-                unset($cards[$k]);
+                unset($cards[ $k ]);
                 continue;
             }
 
-            /** @var \ParadoxLabs\TokenBase\Model\Card $storedCard */
+            /** @var Card $storedCard */
             $storedCard = $this->cardFactory->create();
             $storedCard->setMethod('authnetcim')
                        ->setCustomer($customer)
@@ -280,30 +243,30 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
             }
 
             $addressData = [
-                'parent_id'   => $customer->getId(),
+                'parent_id' => $customer->getId(),
                 'customer_id' => $customer->getId(),
-                'firstname'   => isset($card['billTo']['firstName']) ? $card['billTo']['firstName'] : '',
-                'lastname'    => isset($card['billTo']['lastName']) ? $card['billTo']['lastName'] : '',
-                'street'      => isset($card['billTo']['address']) ? $card['billTo']['address'] : '',
-                'city'        => isset($card['billTo']['city']) ? $card['billTo']['city'] : '',
-                'country_id'  => isset($card['billTo']['country']) ? $card['billTo']['country'] : '',
-                'region'      => isset($card['billTo']['state']) ? $card['billTo']['state'] : '',
-                'region_id'   => isset($region) ? $region->getId() : '',
-                'postcode'    => isset($card['billTo']['zip']) ? $card['billTo']['zip'] : '',
-                'telephone'   => isset($card['billTo']['phoneNumber']) ? $card['billTo']['phoneNumber'] : '',
-                'fax'         => isset($card['billTo']['faxNumber']) ? $card['billTo']['faxNumber'] : '',
+                'firstname' => $card['billTo']['firstName'] ?? '',
+                'lastname' => $card['billTo']['lastName'] ?? '',
+                'street' => $card['billTo']['address'] ?? '',
+                'city' => $card['billTo']['city'] ?? '',
+                'country_id' => $card['billTo']['country'] ?? '',
+                'region' => $card['billTo']['state'] ?? '',
+                'region_id' => isset($region) ? $region->getId() : '',
+                'postcode' => $card['billTo']['zip'] ?? '',
+                'telephone' => $card['billTo']['phoneNumber'] ?? '',
+                'fax' => $card['billTo']['faxNumber'] ?? '',
             ];
 
             $storedCard->setData('address', json_encode($addressData));
 
             if (isset($card['payment']['creditCard'])) {
-                list($yr, $mo) = explode('-', (string)$card['payment']['creditCard']['expirationDate'], 2);
+                [$yr, $mo] = explode('-', (string)$card['payment']['creditCard']['expirationDate'], 2);
                 $day = date('t', strtotime($yr . '-' . $mo));
 
                 $paymentData = [
-                    'cc_type'      => $this->helper->mapCcTypeToMagento($card['payment']['creditCard']['cardType']),
-                    'cc_last4'     => substr((string)$card['payment']['creditCard']['cardNumber'], -4),
-                    'cc_exp_year'  => $yr,
+                    'cc_type' => $this->helper->mapCcTypeToMagento($card['payment']['creditCard']['cardType']),
+                    'cc_last4' => substr((string)$card['payment']['creditCard']['cardNumber'], -4),
+                    'cc_exp_year' => $yr,
                     'cc_exp_month' => $mo,
                 ];
 
@@ -313,7 +276,7 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
 
             $storedCard = $this->cardRepository->save($storedCard);
 
-            $cards[$k]['tokenbase_id'] = $storedCard->getId();
+            $cards[ $k ]['tokenbase_id'] = $storedCard->getId();
 
             $affectedCards++;
         }
@@ -333,10 +296,10 @@ class ConvertLegacyStoredDataObserver implements \Magento\Framework\Event\Observ
 
             // Could have one value, or several. Handle both cases.
             if (isset($profiles['billTo'])) {
-                $cards[$profiles['customerPaymentProfileId']] = $profiles;
+                $cards[ $profiles['customerPaymentProfileId'] ] = $profiles;
             } else {
                 foreach ($profiles as $card) {
-                    $cards[$card['customerPaymentProfileId']] = $card;
+                    $cards[ $card['customerPaymentProfileId'] ] = $card;
                 }
             }
         }

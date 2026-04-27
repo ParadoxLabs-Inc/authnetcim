@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,10 +15,15 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Block\Info;
+
+use ParadoxLabs\TokenBase\Helper\Data;
+use Magento\Framework\DataObject;
+use Magento\Sales\Model\Order\Payment;
 
 /**
  * ACH payment info block for Authorize.Net CIM.
@@ -28,27 +33,27 @@ class Ach extends \ParadoxLabs\TokenBase\Block\Info\Ach
     /**
      * @var \ParadoxLabs\Authnetcim\Helper\Data
      */
-    protected $helper;
+    protected readonly Data $helper;
 
     /**
      * Prepare payment info
      *
-     * @param \Magento\Framework\DataObject|array $transport
-     * @return \Magento\Framework\DataObject
+     * @param DataObject|array $transport
+     * @return DataObject
      */
     protected function _prepareSpecificInformation($transport = null)
     {
-        $transport  = parent::_prepareSpecificInformation($transport);
-        $data       = [];
+        $transport = parent::_prepareSpecificInformation($transport);
+        $data      = [];
 
         if ($this->getIsSecureMode() === false && $this->isEcheck() === true) {
-            /** @var \Magento\Sales\Model\Order\Payment $info */
+            /** @var Payment $info */
             $info = $this->getInfo();
 
             $type = $info->getAdditionalInformation('echeck_account_type');
 
             if (!empty($type)) {
-                $data[(string)__('Type')] = $this->helper->getAchAccountTypes($type);
+                $data[ (string)__('Type') ] = $this->helper->getAchAccountTypes($type);
             }
         }
 

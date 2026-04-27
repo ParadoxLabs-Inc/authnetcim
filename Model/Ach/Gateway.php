@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,13 +15,16 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model\Ach;
 
+use ParadoxLabs\TokenBase\Model\Gateway\Response;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Payment\Gateway\Command\CommandException;
+use Magento\Payment\Model\InfoInterface;
 
 /**
  * Authorize.Net CIM API Gateway - custom built for perfection.
@@ -37,7 +40,7 @@ class Gateway extends \ParadoxLabs\Authnetcim\Model\Gateway
      * Turn transaction results and directResponse into a usable object.
      *
      * @param string $transactionResult
-     * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
+     * @return Response
      * @throws LocalizedException
      * @throws LocalizedException
      */
@@ -59,14 +62,15 @@ class Gateway extends \ParadoxLabs\Authnetcim\Model\Gateway
      */
     public function findDuplicateCard()
     {
-        $profile            = $this->getCustomerProfile();
-        $accountLastFour    = substr((string)$this->getParameter('accountNumber'), -4);
-        $routingLastFour    = substr((string)$this->getParameter('routingNumber'), -4);
+        $profile         = $this->getCustomerProfile();
+        $accountLastFour = substr((string)$this->getParameter('accountNumber'), -4);
+        $routingLastFour = substr((string)$this->getParameter('routingNumber'), -4);
 
         if (isset($profile['profile']['paymentProfiles']) && !empty($profile['profile']['paymentProfiles'])) {
             // If there's only one, just stop. It has to be the match.
             if (isset($profile['profile']['paymentProfiles']['billTo'])) {
                 $card = $profile['profile']['paymentProfiles'];
+
                 return $card['customerPaymentProfileId'];
             } else {
                 // Otherwise, compare end of routing number and account number for each until one matches.
@@ -86,13 +90,13 @@ class Gateway extends \ParadoxLabs\Authnetcim\Model\Gateway
     /**
      * Run a refund transaction for $amount with the given payment info
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @param float $amount
      * @param string $transactionId
-     * @return \ParadoxLabs\TokenBase\Model\Gateway\Response
+     * @return Response
      * @throws CommandException
      */
-    public function refund(\Magento\Payment\Model\InfoInterface $payment, $amount, $transactionId = null)
+    public function refund(InfoInterface $payment, $amount, $transactionId = null)
     {
         // Send last4 values for verification of ACH refunds
         if ($payment->getMethod() === ConfigProvider::CODE) {
@@ -135,12 +139,12 @@ class Gateway extends \ParadoxLabs\Authnetcim\Model\Gateway
         if ($this->hasParameter('accountNumber')) {
             $params['payment'] = [
                 'bankAccount' => [
-                    'accountType'   => $this->getParameter('accountType'),
+                    'accountType' => $this->getParameter('accountType'),
                     'routingNumber' => $this->getParameter('routingNumber'),
                     'accountNumber' => $this->getParameter('accountNumber'),
                     'nameOnAccount' => $this->getParameter('nameOnAccount'),
-                    'echeckType'    => $this->getParameter('echeckType'),
-                    'bankName'      => $this->getParameter('bankName'),
+                    'echeckType' => $this->getParameter('echeckType'),
+                    'bankName' => $this->getParameter('bankName'),
                 ],
             ];
         }

@@ -15,12 +15,22 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model\Service;
 
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\HTTP\ZendClientFactory;
+use Magento\Framework\Module\Dir;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
+use ParadoxLabs\Authnetcim\Model\Service\RestClient\Curl;
+use ParadoxLabs\Authnetcim\Model\Service\RestClient\CurlFactory;
+use ParadoxLabs\TokenBase\Helper\Operation;
+use const CURLOPT_CAINFO;
+use const CURLOPT_SSL_VERIFYHOST;
+use const CURLOPT_SSL_VERIFYPEER;
 
 class RestClient
 {
@@ -35,24 +45,9 @@ class RestClient
     protected $sandbox;
 
     /**
-     * @var \ParadoxLabs\TokenBase\Helper\Operation
-     */
-    protected $helper;
-
-    /**
-     * @var \ParadoxLabs\Authnetcim\Model\ConfigProvider
-     */
-    protected $config;
-
-    /**
      * @var \Magento\Framework\HTTP\ZendClientFactory
      */
     protected $httpClientFactory;
-
-    /**
-     * @var \Magento\Framework\Module\Dir
-     */
-    protected $moduleDir;
 
     /**
      * @var \ParadoxLabs\Authnetcim\Model\Service\RestClient\CurlFactory
@@ -62,29 +57,21 @@ class RestClient
     /**
      * RestClient constructor.
      *
-     * @param \ParadoxLabs\TokenBase\Helper\Operation $helper
-     * @param \ParadoxLabs\Authnetcim\Model\ConfigProvider $config
+     * @param Operation $helper
+     * @param ConfigProvider $config
      * @param \Magento\Framework\HTTP\ZendClientFactory $httpClientFactory
-     * @param \Magento\Framework\Module\Dir $moduleDir
-     * @param \ParadoxLabs\Authnetcim\Model\Service\RestClient\CurlFactory|null $curlClientFactory
+     * @param Dir $moduleDir
+     * @param \ParadoxLabs\Authnetcim\Model\Service\RestClient\CurlFactory $curlClientFactory
      */
     public function __construct(
-        \ParadoxLabs\TokenBase\Helper\Operation $helper,
-        ConfigProvider $config,
-        \Magento\Framework\HTTP\ZendClientFactory $httpClientFactory,
-        \Magento\Framework\Module\Dir $moduleDir,
-        ?\ParadoxLabs\Authnetcim\Model\Service\RestClient\CurlFactory $curlClientFactory = null
+        protected readonly Operation $helper,
+        protected readonly ConfigProvider $config,
+        ZendClientFactory $httpClientFactory,
+        protected readonly Dir $moduleDir,
+        CurlFactory $curlClientFactory,
     ) {
-        $this->helper = $helper;
-        $this->config = $config;
         $this->httpClientFactory = $httpClientFactory;
-        $this->moduleDir = $moduleDir;
-
-        // BC preservation -- argument added in 4.5.1
-        $om = \Magento\Framework\App\ObjectManager::getInstance();
-        $this->curlClientFactory = $curlClientFactory ?? $om->get(
-            \ParadoxLabs\Authnetcim\Model\Service\RestClient\CurlFactory::class
-        );
+        $this->curlClientFactory = $curlClientFactory;
     }
 
     /**
@@ -98,10 +85,10 @@ class RestClient
      */
     public function setAuth(string $apiLoginId, string $transactionKey, string $signatureKey, bool $sandbox): void
     {
-        $this->apiLoginId = $apiLoginId;
+        $this->apiLoginId     = $apiLoginId;
         $this->transactionKey = $transactionKey;
-        $this->signatureKey = $signatureKey;
-        $this->sandbox = $sandbox;
+        $this->signatureKey   = $signatureKey;
+        $this->sandbox        = $sandbox;
     }
 
     /**
@@ -119,7 +106,7 @@ class RestClient
      *
      * @param string $path
      * @return void
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     public function delete(string $path): void
     {
@@ -141,7 +128,7 @@ class RestClient
      * @param string $path
      * @param array $params
      * @return array
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     public function post(string $path, array $params): array
     {
@@ -161,7 +148,7 @@ class RestClient
      * @param string $path
      * @param array $params
      * @return array
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     public function put(string $path, array $params): array
     {
@@ -181,7 +168,7 @@ class RestClient
      * @param string $path
      * @param array $params
      * @return array
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     public function get(string $path, array $params = []): array
     {
@@ -200,9 +187,9 @@ class RestClient
     /**
      * Validate response, throw exception on invalid or error result
      *
-     * @param \ParadoxLabs\Authnetcim\Model\Service\RestClient\Curl $response
+     * @param Curl $response
      * @return void
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     protected function checkErrors($response): void
     {
@@ -231,7 +218,7 @@ class RestClient
             $this->helper->log(ConfigProvider::CODE, $message);
             $this->helper->log(ConfigProvider::CODE, $responseJson, true);
 
-            throw new \Magento\Framework\Exception\LocalizedException(
+            throw new LocalizedException(
                 __($message),
                 null,
                 $responseCode
@@ -242,19 +229,19 @@ class RestClient
     /**
      * Get an HTTP client for REST
      *
-     * @return \ParadoxLabs\Authnetcim\Model\Service\RestClient\Curl
+     * @return Curl
      */
-    protected function getHttpClient(): \ParadoxLabs\Authnetcim\Model\Service\RestClient\Curl
+    protected function getHttpClient(): Curl
     {
-        /** @var \ParadoxLabs\Authnetcim\Model\Service\RestClient\Curl $communicator */
+        /** @var Curl $communicator */
         $communicator = $this->curlClientFactory->create();
 
         $communicator->setTimeout(15);
 
         $certificatePath = $this->moduleDir->getDir('ParadoxLabs_Authnetcim') . '/authorizenet-cert.pem';
-        $communicator->setOption(\CURLOPT_SSL_VERIFYPEER, true);
-        $communicator->setOption(\CURLOPT_SSL_VERIFYHOST, 2);
-        $communicator->setOption(\CURLOPT_CAINFO, $certificatePath);
+        $communicator->setOption(CURLOPT_SSL_VERIFYPEER, true);
+        $communicator->setOption(CURLOPT_SSL_VERIFYHOST, 2);
+        $communicator->setOption(CURLOPT_CAINFO, $certificatePath);
 
         $communicator->addHeader('Content-Type', 'application/json');
         $communicator->addHeader('Authorization', $this->getAuthHeader());
@@ -269,6 +256,6 @@ class RestClient
      */
     public function getRestEndpoint(): string
     {
-        return self::ENDPOINTS[$this->sandbox ? 'sandbox' : 'live'];
+        return self::ENDPOINTS[ $this->sandbox ? 'sandbox' : 'live' ];
     }
 }

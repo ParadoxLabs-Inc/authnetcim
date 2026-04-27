@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,10 +15,18 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model\Ach;
+
+use Magento\Sales\Model\Order\Payment\Info;
+use Magento\Sales\Model\Order\Payment;
+use Magento\Payment\Model\InfoInterface;
+use ParadoxLabs\Authnetcim\Block\Info\Ach;
+use ParadoxLabs\TokenBase\Api\Data\CardInterface;
+use ParadoxLabs\TokenBase\Model\Gateway\Response;
 
 /**
  * Authorize.Net CIM ACH payment method
@@ -38,7 +46,7 @@ class Method extends \ParadoxLabs\Authnetcim\Model\Method
     /**
      * @var string
      */
-    protected $_infoBlockType = \ParadoxLabs\Authnetcim\Block\Info\Ach::class;
+    protected $_infoBlockType = Ach::class;
 
     /**
      * @var array
@@ -54,14 +62,14 @@ class Method extends \ParadoxLabs\Authnetcim\Model\Method
     /**
      * Set the current payment card
      *
-     * @param \ParadoxLabs\TokenBase\Api\Data\CardInterface $card
+     * @param CardInterface $card
      * @return $this
      */
-    public function setCard(\ParadoxLabs\TokenBase\Api\Data\CardInterface $card)
+    public function setCard(CardInterface $card)
     {
         parent::setCard($card);
 
-        /** @var \Magento\Sales\Model\Order\Payment\Info $info */
+        /** @var Info $info */
         $info = $this->getInfoInstance();
 
         foreach ($this->achFields as $field) {
@@ -82,12 +90,12 @@ class Method extends \ParadoxLabs\Authnetcim\Model\Method
     /**
      * Return boolean whether given payment object includes new card info.
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @return bool
      */
-    protected function paymentContainsCard(\Magento\Payment\Model\InfoInterface $payment)
+    protected function paymentContainsCard(InfoInterface $payment)
     {
-        /** @var \Magento\Sales\Model\Order\Payment $payment */
+        /** @var Payment $payment */
         if (strlen((string)$payment->getData('echeck_routing_no')) == 9
             && strlen((string)$payment->getData('echeck_account_no')) >= 5) {
             return true;
@@ -99,13 +107,13 @@ class Method extends \ParadoxLabs\Authnetcim\Model\Method
     /**
      * Save type for legacy cards.
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
-     * @param \ParadoxLabs\TokenBase\Model\Gateway\Response $response
-     * @return \Magento\Payment\Model\InfoInterface
+     * @param InfoInterface $payment
+     * @param Response $response
+     * @return InfoInterface
      */
     protected function fixLegacyCcType(
-        \Magento\Payment\Model\InfoInterface $payment,
-        \ParadoxLabs\TokenBase\Model\Gateway\Response $response
+        InfoInterface $payment,
+        Response $response
     ) {
         /**
          * Legacy CIM method, not needed for ACH.

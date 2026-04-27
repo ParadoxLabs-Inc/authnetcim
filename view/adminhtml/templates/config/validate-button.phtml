@@ -1,8 +1,10 @@
-<?php /** @var $block \ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ValidateButton */ ?>
-<?php $code = $block->escapeJsQuote($block->getGroupCode()) ?>
+<?php /** @var $block \ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ValidateButton */
+
+use Magento\Framework\View\Helper\SecureHtmlRenderer; ?>
+<?php $code = $escaper->escapeJsQuote($block->getGroupCode()) ?>
 
 <?php $website = (int)$block->getRequest()->getParam('website') ?: 'null' ?>
-<?php $store   = (int)$block->getRequest()->getParam('store') ?: 'null' ?>
+<?php $store = (int)$block->getRequest()->getParam('store') ?: 'null' ?>
 <?php $inlineScript = <<<JS
     require([
         'jquery',
@@ -55,7 +57,7 @@
     });
 JS;
 ?>
-<?php if (isset($secureRenderer) && $secureRenderer instanceof \Magento\Framework\View\Helper\SecureHtmlRenderer): ?>
+<?php if (isset($secureRenderer) && $secureRenderer instanceof SecureHtmlRenderer): ?>
     <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $inlineScript, false) ?>
 <?php else: ?>
     <script><?= /* @noEscape */ $inlineScript ?></script>

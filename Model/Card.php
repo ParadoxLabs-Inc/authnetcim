@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,13 +15,25 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model;
 
+use Magento\Framework\Api\AttributeInterface;
+use Magento\Framework\Api\AttributeValueFactory;
+use Magento\Framework\Api\ExtensionAttributesFactory;
+use Magento\Framework\Data\Collection\AbstractDb;
+use Magento\Framework\Model\ResourceModel\AbstractResource;
+use Magento\Framework\Registry;
 use Magento\Payment\Gateway\Command\CommandException;
+use Magento\Payment\Model\InfoInterface;
+use Magento\Sales\Api\OrderPaymentRepositoryInterface;
 use Magento\Sales\Model\Order\Payment;
+use ParadoxLabs\TokenBase\Api\GatewayInterface;
+use ParadoxLabs\TokenBase\Model\Card\Context;
+use Throwable;
 
 /**
  * Authorize.Net CIM card model
@@ -29,32 +41,27 @@ use Magento\Sales\Model\Order\Payment;
 class Card extends \ParadoxLabs\TokenBase\Model\Card
 {
     /**
-     * @var \Magento\Sales\Api\OrderPaymentRepositoryInterface
-     */
-    protected $paymentRepository;
-
-    /**
      * Card constructor.
      *
      * @param \Magento\Framework\Model\Context $context
-     * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory
-     * @param \Magento\Framework\Api\AttributeValueFactory $customAttributeFactory
-     * @param \ParadoxLabs\TokenBase\Model\Card\Context $cardContext
-     * @param \Magento\Sales\Api\OrderPaymentRepositoryInterface $paymentRepository
-     * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
-     * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
+     * @param Registry $registry
+     * @param ExtensionAttributesFactory $extensionFactory
+     * @param AttributeValueFactory $customAttributeFactory
+     * @param Context $cardContext
+     * @param OrderPaymentRepositoryInterface $paymentRepository
+     * @param AbstractResource|null $resource
+     * @param AbstractDb|null $resourceCollection
      * @param array $data
      */
     public function __construct(
         \Magento\Framework\Model\Context $context,
-        \Magento\Framework\Registry $registry,
-        \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory,
-        \Magento\Framework\Api\AttributeValueFactory $customAttributeFactory,
-        \ParadoxLabs\TokenBase\Model\Card\Context $cardContext,
-        \Magento\Sales\Api\OrderPaymentRepositoryInterface $paymentRepository,
-        ?\Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
-        ?\Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
+        Registry $registry,
+        ExtensionAttributesFactory $extensionFactory,
+        AttributeValueFactory $customAttributeFactory,
+        Context $cardContext,
+        protected readonly OrderPaymentRepositoryInterface $paymentRepository,
+        ?AbstractResource $resource = null,
+        ?AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct(
@@ -67,8 +74,6 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $resourceCollection,
             $data
         );
-
-        $this->paymentRepository = $paymentRepository;
     }
 
     /**
@@ -81,17 +86,16 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
     /**
      * Try to create a card record from legacy data.
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @return $this
      * @throws CommandException
      */
-    public function importLegacyData(\Magento\Payment\Model\InfoInterface $payment)
+    public function importLegacyData(InfoInterface $payment)
     {
-        /** @var \Magento\Sales\Model\Order\Payment $payment */
-
+        /** @var Payment $payment */
         // Customer ID -- pull from customer or payment if possible, otherwise go to Authorize.Net.
         $profileId = $this->getCustomer()->getCustomAttribute('authnetcim_profile_id');
-        if ($profileId instanceof \Magento\Framework\Api\AttributeInterface) {
+        if ($profileId instanceof AttributeInterface) {
             $profileId = $profileId->getValue();
         }
 
@@ -139,8 +143,8 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $day = date('t', strtotime($payment->getData('cc_exp_year') . '-' . $payment->getData('cc_exp_month')));
 
             $this->setAdditional('cc_exp_year', $payment->getData('cc_exp_year'))
-                ->setAdditional('cc_exp_month', $payment->getData('cc_exp_month'))
-                ->setData('expires', sprintf('%s-%s-%s 23:59:59', $yr, $mo, $day));
+                 ->setAdditional('cc_exp_month', $payment->getData('cc_exp_month'))
+                 ->setData('expires', sprintf('%s-%s-%s 23:59:59', $yr, $mo, $day));
         }
 
         return $this;
@@ -166,7 +170,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
 
         // If this is a new card, set its active state to the given value (if any)
         $payment = $this->getInfoInstance();
-        if ($payment instanceof \Magento\Payment\Model\InfoInterface
+        if ($payment instanceof InfoInterface
             && $payment->getAdditionalInformation('save') !== null
             && $this->getOrigData('last_use') === null) {
             $this->setActive((bool)$payment->getAdditionalInformation('save') ? 1 : 0);
@@ -213,7 +217,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
          * Delete from Authorize.Net if we have a valid record.
          */
         if ($this->getProfileId() != '' && $this->getPaymentId() != '') {
-            /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
+            /** @var Gateway $gateway */
             $gateway = $this->getMethodInstance()->gateway();
 
             $gateway->setCard($this);
@@ -224,7 +228,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             // Suppress any gateway errors that might occur; we don't care here.
             try {
                 $gateway->deleteCustomerPaymentProfile();
-            } catch (\Exception $e) {
+            } catch (Throwable $e) {
                 $this->helper->log(
                     $this->getMethod(),
                     sprintf(
@@ -251,7 +255,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
     protected function createCustomerProfile()
     {
         if ($this->getCustomerId() > 0 || $this->getCustomerEmail() != '') {
-            /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
+            /** @var Gateway $gateway */
             $gateway = $this->getMethodInstance()->gateway();
 
             $gateway->setParameter('merchantCustomerId', $this->getCustomerId());
@@ -266,7 +270,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             if (!empty($profileId)) {
                 $this->setProfileId($profileId);
                 $this->getCustomer()->setCustomAttribute('authnetcim_profile_id', $profileId)
-                                    ->setCustomAttribute('authnetcim_profile_version', 200);
+                     ->setCustomAttribute('authnetcim_profile_version', 200);
 
                 if ($this->getCustomer()->getId() > 0) {
                     $this->customerRepository->save($this->getCustomer());
@@ -297,7 +301,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
      * Get existing customer profile ID if possible, or else create one
      *
      * @return $this
-     * @throws \Magento\Payment\Gateway\Command\CommandException
+     * @throws CommandException
      */
     protected function getOrCreateCustomerProfileId(): self
     {
@@ -309,7 +313,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
         // Are we using one profile per customer? Does the customer have a profile ID? Try to import it.
         if (empty($profileId) && $this->useMultipleCustomerProfiles() === false) {
             $profileIdAttr = $this->getCustomer()->getCustomAttribute('authnetcim_profile_id');
-            if ($profileIdAttr instanceof \Magento\Framework\Api\AttributeInterface) {
+            if ($profileIdAttr instanceof AttributeInterface) {
                 $profileId = $profileIdAttr->getValue();
             }
         }
@@ -335,7 +339,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
      * the limit by creating a separate profile for each card. There's no limit on the number of customer profiles.
      *
      * @return bool
-     * @throws \Magento\Payment\Gateway\Command\CommandException
+     * @throws CommandException
      */
     protected function useMultipleCustomerProfiles(): bool
     {
@@ -363,7 +367,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
 
         $this->getMethodInstance()->setCard($this);
 
-        /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
+        /** @var Gateway $gateway */
         $gateway = $this->getMethodInstance()->gateway();
 
         /**
@@ -424,13 +428,14 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $this->setPaymentId('');
 
             $profileId = $this->getCustomer()->getCustomAttribute('authnetcim_profile_id');
-            if ($profileId instanceof \Magento\Framework\Api\AttributeInterface) {
+            if ($profileId instanceof AttributeInterface) {
                 $profileId = $profileId->getValue();
             }
 
             /**
              * We know the authnetcim_profile_id is invalid, so get rid of it. Except we're in the middle
              * of a transaction... so any change will just be rolled back. Save it for a little later.
+             *
              * @see \ParadoxLabs\Authnetcim\Observer\CheckoutFailureClearProfileIdObserver::execute()
              */
             if (!empty($profileId)) {
@@ -442,6 +447,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
 
             /**
              * If this is an existing stored card that kicked out a no-such-entity error, get rid of it.
+             *
              * @see \ParadoxLabs\TokenBase\Observer\CardLoadProcessDeleteQueueObserver::execute()
              */
             if ($this->getId()) {
@@ -451,9 +457,11 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
 
             if ($this->getMethodInstance()->isAcceptJsEnabled()) {
                 // This is an unrecoverable error with Accept.js (we just consumed the nonce), so kick out a nice error.
-                throw new \Magento\Payment\Gateway\Command\CommandException(
-                    __('Sorry, we were unable to find your payment record. '
-                        . 'Please re-enter your payment info and try again.')
+                throw new CommandException(
+                    __(
+                        'Sorry, we were unable to find your payment record. '
+                        . 'Please re-enter your payment info and try again.'
+                    )
                 );
             }
 
@@ -468,7 +476,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $this->helper->log($this->getMethod(), sprintf('API error: %s: %s', $errorCode, $errorText));
             $gateway->logLogs();
 
-            throw new \Magento\Payment\Gateway\Command\CommandException(
+            throw new CommandException(
                 __(sprintf('Authorize.Net CIM Gateway: %s', $errorText))
             );
         }
@@ -482,7 +490,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
         } else {
             $gateway->logLogs();
 
-            throw new \Magento\Payment\Gateway\Command\CommandException(
+            throw new CommandException(
                 __('Authorize.Net CIM Gateway: Unable to create payment record.')
             );
         }
@@ -517,12 +525,12 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
     /**
      * On card save, set payment data to the gateway. (Broken out for extensibility)
      *
-     * @param \ParadoxLabs\TokenBase\Api\GatewayInterface $gateway
+     * @param GatewayInterface $gateway
      * @return $this
      */
-    protected function setPaymentInfoOnCreate(\ParadoxLabs\TokenBase\Api\GatewayInterface $gateway)
+    protected function setPaymentInfoOnCreate(GatewayInterface $gateway)
     {
-        /** @var \Magento\Sales\Model\Order\Payment $info */
+        /** @var Payment $info */
         $info = $this->getInfoInstance();
 
         $acceptJsKey   = $info->getAdditionalInformation('acceptjs_key');
@@ -539,7 +547,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $info->setAdditionalInformation('acceptjs_key', null);
             $info->setAdditionalInformation('acceptjs_value', null);
 
-            if ($info instanceof \Magento\Payment\Model\InfoInterface && $info->getId() > 0) {
+            if ($info instanceof InfoInterface && $info->getId() > 0) {
                 $this->paymentRepository->save($info);
             }
         } else {
@@ -557,15 +565,14 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
     /**
      * On card update, set payment data to the gateway. (Broken out for extensibility)
      *
-     * @param \ParadoxLabs\TokenBase\Api\GatewayInterface $gateway
+     * @param GatewayInterface $gateway
      * @return $this
      * @throws CommandException
      */
-    protected function setPaymentInfoOnUpdate(\ParadoxLabs\TokenBase\Api\GatewayInterface $gateway)
+    protected function setPaymentInfoOnUpdate(GatewayInterface $gateway)
     {
         /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
-
-        /** @var \Magento\Sales\Model\Order\Payment $info */
+        /** @var Payment $info */
         $info = $this->getInfoInstance();
 
         $acceptJsKey   = $info->getAdditionalInformation('acceptjs_key');
@@ -582,7 +589,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             $info->setAdditionalInformation('acceptjs_key', null);
             $info->setAdditionalInformation('acceptjs_value', null);
 
-            if ($info instanceof \Magento\Payment\Model\InfoInterface && $info->getId() > 0) {
+            if ($info instanceof InfoInterface && $info->getId() > 0) {
                 $this->paymentRepository->save($info);
             }
         } elseif (strlen((string)$info->getData('cc_number')) >= 12) {

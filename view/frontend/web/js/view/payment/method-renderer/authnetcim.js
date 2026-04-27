@@ -26,7 +26,7 @@ define(
     ],
     function (ko, $, Component) {
         'use strict';
-        var config=window.checkoutConfig.payment.authnetcim;
+        var config = window.checkoutConfig.payment.authnetcim;
         return Component.extend({
             defaults: {
                 template: 'ParadoxLabs_Authnetcim/payment/cc',
@@ -39,7 +39,7 @@ define(
                 apiLoginId: config ? config.apiLoginId : '',
                 clientKey: config ? config.clientKey : '',
                 sandbox: config ? config.sandbox : false,
-                canStoreBin: config ? config.canStoreBin : false,
+                canStoreBin: config ? config.canStoreBin : false
             },
 
             // Change certain error responses to be more useful.
@@ -51,11 +51,11 @@ define(
                            + ' Client Key.'
             },
 
-            initVars: function() {
-                this.canSaveCard     = config ? config.canSaveCard : false;
-                this.forceSaveCard   = config ? config.forceSaveCard : false;
+            initVars: function () {
+                this.canSaveCard = config ? config.canSaveCard : false;
+                this.forceSaveCard = config ? config.forceSaveCard : false;
                 this.defaultSaveCard = config ? config.defaultSaveCard : false;
-                this.requireCcv      = config ? config.requireCcv : false;
+                this.requireCcv = config ? config.requireCcv : false;
             },
 
             /**
@@ -91,7 +91,7 @@ define(
                 return this;
             },
 
-            initAcceptJs: function() {
+            initAcceptJs: function () {
                 window[this.item.method + '_acceptJs_callback'] = this.handlePaymentResponse.bind(this);
                 window.isReady = true;
             },
@@ -195,7 +195,7 @@ define(
                 } else {
                     this.isTokenizing(true);
 
-                    var cc_no = this.creditCardNumber().replace(/\D/g,'');
+                    var cc_no = this.creditCardNumber().replace(/\D/g, '');
                     this.creditCardLast4(cc_no.substring(cc_no.length - 4));
                     if (this.canStoreBin) {
                         this.creditCardBin(cc_no.substring(0, 6));

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,33 +15,29 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Observer;
 
-class CheckoutFailureClearProfileIdObserver implements \Magento\Framework\Event\ObserverInterface
+use Magento\Customer\Api\CustomerRepositoryInterface;
+use Magento\Customer\Api\Data\CustomerInterface;
+use Magento\Framework\Event\Observer;
+use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\Registry;
+use Throwable;
+
+class CheckoutFailureClearProfileIdObserver implements ObserverInterface
 {
     /**
-     * @var \Magento\Framework\Registry
-     */
-    protected $registry;
-
-    /**
-     * @var \Magento\Customer\Api\CustomerRepositoryInterface
-     */
-    protected $customerRepository;
-
-    /**
-     * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
+     * @param Registry $registry
+     * @param CustomerRepositoryInterface $customerRepository
      */
     public function __construct(
-        \Magento\Framework\Registry $registry,
-        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
+        protected readonly Registry $registry,
+        protected readonly CustomerRepositoryInterface $customerRepository
     ) {
-        $this->registry = $registry;
-        $this->customerRepository = $customerRepository;
     }
 
     /**
@@ -51,21 +47,21 @@ class CheckoutFailureClearProfileIdObserver implements \Magento\Framework\Event\
      * This is ultimately to prevent failure loops on checkout where an invalid
      * ID prevents payment, and can't be resolved by any normal means.
      *
-     * @param \Magento\Framework\Event\Observer $observer
+     * @param Observer $observer
      * @return void
      */
-    public function execute(\Magento\Framework\Event\Observer $observer)
+    public function execute(Observer $observer)
     {
         try {
-            /** @var \Magento\Customer\Api\Data\CustomerInterface */
+            /** @var CustomerInterface */
             $customer = $this->registry->registry('queue_profileid_deletion');
 
-            if ($customer instanceof \Magento\Customer\Api\Data\CustomerInterface && $customer->getId() > 0) {
+            if ($customer instanceof CustomerInterface && $customer->getId() > 0) {
                 $customer->setCustomAttribute('authnetcim_profile_id', '');
 
                 $this->customerRepository->save($customer);
             }
-        } catch (\Exception $e) {
+        } catch (Throwable) {
             // Do nothing on error -- we don't want it causing any more problems.
         }
     }

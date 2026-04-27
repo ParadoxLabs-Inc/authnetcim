@@ -15,48 +15,47 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Gateway\Validator;
 
+use Magento\Payment\Gateway\Validator\ResultInterface;
+use Magento\Payment\Model\Info;
+use Magento\Payment\Gateway\ConfigInterface;
+use Magento\Payment\Gateway\Validator\ResultInterfaceFactory;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
 
 class StoredCard extends \ParadoxLabs\TokenBase\Gateway\Validator\StoredCard
 {
-    /**
-     * @var \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
-     */
-    private $ccValidator;
+    private readonly CreditCard $ccValidator;
 
-    /**
-     * @var \Magento\Payment\Gateway\ConfigInterface
-     */
-    private $config;
+    private readonly ConfigInterface $config;
 
     /**
      * Constructor
      *
-     * @param \Magento\Payment\Gateway\Validator\ResultInterfaceFactory $resultFactory
-     * @param \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard $ccValidator
-     * @param \Magento\Payment\Gateway\ConfigInterface $config
+     * @param ResultInterfaceFactory $resultFactory
+     * @param CreditCard $ccValidator
+     * @param ConfigInterface $config
      */
     public function __construct(
-        \Magento\Payment\Gateway\Validator\ResultInterfaceFactory $resultFactory,
-        \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard $ccValidator,
-        \Magento\Payment\Gateway\ConfigInterface $config
+        ResultInterfaceFactory $resultFactory,
+        CreditCard $ccValidator,
+        ConfigInterface $config
     ) {
         parent::__construct($resultFactory, $ccValidator, $config);
 
         $this->ccValidator = $ccValidator;
-        $this->config = $config;
+        $this->config      = $config;
     }
 
     /**
      * Validate a stored card on the payment object
      *
      * @param array $validationSubject
-     * @return \Magento\Payment\Gateway\Validator\ResultInterface
+     * @return ResultInterface
      */
     public function validate(array $validationSubject)
     {
@@ -68,7 +67,7 @@ class StoredCard extends \ParadoxLabs\TokenBase\Gateway\Validator\StoredCard
         $isValid = true;
         $fails   = [];
 
-        /** @var \Magento\Payment\Model\Info $payment */
+        /** @var Info $payment */
         $payment = $validationSubject['payment'];
 
         /**

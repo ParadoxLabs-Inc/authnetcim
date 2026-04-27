@@ -15,66 +15,49 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model\Service\AcceptHosted;
 
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Customer\Model\Session;
+use Magento\Framework\App\RequestInterface;
 use Magento\Quote\Api\Data\AddressInterface;
+use Magento\Quote\Api\Data\CartInterface;
+use Magento\Quote\Model\ResourceModel\Quote\Payment;
 use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider as ConfigProviderAch;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider as ConfigProviderCc;
+use ParadoxLabs\Authnetcim\Model\Gateway;
 
 class FrontendRequest extends AbstractRequestHandler
 {
     /**
-     * @var \Magento\Checkout\Model\Session
-     */
-    protected $checkoutSession;
-
-    /**
-     * @var \Magento\Customer\Model\Session
-     */
-    protected $customerSession;
-
-    /**
-     * @var \Magento\Framework\App\RequestInterface
-     */
-    protected $request;
-
-    /**
-     * @var \Magento\Quote\Model\ResourceModel\Quote\Payment
-     */
-    protected $paymentResource;
-
-    /**
      * AbstractRequestHandler constructor.
      *
-     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\Context $context
+     * @param Context $context
      * @param \Magento\Checkout\Model\Session $checkoutSession *Proxy
-     * @param \Magento\Customer\Model\Session $customerSession *Proxy
-     * @param \Magento\Framework\App\RequestInterface $request
-     * @param \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
+     * @param Session $customerSession *Proxy
+     * @param RequestInterface $request
+     * @param Payment $paymentResource
      */
     public function __construct(
         Context $context,
-        \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Customer\Model\Session $customerSession,
-        \Magento\Framework\App\RequestInterface $request,
-        \Magento\Quote\Model\ResourceModel\Quote\Payment $paymentResource
+        protected readonly \Magento\Checkout\Model\Session $checkoutSession,
+        protected readonly Session $customerSession,
+        protected readonly RequestInterface $request,
+        protected readonly Payment $paymentResource
     ) {
         parent::__construct($context);
-
-        $this->checkoutSession = $checkoutSession;
-        $this->customerSession = $customerSession;
-        $this->request = $request;
-        $this->paymentResource = $paymentResource;
     }
 
     /**
      * Get the CIM customer profile ID for the current session/context.
      *
      * @return string
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     public function getCustomerProfileId(): string
     {
@@ -88,7 +71,7 @@ class FrontendRequest extends AbstractRequestHandler
             return $payment->getAdditionalInformation('profile_id');
         }
 
-        /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
+        /** @var Gateway $gateway */
         $gateway = $this->getMethod()->gateway();
         $gateway->setParameter('email', $email);
         $gateway->setParameter('merchantCustomerId', $customerId);
@@ -148,11 +131,11 @@ class FrontendRequest extends AbstractRequestHandler
     /**
      * Get the active quote.
      *
-     * @return \Magento\Quote\Api\Data\CartInterface
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @return CartInterface
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
-    protected function getQuote(): \Magento\Quote\Api\Data\CartInterface
+    protected function getQuote(): CartInterface
     {
         return $this->checkoutSession->getQuote();
     }
@@ -186,11 +169,11 @@ class FrontendRequest extends AbstractRequestHandler
     /**
      * Set billing address parameters on the Gateway
      *
-     * @param \ParadoxLabs\Authnetcim\Model\Gateway $gateway
+     * @param Gateway $gateway
      * @return void
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
-    protected function setBillingParams(\ParadoxLabs\Authnetcim\Model\Gateway $gateway): void
+    protected function setBillingParams(Gateway $gateway): void
     {
         // Use billing params over quote data, if given
         $post = $this->request->getPostValue('billing');

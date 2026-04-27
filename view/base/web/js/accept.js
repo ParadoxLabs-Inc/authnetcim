@@ -35,7 +35,7 @@ define([
     'mage/validation',
     'domReady!'
     // NB: using jQuery rather than $ to avoid conflict on admin order form.
-], function(jQuery, ko, alert) {
+], function (jQuery, ko, alert) {
     'use strict';
 
     jQuery.widget('mage.authnetcimAcceptjs', {
@@ -76,7 +76,7 @@ define([
         /**
          * Initialize Accept.js interface
          */
-        _create: function() {
+        _create: function () {
             // If we aren't configured, stop here, do nothing.
             if (this.options.method === '' || this.options.apiLoginId === '' || this.options.clientKey === '') {
                 return;
@@ -92,11 +92,13 @@ define([
             this.creditCardType = ko.observable(null);
 
             if (this.options.sandbox) {
-                require(['authorizeNetAcceptjsSandbox'],
+                require(
+                    ['authorizeNetAcceptjsSandbox'],
                     this._bind.bind(this)
                 );
             } else {
-                require(['authorizeNetAcceptjs'],
+                require(
+                    ['authorizeNetAcceptjs'],
                     this._bind.bind(this)
                 );
             }
@@ -175,7 +177,7 @@ define([
             }
         },
 
-        isActivePaymentMethod: function() {
+        isActivePaymentMethod: function () {
             // Check the selected method.
             if (this.element) {
                 if (typeof window.checkoutConfig !== 'undefined'
@@ -206,7 +208,7 @@ define([
             return '';
         },
 
-        handleFormSubmit: function(event) {
+        handleFormSubmit: function (event) {
             if (this.isActivePaymentMethod()) {
                 if (this.selectedCard() || this.acceptJsValue()) {
                     this.form.trigger('realOrder');
@@ -236,7 +238,7 @@ define([
             }
         },
 
-        handleFormPaymentChange: function(event, method) {
+        handleFormPaymentChange: function (event, method) {
             if (method === this.options.method) {
                 // If we've switched to this method, rebind the submitOrder event (for admin ordering) to enforce
                 // proper order of operations.
@@ -377,8 +379,8 @@ define([
             }
         },
 
-        getCcNumber: function() {
-            return this.element.find('#' + this.options.method + '-cc-number').val().replace(/\D/g,'');
+        getCcNumber: function () {
+            return this.element.find('#' + this.options.method + '-cc-number').val().replace(/\D/g, '');
         },
 
         /**
@@ -399,7 +401,7 @@ define([
             this.form.trigger('processStop');
 
             if (error) {
-                alert({content:error});
+                alert({content: error});
             }
 
             this.form.trigger('processStop');

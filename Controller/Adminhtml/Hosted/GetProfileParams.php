@@ -15,79 +15,66 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Controller\Adminhtml\Hosted;
 
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\Controller\Result\Json;
 use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
+use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\CsrfAwareActionInterface;
+use Magento\Framework\App\Request\InvalidRequestException;
+use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Data\Form\FormKey\Validator;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Registry;
+use ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\BackendRequest;
+use Throwable;
 
 class GetProfileParams extends Action implements CsrfAwareActionInterface, HttpPostActionInterface
 {
     /**
-     * @var \Magento\Framework\Data\Form\FormKey\Validator
-     */
-    protected $formKey;
-
-    /**
-     * @var \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\BackendRequest
-     */
-    protected $hostedForm;
-
-    /**
-     * @var \Magento\Framework\Registry
-     */
-    protected $registry;
-
-    /**
-     * @var \Magento\Customer\Api\CustomerRepositoryInterface
-     */
-    protected $customerRepository;
-
-    /**
      * GetProfileParams constructor.
      *
-     * @param \Magento\Backend\App\Action\Context $context
-     * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey
-     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\BackendRequest $hostedForm
-     * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
+     * @param Context $context
+     * @param Validator $formKey
+     * @param BackendRequest $hostedForm
+     * @param Registry $registry
+     * @param CustomerRepositoryInterface $customerRepository
      */
     public function __construct(
-        \Magento\Backend\App\Action\Context $context,
-        \Magento\Framework\Data\Form\FormKey\Validator $formKey,
-        \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\BackendRequest $hostedForm,
-        \Magento\Framework\Registry $registry,
-        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
+        Context $context,
+        protected readonly Validator $formKey,
+        protected readonly BackendRequest $hostedForm,
+        protected readonly Registry $registry,
+        protected readonly CustomerRepositoryInterface $customerRepository
     ) {
         parent::__construct($context);
-
-        $this->formKey = $formKey;
-        $this->hostedForm = $hostedForm;
-        $this->registry = $registry;
-        $this->customerRepository = $customerRepository;
     }
 
     /**
      * Get hosted form parameters for a session
      *
-     * @return \Magento\Framework\Controller\ResultInterface
+     * @return ResultInterface
      */
     public function execute()
     {
         $this->initCustomer();
 
-        /** @var \Magento\Framework\Controller\Result\Json $result */
+        /** @var Json $result */
         $result = $this->resultFactory->create(ResultFactory::TYPE_JSON);
 
         try {
             $params = $this->hostedForm->getParams();
 
             $result->setData($params);
-        } catch (\Exception $exception) {
+        } catch (Throwable $exception) {
             $result->setHttpResponseCode(400);
             $result->setData([
                 'message' => $exception->getMessage(),
@@ -100,23 +87,23 @@ class GetProfileParams extends Action implements CsrfAwareActionInterface, HttpP
     /**
      * Create exception in case CSRF validation failed.
      *
-     * @param \Magento\Framework\App\RequestInterface $request
+     * @param RequestInterface $request
      *
-     * @return \Magento\Framework\App\Request\InvalidRequestException|null
+     * @return InvalidRequestException|null
      */
     public function createCsrfValidationException(
-        \Magento\Framework\App\RequestInterface $request
-    ): ?\Magento\Framework\App\Request\InvalidRequestException {
+        RequestInterface $request
+    ): ?InvalidRequestException {
         $message = __('Invalid Form Key. Please refresh the page.');
 
-        /** @var \Magento\Framework\Controller\Result\Json $result */
+        /** @var Json $result */
         $result = $this->resultFactory->create(ResultFactory::TYPE_JSON);
         $result->setHttpResponseCode(403);
         $result->setData([
             'message' => $message,
         ]);
 
-        return new \Magento\Framework\App\Request\InvalidRequestException(
+        return new InvalidRequestException(
             $result,
             [$message]
         );
@@ -125,11 +112,11 @@ class GetProfileParams extends Action implements CsrfAwareActionInterface, HttpP
     /**
      * Perform custom request validation.
      *
-     * @param \Magento\Framework\App\RequestInterface $request
+     * @param RequestInterface $request
      *
      * @return bool|null
      */
-    public function validateForCsrf(\Magento\Framework\App\RequestInterface $request): ?bool
+    public function validateForCsrf(RequestInterface $request): ?bool
     {
         return $this->formKey->validate($request);
     }
@@ -158,7 +145,7 @@ class GetProfileParams extends Action implements CsrfAwareActionInterface, HttpP
                 $customer = $this->customerRepository->getById($customerId);
 
                 $this->registry->register('current_customer', $customer);
-            } catch (\Magento\Framework\Exception\NoSuchEntityException $exception) {
+            } catch (NoSuchEntityException $exception) {
                 // Ignore 'no such customer' errors, remainder code will handle accordingly.
             }
         }

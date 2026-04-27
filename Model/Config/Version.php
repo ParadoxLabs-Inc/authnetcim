@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,47 +15,50 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model\Config;
 
+use Magento\Framework\App\Cache\TypeListInterface;
+use Magento\Framework\App\Config\Data\ProcessorInterface;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\Config\Value;
+use Magento\Framework\Data\Collection\AbstractDb;
+use Magento\Framework\Filesystem\Io\File;
+use Magento\Framework\Model\Context;
+use Magento\Framework\Model\ResourceModel\AbstractResource;
+use Magento\Framework\Module\Dir;
+use Magento\Framework\Registry;
+use Throwable;
+
 /**
  * Config backend model for version display.
  */
-class Version extends \Magento\Framework\App\Config\Value implements
-    \Magento\Framework\App\Config\Data\ProcessorInterface
+class Version extends Value implements
+    ProcessorInterface
 {
     /**
-     * @var \Magento\Framework\Module\Dir
-     */
-    protected $moduleDir;
-
-    /**
-     * @var \Magento\Framework\Filesystem\Io\File
-     */
-    protected $fileHandler;
-
-    /**
-     * @param \Magento\Framework\Model\Context $context
-     * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $config
-     * @param \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList
-     * @param \Magento\Framework\Module\Dir $moduleDir
-     * @param \Magento\Framework\Filesystem\Io\File $fileHandler
-     * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
-     * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
+     * @param Context $context
+     * @param Registry $registry
+     * @param ScopeConfigInterface $config
+     * @param TypeListInterface $cacheTypeList
+     * @param Dir $moduleDir
+     * @param File $fileHandler
+     * @param AbstractResource|null $resource
+     * @param AbstractDb|null $resourceCollection
      * @param array $data
      */
     public function __construct(
-        \Magento\Framework\Model\Context $context,
-        \Magento\Framework\Registry $registry,
-        \Magento\Framework\App\Config\ScopeConfigInterface $config,
-        \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList,
-        \Magento\Framework\Module\Dir $moduleDir,
-        \Magento\Framework\Filesystem\Io\File $fileHandler,
-        ?\Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
-        ?\Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
+        Context $context,
+        Registry $registry,
+        ScopeConfigInterface $config,
+        TypeListInterface $cacheTypeList,
+        protected readonly Dir $moduleDir,
+        protected readonly File $fileHandler,
+        ?AbstractResource $resource = null,
+        ?AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct(
@@ -67,9 +70,6 @@ class Version extends \Magento\Framework\App\Config\Value implements
             $resourceCollection,
             $data
         );
-
-        $this->moduleDir = $moduleDir;
-        $this->fileHandler = $fileHandler;
     }
 
     /**
@@ -93,7 +93,7 @@ class Version extends \Magento\Framework\App\Config\Value implements
             } else {
                 return __('Unknown (could not read composer.json)');
             }
-        } catch (\Exception $e) {
+        } catch (Throwable) {
             return __('Unknown (could not read composer.json)');
         }
     }

@@ -1,7 +1,11 @@
 {
     "name": "paradoxlabs/authnetcim",
     "description": "Authorize.Net CIM payment method for Magento 2.x by Paradox Labs",
-    "keywords": ["payment", "authorize.net", "tokenization"],
+    "keywords": [
+        "payment",
+        "authorize.net",
+        "tokenization"
+    ],
     "require": {
         "paradoxlabs/tokenbase": "~4.8.0"
     },
@@ -22,7 +26,9 @@
         ]
     },
     "autoload": {
-        "files": [ "registration.php" ],
+        "files": [
+            "registration.php"
+        ],
         "psr-4": {
             "ParadoxLabs\\Authnetcim\\": ""
         }

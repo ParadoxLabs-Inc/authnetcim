@@ -156,7 +156,7 @@ define([
             form.submit();
 
             // Reload after 15 min expiration
-            setTimeout(this.initHostedForm.bind(this), 15*60*1000);
+            setTimeout(this.initHostedForm.bind(this), 15 * 60 * 1000);
 
             var iframe = this.element.find('#' + this.options.target);
             // There's an awkward break between 400-750px; set max width to avoid scrolling.

@@ -15,36 +15,26 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Setup\Patch\Data;
 
+use Magento\Config\Model\ResourceModel\Config;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\Patch\DataPatchInterface;
 
 class UpdateValidationMode implements DataPatchInterface
 {
     /**
-     * @var \Magento\Config\Model\ResourceModel\Config
-     */
-    private $configResource;
-
-    /**
-     * @var ModuleDataSetupInterface
-     */
-    private $moduleDataSetup;
-
-    /**
      * @param ModuleDataSetupInterface $moduleDataSetup
-     * @param \Magento\Config\Model\ResourceModel\Config $configResource
+     * @param Config $configResource
      */
     public function __construct(
-        ModuleDataSetupInterface $moduleDataSetup,
-        \Magento\Config\Model\ResourceModel\Config $configResource
+        private readonly ModuleDataSetupInterface $moduleDataSetup,
+        private readonly Config $configResource,
     ) {
-        $this->moduleDataSetup = $moduleDataSetup;
-        $this->configResource = $configResource;
     }
 
     /**
@@ -66,7 +56,7 @@ class UpdateValidationMode implements DataPatchInterface
             ],
             [
                 'path in ("payment/authnetcim/validation_mode", "payment/authnetcim_ach/validation_mode")',
-                'value="none"'
+                'value="none"',
             ]
         );
 

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,10 +15,13 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model\Ach;
+
+use ParadoxLabs\TokenBase\Model\Card;
 
 class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
 {
@@ -31,45 +34,45 @@ class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
      */
     public function getConfig()
     {
-        if (!$this->methods[static::CODE]->isAvailable()) {
+        if (!$this->methods[ static::CODE ]->isAvailable()) {
             return [];
         }
 
-        $config             = parent::getConfig();
-        $selected           = null;
-        $storedCardOptions  = [];
-        $cards              = $this->getStoredCards();
+        $config            = parent::getConfig();
+        $selected          = null;
+        $storedCardOptions = [];
+        $cards             = $this->getStoredCards();
 
-        /** @var \ParadoxLabs\TokenBase\Model\Card $card */
+        /** @var Card $card */
         foreach ($cards as $card) {
             $card = $card->getTypeInstance();
 
-            $storedCardOptions[]    = [
-                'id'       => $card->getHash(),
-                'label'    => $card->getLabel(),
+            $storedCardOptions[] = [
+                'id' => $card->getHash(),
+                'label' => $card->getLabel(),
                 'selected' => false,
-                'new'      => $card->getLastUse() === null,
-                'type'     => $card->getType(),
-                'cc_bin'   => $card->getAdditional('cc_bin'),
+                'new' => $card->getLastUse() === null,
+                'type' => $card->getType(),
+                'cc_bin' => $card->getAdditional('cc_bin'),
                 'cc_last4' => $card->getAdditional('cc_last4'),
             ];
 
-            $selected               = $card->getHash();
+            $selected = $card->getHash();
         }
 
-        $config['payment'][static::CODE] = [
-            'canSaveCard'               => $this->canSaveCard(),
-            'forceSaveCard'             => $this->forceSaveCard(),
-            'defaultSaveCard'           => $this->defaultSaveCard(),
-            'storedCards'               => $storedCardOptions,
-            'selectedCard'              => $selected,
-            'logoImage'                 => $this->getLogoImage(),
-            'achImage'                  => $this->getAchImage(),
-            'achAccountTypes'           => $this->getAchAccountTypes(),
-            'requireCcv'                => false,
-            'formType'                  => $this->methods[static::CODE]->getConfigData('form_type'),
-            'paramUrl'                  => $this->getParamUrl(),
-            'newCardUrl'                => $this->getNewCardUrl(),
+        $config['payment'][ static::CODE ] = [
+            'canSaveCard' => $this->canSaveCard(),
+            'forceSaveCard' => $this->forceSaveCard(),
+            'defaultSaveCard' => $this->defaultSaveCard(),
+            'storedCards' => $storedCardOptions,
+            'selectedCard' => $selected,
+            'logoImage' => $this->getLogoImage(),
+            'achImage' => $this->getAchImage(),
+            'achAccountTypes' => $this->getAchAccountTypes(),
+            'requireCcv' => false,
+            'formType' => $this->methods[ static::CODE ]->getConfigData('form_type'),
+            'paramUrl' => $this->getParamUrl(),
+            'newCardUrl' => $this->getNewCardUrl(),
         ];
 
         return $config;

@@ -15,65 +15,42 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model\Service\AcceptHosted;
 
+use Magento\Framework\Url;
+use Magento\Quote\Api\CartRepositoryInterface;
+use ParadoxLabs\Authnetcim\Helper\Data;
+use ParadoxLabs\TokenBase\Helper\Address;
+use ParadoxLabs\TokenBase\Model\Method\Factory;
+
 class Context
 {
     /**
-     * @var \Magento\Framework\Url
-     */
-    private $urlBuilder;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Model\Method\Factory
-     */
-    private $methodFactory;
-
-    /**
-     * @var \ParadoxLabs\Authnetcim\Helper\Data
-     */
-    private $helper;
-
-    /**
-     * @var \Magento\Quote\Api\CartRepositoryInterface
-     */
-    private $quoteRepository;
-
-    /**
-     * @var \ParadoxLabs\TokenBase\Helper\Address
-     */
-    private $addressHelper;
-
-    /**
      * AbstractRequestHandler constructor.
      *
-     * @param \Magento\Framework\Url $urlBuilder
-     * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
-     * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
-     * @param \Magento\Quote\Api\CartRepositoryInterface $quoteRepository
-     * @param \ParadoxLabs\TokenBase\Helper\Address $addressHelper
+     * @param Url $urlBuilder
+     * @param Factory $methodFactory
+     * @param Data $helper
+     * @param CartRepositoryInterface $quoteRepository
+     * @param Address $addressHelper
      */
     public function __construct(
-        \Magento\Framework\Url $urlBuilder,
-        \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
-        \ParadoxLabs\Authnetcim\Helper\Data $helper,
-        \Magento\Quote\Api\CartRepositoryInterface $quoteRepository,
-        \ParadoxLabs\TokenBase\Helper\Address $addressHelper
+        private readonly Url $urlBuilder,
+        private readonly Factory $methodFactory,
+        private readonly Data $helper,
+        private readonly CartRepositoryInterface $quoteRepository,
+        private readonly Address $addressHelper,
     ) {
-        $this->urlBuilder = $urlBuilder;
-        $this->methodFactory = $methodFactory;
-        $this->helper = $helper;
-        $this->quoteRepository = $quoteRepository;
-        $this->addressHelper = $addressHelper;
     }
 
     /**
      * Get urlBuilder
      *
-     * @return \Magento\Framework\Url
+     * @return Url
      */
     public function getUrlBuilder()
     {
@@ -83,7 +60,7 @@ class Context
     /**
      * Get methodFactory
      *
-     * @return \ParadoxLabs\TokenBase\Model\Method\Factory
+     * @return Factory
      */
     public function getMethodFactory()
     {
@@ -93,7 +70,7 @@ class Context
     /**
      * Get helper
      *
-     * @return \ParadoxLabs\Authnetcim\Helper\Data
+     * @return Data
      */
     public function getHelper()
     {
@@ -103,7 +80,7 @@ class Context
     /**
      * Get quoteRepository
      *
-     * @return \Magento\Quote\Api\CartRepositoryInterface
+     * @return CartRepositoryInterface
      */
     public function getQuoteRepository()
     {
@@ -113,7 +90,7 @@ class Context
     /**
      * Get addressHelper
      *
-     * @return \ParadoxLabs\TokenBase\Helper\Address
+     * @return Address
      */
     public function getAddressHelper()
     {

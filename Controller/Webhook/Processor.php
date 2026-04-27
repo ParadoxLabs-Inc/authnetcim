@@ -15,35 +15,39 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Controller\Webhook;
 
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\App\ResponseInterface;
+use Magento\Framework\Exception\NotFoundException;
+use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\CsrfAwareActionInterface;
 use Magento\Framework\App\Request\Http;
+use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Data\Form\FormKey;
+use ParadoxLabs\Authnetcim\Model\Service\WebhookProcessor;
+use Throwable;
 
-class Processor extends \Magento\Framework\App\Action\Action
+class Processor extends Action
 {
     /**
-     * @var \ParadoxLabs\Authnetcim\Model\Service\WebhookProcessor
-     */
-    protected $webhookProcessor;
-
-    /**
-     * @param \Magento\Framework\App\Action\Context $context
-     * @param \ParadoxLabs\Authnetcim\Model\Service\WebhookProcessor $webhookProcessor
-     * @param \Magento\Framework\Data\Form\FormKey $formKey
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @param Context $context
+     * @param WebhookProcessor $webhookProcessor
+     * @param FormKey $formKey
+     * @throws LocalizedException
      */
     public function __construct(
-        \Magento\Framework\App\Action\Context $context,
-        \ParadoxLabs\Authnetcim\Model\Service\WebhookProcessor $webhookProcessor,
-        \Magento\Framework\Data\Form\FormKey $formKey
+        Context $context,
+        protected readonly WebhookProcessor $webhookProcessor,
+        FormKey $formKey
     ) {
         parent::__construct($context);
-
-        $this->webhookProcessor = $webhookProcessor;
 
         // CSRF/form key protection compatibility
         if (interface_exists(CsrfAwareActionInterface::class)) {
@@ -57,18 +61,18 @@ class Processor extends \Magento\Framework\App\Action\Action
     /**
      * Process webhook based on request and return result
      *
-     * @return \Magento\Framework\Controller\ResultInterface|\Magento\Framework\App\ResponseInterface
-     * @throws \Magento\Framework\Exception\NotFoundException
+     * @return ResultInterface|ResponseInterface
+     * @throws NotFoundException
      */
     public function execute()
     {
-        $jsonResponse = $this->resultFactory->create(\Magento\Framework\Controller\ResultFactory::TYPE_JSON);
+        $jsonResponse = $this->resultFactory->create(ResultFactory::TYPE_JSON);
 
         try {
             $this->webhookProcessor->process();
             $jsonResponse->setStatusHeader(200);
             $jsonResponse->setData([]);
-        } catch (\Exception $exception) {
+        } catch (Throwable $exception) {
             $jsonResponse->setStatusHeader(400);
             $jsonResponse->setData(['error' => $exception->getMessage()]);
         }

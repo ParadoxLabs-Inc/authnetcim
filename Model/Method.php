@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,15 +15,26 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model;
 
+use ParadoxLabs\TokenBase\Api\Data\CardInterface;
+use Magento\Sales\Model\Order\Payment;
+use Magento\Sales\Model\Order\Address;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Payment\Model\InfoInterface;
+use Magento\Sales\Api\Data\TransactionInterface;
+use ParadoxLabs\TokenBase\Model\AbstractMethod;
+use ParadoxLabs\TokenBase\Model\Gateway\Response;
+use Throwable;
+
 /**
  * Authorize.Net CIM payment method
  */
-class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
+class Method extends AbstractMethod
 {
     /**
      * Determine whether Accept.js is configured and enabled.
@@ -44,10 +55,10 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
     /**
      * Return boolean whether given payment object includes new card info.
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @return bool
      */
-    protected function paymentContainsCard(\Magento\Payment\Model\InfoInterface $payment)
+    protected function paymentContainsCard(InfoInterface $payment)
     {
         $acceptJsValue = $this->getInfoInstance()->getAdditionalInformation('acceptjs_value');
 
@@ -61,13 +72,12 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
     /**
      * Try to convert legacy data inline.
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
-     * @return \ParadoxLabs\TokenBase\Api\Data\CardInterface
+     * @param InfoInterface $payment
+     * @return CardInterface
      */
-    protected function loadOrCreateCard(\Magento\Payment\Model\InfoInterface $payment)
+    protected function loadOrCreateCard(InfoInterface $payment)
     {
-        /** @var \Magento\Sales\Model\Order\Payment $payment */
-
+        /** @var Payment $payment */
         // Check for stale Accept.js token
         $acceptJsValue = $this->getInfoInstance()->getAdditionalInformation('acceptjs_value');
         $acceptCardId  = $this->registry->registry('authnetcim-acceptjs-' . $acceptJsValue);
@@ -80,7 +90,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
         }
 
         if ($this->card !== null) {
-            $this->log(sprintf('loadOrCreateCard(%s %s)', get_class($payment), $payment->getId()));
+            $this->log(sprintf('loadOrCreateCard(%s %s)', $payment::class, $payment->getId()));
 
             $this->setCard($this->getCard());
 
@@ -88,9 +98,9 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
         } elseif ($payment->hasData('tokenbase_id') !== true
             && $payment->getOrder()
             && $payment->getOrder()->getExtCustomerId() != '') {
-            $this->log(sprintf('loadOrCreateCard(%s %s)', get_class($payment), $payment->getId()));
+            $this->log(sprintf('loadOrCreateCard(%s %s)', $payment::class, $payment->getId()));
 
-            /** @var \ParadoxLabs\Authnetcim\Model\Card $card */
+            /** @var Card $card */
             $card = $this->cardFactory->create();
             $card->setMethod($this->methodCode)
                  ->setMethodInstance($this)
@@ -117,7 +127,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
 
                 $card->setPaymentId($result['customerPaymentProfileIdList']['numericString'] ?? null);
                 $card = $this->cardRepository->save($card);
-            } catch (\Exception $e) {
+            } catch (Throwable $e) {
                 $this->log($e->getMessage());
             }
         }
@@ -128,18 +138,17 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
     /**
      * Set shipping address on the gateway before running the transaction.
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @return $this
      */
-    protected function handleShippingAddress(\Magento\Payment\Model\InfoInterface $payment)
+    protected function handleShippingAddress(InfoInterface $payment)
     {
-        /** @var \Magento\Sales\Model\Order\Payment $payment */
-
+        /** @var Payment $payment */
         if ($this->getConfigData('send_shipping_address') && $payment->getOrder()->getIsVirtual() == false) {
-            /** @var \Magento\Sales\Model\Order\Address $address */
+            /** @var Address $address */
             $address = $payment->getOrder()->getShippingAddress();
 
-            $region  = $address->getRegionCode() ?: $address->getRegion();
+            $region = $address->getRegionCode() ?: $address->getRegion();
 
             $this->gateway()->setParameter('shipToFirstName', $address->getFirstname());
             $this->gateway()->setParameter('shipToLastName', $address->getLastname());
@@ -159,15 +168,15 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
     /**
      * Catch execution after authorizing to look for card type.
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @param float $amount
-     * @param \ParadoxLabs\TokenBase\Model\Gateway\Response $response
+     * @param Response $response
      * @return void
      */
     protected function afterAuthorize(
-        \Magento\Payment\Model\InfoInterface $payment,
+        InfoInterface $payment,
         $amount,
-        \ParadoxLabs\TokenBase\Model\Gateway\Response $response
+        Response $response
     ) {
         $this->fixLegacyCcType($payment, $response);
 
@@ -177,15 +186,15 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
     /**
      * Catch execution after capturing to reauthorize (if incomplete partial capture).
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @param float $amount
-     * @param \ParadoxLabs\TokenBase\Model\Gateway\Response $response
+     * @param Response $response
      * @return void
      */
     protected function afterCapture(
-        \Magento\Payment\Model\InfoInterface $payment,
+        InfoInterface $payment,
         $amount,
-        \ParadoxLabs\TokenBase\Model\Gateway\Response $response
+        Response $response
     ) {
         $this->fixLegacyCcType($payment, $response);
 
@@ -195,17 +204,17 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
     /**
      * Save type for legacy cards if we don't have it. Run after auth/capture transactions.
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
-     * @param \ParadoxLabs\TokenBase\Model\Gateway\Response $response
-     * @return \Magento\Payment\Model\InfoInterface
+     * @param InfoInterface $payment
+     * @param Response $response
+     * @return InfoInterface
      */
     protected function fixLegacyCcType(
-        \Magento\Payment\Model\InfoInterface $payment,
-        \ParadoxLabs\TokenBase\Model\Gateway\Response $response
+        InfoInterface $payment,
+        Response $response
     ) {
         $card = $this->getCard();
 
-        /** @var \Magento\Sales\Model\Order\Payment $payment */
+        /** @var Payment $payment */
         if ($card->getType() == null && $response->getData('card_type') != '') {
             $ccType = $this->helper->mapCcTypeToMagento($response->getData('card_type'));
 
@@ -225,15 +234,15 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
     /**
      * Store response statuses persistently.
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
-     * @param \ParadoxLabs\TokenBase\Model\Gateway\Response $response
-     * @return \Magento\Payment\Model\InfoInterface
+     * @param InfoInterface $payment
+     * @param Response $response
+     * @return InfoInterface
      */
     protected function storeTransactionStatuses(
-        \Magento\Payment\Model\InfoInterface $payment,
-        \ParadoxLabs\TokenBase\Model\Gateway\Response $response
+        InfoInterface $payment,
+        Response $response
     ) {
-        /** @var \Magento\Sales\Model\Order\Payment $payment */
+        /** @var Payment $payment */
         if (empty($payment->getData('cc_avs_status'))
             && !empty($response->getData('avs_result_code'))) {
             $payment->setData('cc_avs_status', $response->getData('avs_result_code'));
@@ -259,14 +268,13 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
     /**
      * Attempt to accept a payment that us under review
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @return bool
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
-    public function acceptPayment(\Magento\Payment\Model\InfoInterface $payment)
+    public function acceptPayment(InfoInterface $payment)
     {
-        /** @var \Magento\Sales\Model\Order\Payment $payment */
-
+        /** @var Payment $payment */
         parent::acceptPayment(
             $payment
         );
@@ -279,7 +287,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
             $payment->setData('parent_transaction_id', $payment->getTransactionId());
 
             $transaction = $payment->getAuthorizationTransaction();
-            if ($transaction instanceof \Magento\Sales\Api\Data\TransactionInterface) {
+            if ($transaction instanceof TransactionInterface) {
                 $transaction->setAdditionalInformation('is_transaction_fraud', false);
             }
 
@@ -296,14 +304,13 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
     /**
      * Attempt to deny a payment that us under review
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @return bool
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
-    public function denyPayment(\Magento\Payment\Model\InfoInterface $payment)
+    public function denyPayment(InfoInterface $payment)
     {
-        /** @var \Magento\Sales\Model\Order\Payment $payment */
-
+        /** @var Payment $payment */
         parent::acceptPayment(
             $payment
         );
@@ -314,6 +321,7 @@ class Method extends \ParadoxLabs\TokenBase\Model\AbstractMethod
 
         if ($response->getData('is_denied')) {
             $payment->setIsTransactionDenied(true);
+
             return true;
         }
 

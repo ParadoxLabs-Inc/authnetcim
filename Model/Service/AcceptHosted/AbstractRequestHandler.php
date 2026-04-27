@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,12 +15,27 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model\Service\AcceptHosted;
 
+use Magento\Framework\Url;
+use ParadoxLabs\TokenBase\Model\Method\Factory;
+use ParadoxLabs\Authnetcim\Helper\Data;
+use Magento\Quote\Api\CartRepositoryInterface;
+use ParadoxLabs\TokenBase\Helper\Address;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Payment\Gateway\Command\CommandException;
+use Magento\Framework\Exception\InputException;
+use Magento\Framework\Exception\StateException;
 use Magento\Quote\Api\Data\AddressInterface;
+use Magento\Quote\Api\Data\CartInterface;
+use Magento\Quote\Model\Quote;
+use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider;
+use ParadoxLabs\Authnetcim\Model\Gateway;
+use ParadoxLabs\Authnetcim\Model\Method;
 
 abstract class AbstractRequestHandler
 {
@@ -30,32 +45,32 @@ abstract class AbstractRequestHandler
     ];
 
     /**
-     * @var \Magento\Framework\Url
+     * @var Url
      */
     protected $urlBuilder;
 
     /**
-     * @var \ParadoxLabs\TokenBase\Model\Method\Factory
+     * @var Factory
      */
     protected $methodFactory;
 
     /**
-     * @var \ParadoxLabs\Authnetcim\Helper\Data
+     * @var Data
      */
     protected $helper;
 
     /**
-     * @var \ParadoxLabs\Authnetcim\Model\Method
+     * @var Method
      */
     protected $method;
 
     /**
-     * @var \Magento\Quote\Api\CartRepositoryInterface
+     * @var CartRepositoryInterface
      */
     protected $quoteRepository;
 
     /**
-     * @var \ParadoxLabs\TokenBase\Helper\Address
+     * @var Address
      */
     protected $addressHelper;
 
@@ -67,30 +82,30 @@ abstract class AbstractRequestHandler
     /**
      * AbstractRequestHandler constructor.
      *
-     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\Context $context
+     * @param Context $context
      */
     public function __construct(
         Context $context
     ) {
-        $this->urlBuilder = $context->getUrlBuilder();
-        $this->methodFactory = $context->getMethodFactory();
-        $this->helper = $context->getHelper();
+        $this->urlBuilder      = $context->getUrlBuilder();
+        $this->methodFactory   = $context->getMethodFactory();
+        $this->helper          = $context->getHelper();
         $this->quoteRepository = $context->getQuoteRepository();
-        $this->addressHelper = $context->getAddressHelper();
+        $this->addressHelper   = $context->getAddressHelper();
     }
 
     /**
      * Get the payment method instance
      *
-     * @return \ParadoxLabs\Authnetcim\Model\Method
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @return Method
+     * @throws LocalizedException
      */
-    public function getMethod(): \ParadoxLabs\Authnetcim\Model\Method
+    public function getMethod(): Method
     {
         if ($this->method === null) {
             $methodCode = $this->getMethodCode();
 
-            /** @var \ParadoxLabs\Authnetcim\Model\Method $method */
+            /** @var Method $method */
             $this->method = $this->methodFactory->getMethodInstance($methodCode);
             $this->method->setStore($this->getStoreId());
         }
@@ -117,7 +132,7 @@ abstract class AbstractRequestHandler
      * Get Authorize.Net Accept Hosted API endpoint URL for the current configuration.
      *
      * @return string
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     protected function getEndpoint(): string
     {
@@ -131,36 +146,36 @@ abstract class AbstractRequestHandler
     /**
      * Get hosted profile page request token
      *
-     * @throws \Magento\Framework\Exception\InputException
-     * @throws \Magento\Framework\Exception\StateException
-     * @throws \Magento\Payment\Gateway\Command\CommandException
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws InputException
+     * @throws StateException
+     * @throws CommandException
+     * @throws LocalizedException
      */
     public function getToken(): string
     {
         $method = $this->getMethod();
 
-        /** @var \ParadoxLabs\Authnetcim\Model\Gateway $gateway */
+        /** @var Gateway $gateway */
         $gateway = $method->gateway();
 
         // Get payment form token
         $customCommunicatorUrl = $this->method->getConfigData('hosted_custom_communicator_url');
-        $communicatorUrl = $customCommunicatorUrl ?: $this->urlBuilder->getUrl('authnetcim/hosted/communicator');
+        $communicatorUrl       = $customCommunicatorUrl ?: $this->urlBuilder->getUrl('authnetcim/hosted/communicator');
 
-        $allowSaveOptIn  = !empty($this->getCustomerId()) ? (bool)$method->getConfigData('allow_unsaved') : false;
+        $allowSaveOptIn = !empty($this->getCustomerId()) ? (bool)$method->getConfigData('allow_unsaved') : false;
         $gateway->setParameter('hostedProfileIFrameCommunicatorUrl', $communicatorUrl);
         $gateway->setParameter('hostedProfileHeadingBgColor', $method->getConfigData('accent_color'));
         $gateway->setParameter('hostedPaymentAddProfile', $allowSaveOptIn);
         $gateway->setParameter('hostedPaymentValidateCaptcha', (bool)$method->getConfigData('enable_hosted_captcha'));
         $gateway->setParameter('customerProfileId', $this->getCustomerProfileId());
 
-        if ($this->getMethodCode() === \ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider::CODE) {
+        if ($this->getMethodCode() === ConfigProvider::CODE) {
             $gateway->setParameter('hostedPaymentCardCodeRequired', false);
             $gateway->setParameter('hostedPaymentShowCreditCard', false);
             $gateway->setParameter('hostedPaymentShowBankAccount', true);
         }
 
-        /** @var \Magento\Quote\Model\Quote $quote */
+        /** @var Quote $quote */
         $quote = $this->getQuote();
 
         $gateway->setParameter('merchantCustomerId', $this->getCustomerId());
@@ -178,11 +193,11 @@ abstract class AbstractRequestHandler
 
         if (!empty($response['messages']['message']['text'])
             && $response['messages']['message']['text'] !== 'Successful.') {
-            throw new \Magento\Framework\Exception\InputException(__($response['messages']['message']['text']));
+            throw new InputException(__($response['messages']['message']['text']));
         }
 
         if (empty($response['token'])) {
-            throw new \Magento\Framework\Exception\StateException(__('Unable to initialize payment form.'));
+            throw new StateException(__('Unable to initialize payment form.'));
         }
 
         return $response['token'];
@@ -191,10 +206,10 @@ abstract class AbstractRequestHandler
     /**
      * Get/reserve an order ID for the quote
      *
-     * @param \Magento\Quote\Model\Quote $quote
+     * @param Quote $quote
      * @return string
      */
-    public function getOrderIncrementId(\Magento\Quote\Model\Quote $quote): string
+    public function getOrderIncrementId(Quote $quote): string
     {
         if (empty($quote->getReservedOrderId())) {
             $quote->reserveOrderId();
@@ -207,12 +222,12 @@ abstract class AbstractRequestHandler
     /**
      * Set shipping address parameters on the Gateway
      *
-     * @param \ParadoxLabs\Authnetcim\Model\Gateway $gateway
+     * @param Gateway $gateway
      * @return void
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Payment\Gateway\Command\CommandException
+     * @throws LocalizedException
+     * @throws CommandException
      */
-    protected function setShippingParams(\ParadoxLabs\Authnetcim\Model\Gateway $gateway): void
+    protected function setShippingParams(Gateway $gateway): void
     {
         $quote    = $this->getQuote();
         $shipping = $quote->getShippingAddress();
@@ -258,9 +273,9 @@ abstract class AbstractRequestHandler
     /**
      * Get the active quote.
      *
-     * @return \Magento\Quote\Api\Data\CartInterface
+     * @return CartInterface
      */
-    abstract protected function getQuote(): \Magento\Quote\Api\Data\CartInterface;
+    abstract protected function getQuote(): CartInterface;
 
     /**
      * Get the current store ID, for config loading.
@@ -279,8 +294,8 @@ abstract class AbstractRequestHandler
     /**
      * Set billing address parameters on the Gateway
      *
-     * @param \ParadoxLabs\Authnetcim\Model\Gateway $gateway
+     * @param Gateway $gateway
      * @return void
      */
-    abstract protected function setBillingParams(\ParadoxLabs\Authnetcim\Model\Gateway $gateway): void;
+    abstract protected function setBillingParams(Gateway $gateway): void;
 }

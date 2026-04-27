@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,12 +15,22 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Block\Adminhtml\Config;
 
-class AcceptjsTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
+use ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest;
+use ParadoxLabs\Authnetcim\Model\Method;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Backend\Block\Template\Context;
+use Magento\Store\Model\StoreFactory;
+use Magento\Store\Model\WebsiteFactory;
+use ParadoxLabs\TokenBase\Helper\Data;
+use ParadoxLabs\TokenBase\Model\Method\Factory;
+
+class AcceptjsTest extends ApiTest
 {
     /**
      * @var string
@@ -28,29 +38,24 @@ class AcceptjsTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
     protected $code = 'authnetcim';
 
     /**
-     * @var \ParadoxLabs\TokenBase\Model\Method\Factory
-     */
-    protected $methodFactory;
-
-    /**
-     * @var \ParadoxLabs\Authnetcim\Model\Method
+     * @var Method
      */
     protected $method;
 
     /**
-     * @param \Magento\Backend\Block\Template\Context $context
-     * @param \ParadoxLabs\TokenBase\Helper\Data $helper
-     * @param \Magento\Store\Model\StoreFactory $storeFactory
-     * @param \Magento\Store\Model\WebsiteFactory $websiteFactory
-     * @param \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory
+     * @param Context $context
+     * @param Data $helper
+     * @param StoreFactory $storeFactory
+     * @param WebsiteFactory $websiteFactory
+     * @param Factory $methodFactory
      * @param array $data
      */
     public function __construct(
-        \Magento\Backend\Block\Template\Context $context,
-        \ParadoxLabs\TokenBase\Helper\Data $helper,
-        \Magento\Store\Model\StoreFactory $storeFactory,
-        \Magento\Store\Model\WebsiteFactory $websiteFactory,
-        \ParadoxLabs\TokenBase\Model\Method\Factory $methodFactory,
+        Context $context,
+        Data $helper,
+        StoreFactory $storeFactory,
+        WebsiteFactory $websiteFactory,
+        Factory $methodFactory,
         array $data = []
     ) {
         $this->setTemplate('ParadoxLabs_Authnetcim::config/acceptjs-test.phtml');
@@ -58,12 +63,12 @@ class AcceptjsTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
     }
 
     /**
-     * @return \ParadoxLabs\Authnetcim\Model\Method
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @return Method
+     * @throws LocalizedException
      */
     public function getMethodInstance()
     {
-        /** @var \ParadoxLabs\Authnetcim\Model\Method $method */
+        /** @var Method $method */
         $this->method = $this->methodFactory->getMethodInstance($this->code);
         $this->method->setStore($this->getStoreId());
 

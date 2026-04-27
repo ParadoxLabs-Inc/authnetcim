@@ -1,4 +1,6 @@
-<?php /** @var \Magento\Framework\View\Element\Template $block */ ?>
+<?php /** @var \Magento\Framework\View\Element\Template $block */
+
+use Magento\Framework\View\Helper\SecureHtmlRenderer; ?>
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -50,7 +52,7 @@
             var \$ = jQuery = req = requirejs = require = depend = function() {
             }
         JS; ?>
-        <?php if (isset($secureRenderer) && $secureRenderer instanceof \Magento\Framework\View\Helper\SecureHtmlRenderer): ?>
+        <?php if (isset($secureRenderer) && $secureRenderer instanceof SecureHtmlRenderer): ?>
             <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $inlineScript, false) ?>
             <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $mockJS, false) ?>
         <?php else: ?>

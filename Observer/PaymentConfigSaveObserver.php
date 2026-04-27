@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,58 +15,46 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Observer;
 
-class PaymentConfigSaveObserver implements \Magento\Framework\Event\ObserverInterface
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Customer\Model\Customer;
+use Magento\Eav\Api\AttributeRepositoryInterface;
+use Magento\Eav\Model\Entity\Attribute;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\Event\Observer;
+use Magento\Framework\Event\ObserverInterface;
+use ParadoxLabs\Authnetcim\Helper\Data;
+use Throwable;
+
+class PaymentConfigSaveObserver implements ObserverInterface
 {
-    /**
-     * @var \Magento\Framework\App\RequestInterface
-     */
-    private $request;
-
-    /**
-     * @var \Magento\Eav\Api\AttributeRepositoryInterface
-     */
-    private $attributeRepository;
-
-    /**
-     * @var \Magento\Framework\App\ResourceConnection
-     */
-    private $resourceConnection;
-
-    /**
-     * @var \ParadoxLabs\Authnetcim\Helper\Data
-     */
-    private $helper;
-
     /**
      * PaymentConfigSaveObserver constructor.
      *
-     * @param \Magento\Framework\App\RequestInterface $request
-     * @param \Magento\Eav\Api\AttributeRepositoryInterface $attributeRepository
-     * @param \Magento\Framework\App\ResourceConnection $resourceConnection
-     * @param \ParadoxLabs\Authnetcim\Helper\Data $helper
+     * @param RequestInterface $request
+     * @param AttributeRepositoryInterface $attributeRepository
+     * @param ResourceConnection $resourceConnection
+     * @param Data $helper
      */
     public function __construct(
-        \Magento\Framework\App\RequestInterface $request,
-        \Magento\Eav\Api\AttributeRepositoryInterface $attributeRepository,
-        \Magento\Framework\App\ResourceConnection $resourceConnection,
-        \ParadoxLabs\Authnetcim\Helper\Data $helper
+        private readonly RequestInterface $request,
+        private readonly AttributeRepositoryInterface $attributeRepository,
+        private readonly ResourceConnection $resourceConnection,
+        private readonly Data $helper
     ) {
-        $this->request = $request;
-        $this->attributeRepository = $attributeRepository;
-        $this->resourceConnection = $resourceConnection;
-        $this->helper = $helper;
     }
 
     /**
-     * @param \Magento\Framework\Event\Observer $observer
+     * @param Observer $observer
      * @return void
      */
-    public function execute(\Magento\Framework\Event\Observer $observer)
+    public function execute(Observer $observer)
     {
         $changedPaths = $observer->getData('changed_paths');
 
@@ -83,8 +71,8 @@ class PaymentConfigSaveObserver implements \Magento\Framework\Event\ObserverInte
         ];
 
         foreach ($methodCodes as $methodCode) {
-            if (isset($groups[$methodCode]['fields']['login']['value'])
-                && $groups[$methodCode]['fields']['login']['value'] !== '******'
+            if (isset($groups[ $methodCode ]['fields']['login']['value'])
+                && $groups[ $methodCode ]['fields']['login']['value'] !== '******'
                 && in_array('payment/' . $methodCode . '/login', (array)$changedPaths, true)) {
                 /**
                  * Value changed -- purge any cached authnetcim_profile_id values to be safe and avoid potential errors.
@@ -95,7 +83,7 @@ class PaymentConfigSaveObserver implements \Magento\Framework\Event\ObserverInte
                  */
                 try {
                     $this->purgeCachedProfileIds();
-                } catch (\Exception $e) {
+                } catch (Throwable $e) {
                     $this->helper->log(
                         'authnetcim',
                         __('Error when purging cached authnetcim_profile_id values: %1', $e->getMessage())
@@ -111,17 +99,17 @@ class PaymentConfigSaveObserver implements \Magento\Framework\Event\ObserverInte
      * Remove any stored customer_entity_varchar -> authnetcim_profile_id values.
      *
      * @return void
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws NoSuchEntityException
      */
     protected function purgeCachedProfileIds()
     {
-        /** @var \Magento\Eav\Model\Entity\Attribute $attribute */
+        /** @var Attribute $attribute */
         $attribute = $this->attributeRepository->get(
-            \Magento\Customer\Model\Customer::ENTITY,
+            Customer::ENTITY,
             'authnetcim_profile_id'
         );
 
-        if ($attribute instanceof \Magento\Eav\Model\Entity\Attribute
+        if ($attribute instanceof Attribute
             && $attribute->getAttributeCode() === 'authnetcim_profile_id') {
             $db = $this->resourceConnection->getConnection();
             $affected = $db->delete(

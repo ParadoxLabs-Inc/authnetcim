@@ -1,9 +1,11 @@
 <?php
 /** @var \ParadoxLabs\Authnetcim\Block\Form\Cc $block */
 
-$code           = $block->escapeHtmlAttr($block->getMethodCode());
-$image          = $block->getBrandingImage();
-$storedCards    = $block->getStoredCards();
+use Magento\Framework\View\Helper\SecureHtmlRenderer;
+
+$code        = $block->escapeHtmlAttr($block->getMethodCode());
+$image       = $block->getBrandingImage();
+$storedCards = $block->getStoredCards();
 
 $paramUrl = $block->getUrl('authnetcim/hosted/getPaymentParams');
 if ($block->getTokenbaseMethod()->getConfigData('payment_action') === 'order') {
@@ -101,7 +103,7 @@ if ($block->getTokenbaseMethod()->getConfigData('payment_action') === 'order') {
     }
 CSS;
 ?>
-<?php if (isset($secureRenderer) && $secureRenderer instanceof \Magento\Framework\View\Helper\SecureHtmlRenderer): ?>
+<?php if (isset($secureRenderer) && $secureRenderer instanceof SecureHtmlRenderer): ?>
     <?= /* @noEscape */ $secureRenderer->renderTag('style', [], $inlineStyle, false) ?>
     <?= /* @noEscape */ $secureRenderer->renderStyleAsTag('display:none', '#payment_form_' . $code) ?>
     <?= /* @noEscape */ $secureRenderer->renderStyleAsTag('display:none', '#' . $code . '_warning') ?>

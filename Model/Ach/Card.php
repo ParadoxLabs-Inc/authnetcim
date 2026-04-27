@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright © 2015-present ParadoxLabs, Inc.
  *
@@ -15,10 +15,16 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Model\Ach;
+
+use Magento\Payment\Model\Info;
+use Magento\Framework\Phrase;
+use Magento\Payment\Model\InfoInterface;
+use ParadoxLabs\TokenBase\Api\GatewayInterface;
 
 /**
  * Authorize.Net CIM ACH card model
@@ -28,16 +34,15 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
     /**
      * Set card payment data from a quote or order payment instance.
      *
-     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param InfoInterface $payment
      * @return $this
      */
-    public function importPaymentInfo(\Magento\Payment\Model\InfoInterface $payment)
+    public function importPaymentInfo(InfoInterface $payment)
     {
         parent::importPaymentInfo($payment);
 
-        if ($payment instanceof \Magento\Payment\Model\InfoInterface) {
-            /** @var \Magento\Payment\Model\Info $payment */
-
+        if ($payment instanceof InfoInterface) {
+            /** @var Info $payment */
             if (!empty($payment->getData('echeck_account_name'))) {
                 $this->setAdditional('echeck_account_name', $payment->getData('echeck_account_name'));
             }
@@ -72,7 +77,7 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
      * Get card label (formatted number).
      *
      * @param bool $includeType
-     * @return string|\Magento\Framework\Phrase
+     * @return string|Phrase
      */
     public function getLabel($includeType = true)
     {
@@ -86,12 +91,12 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
     /**
      * On card save, set payment data to the gateway. (Broken out for extensibility)
      *
-     * @param \ParadoxLabs\TokenBase\Api\GatewayInterface $gateway
+     * @param GatewayInterface $gateway
      * @return $this
      */
-    protected function setPaymentInfoOnCreate(\ParadoxLabs\TokenBase\Api\GatewayInterface $gateway)
+    protected function setPaymentInfoOnCreate(GatewayInterface $gateway)
     {
-        /** @var \Magento\Payment\Model\Info $info */
+        /** @var Info $info */
         $info = $this->getInfoInstance();
 
         if ($info->getData('echeck_account_type') !== 'businessChecking') {
@@ -112,12 +117,12 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
     /**
      * On card update, set payment data to the gateway. (Broken out for extensibility)
      *
-     * @param \ParadoxLabs\TokenBase\Api\GatewayInterface $gateway
+     * @param GatewayInterface $gateway
      * @return $this
      */
-    protected function setPaymentInfoOnUpdate(\ParadoxLabs\TokenBase\Api\GatewayInterface $gateway)
+    protected function setPaymentInfoOnUpdate(GatewayInterface $gateway)
     {
-        /** @var \Magento\Payment\Model\Info $info */
+        /** @var Info $info */
         $info = $this->getInfoInstance();
 
         if ($info->getData('echeck_account_type') !== 'businessChecking') {

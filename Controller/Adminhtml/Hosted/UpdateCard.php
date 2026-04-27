@@ -15,56 +15,49 @@
  * limitations under the License.
  *
  * Need help? Try our knowledgebase and support system:
+ *
  * @link https://support.paradoxlabs.com
  */
 
 namespace ParadoxLabs\Authnetcim\Controller\Adminhtml\Hosted;
 
-use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Api\Data\CustomerInterface;
+use Magento\Framework\Data\Form\FormKey\Validator;
+use Magento\Framework\Registry;
+use ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\BackendRequest;
 
 class UpdateCard extends GetNewCard
 {
     /**
-     * @var \Magento\Framework\Registry
-     */
-    protected $registry;
-
-    /**
-     * @var \Magento\Customer\Api\CustomerRepositoryInterface
-     */
-    protected $customerRepository;
-
-    /**
      * UpdateCard constructor.
      *
-     * @param \Magento\Backend\App\Action\Context $context
-     * @param \Magento\Framework\Data\Form\FormKey\Validator $formKey
-     * @param \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\BackendRequest $hostedForm
-     * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
+     * @param Context $context
+     * @param Validator $formKey
+     * @param BackendRequest $hostedForm
+     * @param Registry $registry
+     * @param CustomerRepositoryInterface $customerRepository
      */
     public function __construct(
-        Action\Context $context,
-        \Magento\Framework\Data\Form\FormKey\Validator $formKey,
-        \ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\BackendRequest $hostedForm,
-        \Magento\Framework\Registry $registry,
-        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
+        Context $context,
+        Validator $formKey,
+        BackendRequest $hostedForm,
+        protected readonly Registry $registry,
+        protected readonly CustomerRepositoryInterface $customerRepository
     ) {
         parent::__construct(
             $context,
             $formKey,
             $hostedForm
         );
-
-        $this->registry = $registry;
-        $this->customerRepository = $customerRepository;
     }
 
     /**
      * Execute action based on request and return result
      *
-     * @return \Magento\Framework\Controller\ResultInterface
+     * @return ResultInterface
      */
     public function execute()
     {
@@ -76,7 +69,7 @@ class UpdateCard extends GetNewCard
     /**
      * Get current customer model.
      *
-     * @return \Magento\Customer\Api\Data\CustomerInterface
+     * @return CustomerInterface
      */
     protected function getCustomer(): CustomerInterface
     {
