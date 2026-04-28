@@ -39,7 +39,7 @@ class Gateway extends \ParadoxLabs\Authnetcim\Model\Gateway
     /**
      * Turn transaction results and directResponse into a usable object.
      *
-     * @param string $transactionResult
+     * @param array $transactionResult
      * @return Response
      * @throws LocalizedException
      * @throws LocalizedException

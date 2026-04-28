@@ -97,7 +97,9 @@ class Method extends AbstractMethod
             $this->setCard($this->getCard());
 
             return $this->getCard();
-        } elseif ($payment->hasData('tokenbase_id') !== true
+        }
+
+        if ($payment->hasData('tokenbase_id') !== true
             && $payment->getOrder()
             && $payment->getOrder()->getExtCustomerId() != '') {
             $this->log(sprintf('loadOrCreateCard(%s %s)', $payment::class, $payment->getId()));

@@ -101,8 +101,8 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
 
         if (!empty($profileId)) {
             $this->setProfileId($profileId);
-        } elseif ((int)$payment->getAdditionalInformation('profile_id') > 0) {
-            $this->setProfileId((int)$payment->getAdditionalInformation('profile_id'));
+        } elseif (!empty($payment->getAdditionalInformation('profile_id'))) {
+            $this->setProfileId((string)$payment->getAdditionalInformation('profile_id'));
         } else {
             $this->createCustomerProfile();
         }

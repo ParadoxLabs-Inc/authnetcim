@@ -309,7 +309,7 @@ class WebhookProcessor
         }
 
         $order->addCommentToStatusHistory(
-            __(
+            (string)__(
                 'Transaction "%1" approved via Authorize.net webhook.',
                 $txnDetails->getTransactionId()
             ),
@@ -350,7 +350,7 @@ class WebhookProcessor
         $order->cancel();
 
         $order->addCommentToStatusHistory(
-            __(
+            (string)__(
                 'Transaction "%1" declined via Authorize.net webhook.',
                 $txnDetails->getTransactionId()
             ),
@@ -385,7 +385,7 @@ class WebhookProcessor
             );
 
             $order->addCommentToStatusHistory(
-                __(
+                (string)__(
                     'Authorize.net webhook reports $%1 was captured in transaction ID %2, but the total due is $%3. The'
                     . ' order must be invoiced manually to reconcile records.',
                     $txnDetails->getData('amount_settled'),
@@ -438,7 +438,7 @@ class WebhookProcessor
         );
 
         $order->addCommentToStatusHistory(
-            __(
+            (string)__(
                 '$%1 captured via Authorize.net webhook. Transaction ID: "%2"',
                 $txnDetails->getData('amount_settled'),
                 $txnDetails->getTransactionId()
@@ -481,7 +481,7 @@ class WebhookProcessor
             );
 
             $order->addCommentToStatusHistory(
-                __(
+                (string)__(
                     'Authorize.net webhook reports $%1 was refunded in transaction ID "%2", but the amount paid is $%3.'
                     . ' The order must be refunded manually to reconcile records.',
                     $txnDetails->getData('amount'),
@@ -510,7 +510,7 @@ class WebhookProcessor
         );
 
         $order->addCommentToStatusHistory(
-            __(
+            (string)__(
                 '$%1 refunded via Authorize.net webhook. Transaction ID: "%2"',
                 $txnDetails->getData('amount'),
                 $txnDetails->getTransactionId()

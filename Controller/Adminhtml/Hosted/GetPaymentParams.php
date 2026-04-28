@@ -136,7 +136,7 @@ class GetPaymentParams extends Action implements CsrfAwareActionInterface, HttpP
 
         if ($customerId > 0) {
             try {
-                $customer = $this->customerRepository->getById($customerId);
+                $customer = $this->customerRepository->getById((int)$customerId);
 
                 $this->registry->register('current_customer', $customer);
             } catch (NoSuchEntityException) {

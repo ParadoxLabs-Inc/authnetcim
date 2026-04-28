@@ -84,7 +84,7 @@ class Version extends Value implements
                 $this->moduleDir->getDir('ParadoxLabs_Authnetcim') . '/composer.json'
             );
 
-            $composer = json_decode((string)$composerFile, 1);
+            $composer = json_decode((string)$composerFile, true);
 
             if (isset($composer['version'], $composer['time'])) {
                 return $composer['version'] . ' (' . $composer['time'] . ')';

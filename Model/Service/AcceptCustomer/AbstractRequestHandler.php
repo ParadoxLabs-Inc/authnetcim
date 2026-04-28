@@ -247,7 +247,7 @@ abstract class AbstractRequestHandler
             /** @var Card $card */
             $card = $this->cardFactory->create();
             $card->setMethod($this->getMethodCode());
-            $card->setCustomerId($this->getCustomerId());
+            $card->setCustomerId($this->getCustomerId() ? (int)$this->getCustomerId() : null);
             $card->setCustomerEmail($this->getEmail());
             $card->setProfileId($this->getCustomerProfileId());
             $card->setActive(true);
