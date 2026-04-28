@@ -11,11 +11,11 @@ use Magento\Framework\View\Helper\SecureHtmlRenderer; ?>
         'Magento_Ui/js/modal/alert',
         'mage/translate'
     ], function(\$, alert) {
-        jQuery('#{$block->escapeJs($block->getButtonId())}').on('click', function() {
-            jQuery('#{$block->escapeJs($block->getButtonId())}_results').hide();
+        jQuery('#{$escaper->escapeJs($block->getButtonId())}').on('click', function() {
+            jQuery('#{$escaper->escapeJs($block->getButtonId())}_results').hide();
             jQuery('body').trigger('processStart');
             jQuery.post({
-                url: '{$block->escapeJsQuote($block->getAjaxUrl())}',
+                url: '{$escaper->escapeJsQuote($block->getAjaxUrl())}',
                 data: {
                     apiLoginId: jQuery('input[name="groups[{$code}][fields][login][value]"]').val(),
                     transactionKey: jQuery('input[name="groups[{$code}][fields][trans_key][value]"]').val(),
@@ -30,7 +30,7 @@ use Magento\Framework\View\Helper\SecureHtmlRenderer; ?>
                     jQuery('body').trigger('processStop');
                 },
                 success: function(response) {
-                    jQuery('#{$block->escapeJs($block->getButtonId())}_results').html(response.message).show();
+                    jQuery('#{$escaper->escapeJs($block->getButtonId())}_results').html(response.message).show();
                 },
                 error: function(jqXHR, status, error) {
                     var message = jQuery.mage.__('An error occurred. Please try again.');
@@ -64,4 +64,4 @@ JS;
 <?php endif; ?>
 
 <?= /* @noEscape */ $block->getButtonHtml() ?>
-<div class="testSuccess" id="<?= $block->escapeJs($block->getButtonId()) ?>_results"></div>
+<div class="testSuccess" id="<?= $escaper->escapeJs($block->getButtonId()) ?>_results"></div>

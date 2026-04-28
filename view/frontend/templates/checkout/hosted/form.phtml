@@ -1,9 +1,10 @@
 <?php
 /** @var \ParadoxLabs\Authnetcim\Block\Form\Cc $block */
+/** @var \Magento\Framework\Escaper $escaper */
 
 use Magento\Framework\View\Helper\SecureHtmlRenderer;
 
-$code        = $block->escapeHtmlAttr($block->getMethodCode());
+$code        = $escaper->escapeHtmlAttr($block->getMethodCode());
 $image       = $block->getBrandingImage();
 $storedCards = $block->getStoredCards();
 ?>
@@ -13,23 +14,23 @@ $storedCards = $block->getStoredCards();
 
     <?php if ($image): ?>
         <div class="sorter">
-            <img src="<?= $block->escapeUrl($image); ?>" />
+            <img src="<?= $escaper->escapeUrl($image); ?>" />
         </div>
     <?php endif; ?>
 
     <?php if ($block->haveStoredCards()): ?>
         <div class="field">
-            <label for="<?= /* @noEscape */ $code ?>-card-id" class="label"><span><?= $block->escapeHtml(__('Payment Information')) ?></span></label>
+            <label for="<?= /* @noEscape */ $code ?>-card-id" class="label"><span><?= $escaper->escapeHtml(__('Payment Information')) ?></span></label>
             <div class="input-box">
                 <select id="<?= /* @noEscape */ $code ?>-card-id" name="payment[card_id]">
                     <?php /** @var \ParadoxLabs\TokenBase\Model\Card $card */ ?>
                     <?php foreach ($storedCards as $card): ?>
                         <?php $card = $card->getTypeInstance(); ?>
-                        <option value="<?= $block->escapeHtmlAttr($card->getHash()) ?>" <?php if ($card->getId() == $block->getInfoData('tokenbase_id') || count($storedCards) == 1): ?>selected="selected"<?php endif; ?> data-type="<?= $block->escapeHtmlAttr($card->getType()) ?>">
-                            <?= $block->escapeHtml($card->getLabel()) ?>
+                        <option value="<?= $escaper->escapeHtmlAttr($card->getHash()) ?>" <?php if ($card->getId() == $block->getInfoData('tokenbase_id') || count($storedCards) == 1): ?>selected="selected"<?php endif; ?> data-type="<?= $escaper->escapeHtmlAttr($card->getType()) ?>">
+                            <?= $escaper->escapeHtml($card->getLabel()) ?>
                         </option>
                     <?php endforeach; ?>
-                    <option value=''><?= $block->escapeHtml(__('Add new card')) ?></option>
+                    <option value=''><?= $escaper->escapeHtml(__('Add new card')) ?></option>
                 </select>
             </div>
         </div>
@@ -43,16 +44,16 @@ $storedCards = $block->getStoredCards();
 
     <?php if ($block->hasVerification()): ?>
         <div class="field cvv required <?php if ($block->getMethod()->getConfigData('require_ccv') == 0): ?>hide-if-card-selected<?php endif; ?>">
-            <label for="<?= /* @noEscape */ $code ?>-cc-cid" class="label"><span><?= $block->escapeHtml(__('Card Verification Number')) ?></span></label>
+            <label for="<?= /* @noEscape */ $code ?>-cc-cid" class="label"><span><?= $escaper->escapeHtml(__('Card Verification Number')) ?></span></label>
             <div class="control _with-tooltip">
                 <input type="hidden" name="payment[cc_type]" id="<?= /* @noEscape */ $code ?>-cc-type" value="" />
-                <input type="text" title="<?= $block->escapeHtmlAttr(__('Card Verification Number')) ?>" class="input-text cvv" id="<?= /* @noEscape */ $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true, "validate-cc-cvn":"#<?= /* @noEscape */ $code ?>-cc-type"}' autocomplete="cc-csc" maxlength="4" />
+                <input type="text" title="<?= $escaper->escapeHtmlAttr(__('Card Verification Number')) ?>" class="input-text cvv" id="<?= /* @noEscape */ $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true, "validate-cc-cvn":"#<?= /* @noEscape */ $code ?>-cc-type"}' autocomplete="cc-csc" maxlength="4" />
                 <div class="field-tooltip tooltip note toggle">
                     <span class="field-tooltip-action tooltip-toggle action-cvv" tabindex="0" data-toggle="dropdown">
-                        <span><?= $block->escapeHtml(__('What is this?')) ?></span>
+                        <span><?= $escaper->escapeHtml(__('What is this?')) ?></span>
                     </span>
                     <div class="tooltip-content" data-target="dropdown" aria-hidden="true">
-                        <img src="<?= $block->escapeUrl($block->getViewFileUrl('Magento_Checkout::cvv.png')) ?>" alt="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" title="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" />
+                        <img src="<?= $escaper->escapeUrl($block->getViewFileUrl('Magento_Checkout::cvv.png')) ?>" alt="<?= $escaper->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" title="<?= $escaper->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" />
                     </div>
                 </div>
             </div>
@@ -65,11 +66,11 @@ $storedCards = $block->getStoredCards();
             <div class="control">
                 <?php if ($block->getMethod()->getConfigData('allow_unsaved')): ?>
                     <input type="hidden" name="payment[save]" value="0" />
-                    <input type="checkbox" title="<?= $block->escapeHtmlAttr(__('Save for next time')) ?>" class="input-checkbox" id="<?= /* @noEscape */ $code ?>_save" name="payment[save]" value="1" <?php if ($block->getMethod()->getConfigData('savecard_opt_out') && $block->getInfoData('save') !== 0): ?>checked="checked"<?php endif; ?> />
-                    <label for="<?= /* @noEscape */ $code ?>_save"><?= $block->escapeHtml(__('Save for next time')) ?></label>
+                    <input type="checkbox" title="<?= $escaper->escapeHtmlAttr(__('Save for next time')) ?>" class="input-checkbox" id="<?= /* @noEscape */ $code ?>_save" name="payment[save]" value="1" <?php if ($block->getMethod()->getConfigData('savecard_opt_out') && $block->getInfoData('save') !== 0): ?>checked="checked"<?php endif; ?> />
+                    <label for="<?= /* @noEscape */ $code ?>_save"><?= $escaper->escapeHtml(__('Save for next time')) ?></label>
                 <?php else: ?>
                     <input type="hidden" name="payment[save]" value="1" />
-                    <label class="label" for="<?= /* @noEscape */ $code ?>_save"><?= $block->escapeHtml(__('For your convenience, this data will be stored securely by our payment processor.')) ?></label>
+                    <label class="label" for="<?= /* @noEscape */ $code ?>_save"><?= $escaper->escapeHtml(__('For your convenience, this data will be stored securely by our payment processor.')) ?></label>
                 <?php endif; ?>
             </div>
         </div>
@@ -84,8 +85,8 @@ $storedCards = $block->getStoredCards();
             "authnetcimHostedForm": {
                 "method": "<?= /* @noEscape */ $code ?>",
                 "target": "<?= /* @noEscape */ $code ?>_iframe",
-                "paramUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getProfileParams', ['source' => 'checkout'])) ?>",
-                "newCardUrl": "<?= $block->escapeJs($block->getUrl('authnetcim/hosted/getNewCard')) ?>"
+                "paramUrl": "<?= $escaper->escapeJs($block->getUrl('authnetcim/hosted/getProfileParams', ['source' => 'checkout'])) ?>",
+                "newCardUrl": "<?= $escaper->escapeJs($block->getUrl('authnetcim/hosted/getNewCard')) ?>"
             }
         }
     }

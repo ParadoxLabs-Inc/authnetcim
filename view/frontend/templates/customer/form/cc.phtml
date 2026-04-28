@@ -1,25 +1,26 @@
 <?php
 /** @var \ParadoxLabs\Authnetcim\Block\Customer\Form\Cc $block */
+/** @var \Magento\Framework\Escaper $escaper */
 
 use Magento\Customer\Helper\Address;
 use Magento\Directory\Helper\Data;
 
 ?>
-<?php $code = $block->escapeHtmlAttr($block->getCode()); ?>
+<?php $code = $escaper->escapeHtmlAttr($block->getCode()); ?>
 
 <div class="block-title">
     <h2>
         <?php if ($block->isEdit()): ?>
-            <?= $block->escapeHtml(__('Editing %1', $block->getCard()->getLabel())); ?>
+            <?= $escaper->escapeHtml(__('Editing %1', $block->getCard()->getLabel())); ?>
         <?php else: ?>
-            <?= $block->escapeHtml(__('Add A Credit Card')); ?>
+            <?= $escaper->escapeHtml(__('Add A Credit Card')); ?>
         <?php endif; ?>
     </h2>
 </div>
 
-<form action="<?= $block->escapeHtmlAttr($block->getAction()); ?>" method="post" id="form-validate" class="checkout-payment-method" data-hasrequired="<?= $block->escapeHtmlAttr(__('* Required Fields')) ?>">
+<form action="<?= $escaper->escapeHtmlAttr($block->getAction()); ?>" method="post" id="form-validate" class="checkout-payment-method" data-hasrequired="<?= $escaper->escapeHtmlAttr(__('* Required Fields')) ?>">
     <?= /* @noEscape */ $block->getBlockHtml('formkey'); ?>
-    <input type="hidden" name="id" value="<?= $block->getCard()->getId() ? $block->escapeHtmlAttr($block->getCard()->getHash()) : ''; ?>" />
+    <input type="hidden" name="id" value="<?= $block->getCard()->getId() ? $escaper->escapeHtmlAttr($block->getCard()->getHash()) : ''; ?>" />
     <input type="hidden" name="method" value="<?= /* @noEscape */ $code; ?>" />
     <?php if ($block->getMethod()->isAcceptJsEnabled() === true): ?>
         <input type="hidden" name="payment[acceptjs_key]" id="<?= /* @noEscape */ $code ?>-acceptjs-key" value="" />
@@ -30,41 +31,41 @@ use Magento\Directory\Helper\Data;
         <?php endif; ?>
     <?php endif; ?>
     <fieldset class="fieldset">
-        <legend class="legend"><span><?= $block->escapeHtml(__('Cardholder Information')) ?></span></legend><br>
+        <legend class="legend"><span><?= $escaper->escapeHtml(__('Cardholder Information')) ?></span></legend><br>
 
         <?= /* @noEscape */ $block->getNameBlockHtml() ?>
         <div class="field company">
-            <label class="label" for="company"><span><?= $block->escapeHtml(__('Company')) ?></span></label>
+            <label class="label" for="company"><span><?= $escaper->escapeHtml(__('Company')) ?></span></label>
             <div class="control">
-                <input type="text" name="billing[company]" id="company" title="<?= $block->escapeHtmlAttr(__('Company')) ?>" value="<?= $block->escapeHtmlAttr($block->getAddress()->getCompany()) ?>" class="input-text <?= $block->escapeHtmlAttr($this->helper(Address::class)->getAttributeValidationClass('company')) ?>">
+                <input type="text" name="billing[company]" id="company" title="<?= $escaper->escapeHtmlAttr(__('Company')) ?>" value="<?= $escaper->escapeHtmlAttr($block->getAddress()->getCompany()) ?>" class="input-text <?= $escaper->escapeHtmlAttr($this->helper(Address::class)->getAttributeValidationClass('company')) ?>">
             </div>
         </div>
         <?php $phoneValidation = $this->helper(Address::class)->getAttributeValidationClass('telephone'); ?>
         <div class="field telephone<?php if (strpos($phoneValidation, 'required') !== false): ?> required<?php endif; ?>">
-            <label class="label" for="telephone"><span><?= $block->escapeHtml(__('Phone Number')) ?></span></label>
+            <label class="label" for="telephone"><span><?= $escaper->escapeHtml(__('Phone Number')) ?></span></label>
             <div class="control">
-                <input type="text" name="billing[telephone]" value="<?= $block->escapeHtmlAttr($block->getAddress()->getTelephone()) ?>" title="<?= $block->escapeHtmlAttr(__('Phone Number')) ?>" class="input-text <?= $block->escapeHtmlAttr($phoneValidation) ?>" id="telephone">
+                <input type="text" name="billing[telephone]" value="<?= $escaper->escapeHtmlAttr($block->getAddress()->getTelephone()) ?>" title="<?= $escaper->escapeHtmlAttr(__('Phone Number')) ?>" class="input-text <?= $escaper->escapeHtmlAttr($phoneValidation) ?>" id="telephone">
             </div>
         </div>
     </fieldset>
     <fieldset class="fieldset">
-        <legend class="legend"><span><?= $block->escapeHtml(__('Cardholder Address')) ?></span></legend><br>
+        <legend class="legend"><span><?= $escaper->escapeHtml(__('Cardholder Address')) ?></span></legend><br>
 
-        <?php $_streetValidationClass = $block->escapeHtmlAttr($this->helper(Address::class)->getAttributeValidationClass('street')); ?>
+        <?php $_streetValidationClass = $escaper->escapeHtmlAttr($this->helper(Address::class)->getAttributeValidationClass('street')); ?>
         <div class="field street required">
-            <label for="street" class="label"><span><?= $block->escapeHtml(__('Street')) ?></span></label>
+            <label for="street" class="label"><span><?= $escaper->escapeHtml(__('Street')) ?></span></label>
             <div class="control">
-                <input type="text" name="billing[street][]" value="<?= $block->escapeHtmlAttr($block->getStreetLine(1)) ?>" title="<?= $block->escapeHtmlAttr(__('Street Address')) ?>" id="street" class="input-text <?= /* @noEscape */ $_streetValidationClass ?>"  />
+                <input type="text" name="billing[street][]" value="<?= $escaper->escapeHtmlAttr($block->getStreetLine(1)) ?>" title="<?= $escaper->escapeHtmlAttr(__('Street Address')) ?>" id="street" class="input-text <?= /* @noEscape */ $_streetValidationClass ?>"  />
                 <div class="nested">
                     <?php $_streetValidationClass = trim(str_replace('required-entry', '', $_streetValidationClass)); ?>
                     <?php for ($_i = 1, $_n = $this->helper(Address::class)->getStreetLines(); $_i < $_n; $_i++): ?>
                         <?php $lineNo = (int)($_i+1); ?>
                         <div class="field additional">
                             <label class="label" for="street_<?= /* @noEscape */ $lineNo ?>">
-                                <span><?= $block->escapeHtml(__('Street Address %1', $lineNo)) ?></span>
+                                <span><?= $escaper->escapeHtml(__('Street Address %1', $lineNo)) ?></span>
                             </label>
                             <div class="control">
-                                <input type="text" name="billing[street][]" value="<?= $block->escapeHtmlAttr($block->getStreetLine($lineNo)) ?>" title="<?= $block->escapeHtmlAttr(__('Street Address %1', $lineNo)) ?>" id="street_<?= /* @noEscape */ $lineNo ?>" class="input-text <?= /* @noEscape */ $_streetValidationClass ?>">
+                                <input type="text" name="billing[street][]" value="<?= $escaper->escapeHtmlAttr($block->getStreetLine($lineNo)) ?>" title="<?= $escaper->escapeHtmlAttr(__('Street Address %1', $lineNo)) ?>" id="street_<?= /* @noEscape */ $lineNo ?>" class="input-text <?= /* @noEscape */ $_streetValidationClass ?>">
                             </div>
                         </div>
                     <?php endfor; ?>
@@ -72,57 +73,57 @@ use Magento\Directory\Helper\Data;
             </div>
         </div>
         <div class="field city required">
-            <label class="label" for="city"><span><?= $block->escapeHtml(__('City')) ?></span></label>
+            <label class="label" for="city"><span><?= $escaper->escapeHtml(__('City')) ?></span></label>
             <div class="control">
-                <input type="text" name="billing[city]" value="<?= $block->escapeHtmlAttr($block->getAddress()->getCity()) ?>" title="<?= $block->escapeHtmlAttr(__('City')) ?>" class="input-text <?= $block->escapeHtmlAttr($this->helper(Address::class)->getAttributeValidationClass('city')) ?>" id="city">
+                <input type="text" name="billing[city]" value="<?= $escaper->escapeHtmlAttr($block->getAddress()->getCity()) ?>" title="<?= $escaper->escapeHtmlAttr(__('City')) ?>" class="input-text <?= $escaper->escapeHtmlAttr($this->helper(Address::class)->getAttributeValidationClass('city')) ?>" id="city">
             </div>
         </div>
         <div class="field region required">
-            <label class="label" for="region-id"><span><?= $block->escapeHtml(__('State/Province')) ?></span></label>
+            <label class="label" for="region-id"><span><?= $escaper->escapeHtml(__('State/Province')) ?></span></label>
             <div class="control">
-                <select id="region-id" name="billing[region_id]" title="<?= $block->escapeHtmlAttr(__('State/Province')) ?>" class="validate-select" <?php echo(!$block->getConfig('general/region/display_all')) ? ' disabled="disabled"' : '';?>>
-                    <option value=""><?= $block->escapeHtml(__('Please select a region, state or province.')) ?></option>
+                <select id="region-id" name="billing[region_id]" title="<?= $escaper->escapeHtmlAttr(__('State/Province')) ?>" class="validate-select" <?php echo(!$block->getConfig('general/region/display_all')) ? ' disabled="disabled"' : '';?>>
+                    <option value=""><?= $escaper->escapeHtml(__('Please select a region, state or province.')) ?></option>
                 </select>
-                <input type="text" id="region" name="billing[region]" value="<?= $block->escapeHtmlAttr($block->getRegion()) ?>"  title="<?= $block->escapeHtmlAttr(__('State/Province')) ?>" class="input-text <?= $block->escapeHtmlAttr($this->helper(Address::class)->getAttributeValidationClass('region')) ?>"<?php echo(!$block->getConfig('general/region/display_all')) ? ' disabled="disabled"' : '';?>/>
+                <input type="text" id="region" name="billing[region]" value="<?= $escaper->escapeHtmlAttr($block->getRegion()) ?>"  title="<?= $escaper->escapeHtmlAttr(__('State/Province')) ?>" class="input-text <?= $escaper->escapeHtmlAttr($this->helper(Address::class)->getAttributeValidationClass('region')) ?>"<?php echo(!$block->getConfig('general/region/display_all')) ? ' disabled="disabled"' : '';?>/>
             </div>
         </div>
         <div class="field zip required">
-            <label class="label" for="zip"><span><?= $block->escapeHtml(__('Zip/Postal Code')) ?></span></label>
+            <label class="label" for="zip"><span><?= $escaper->escapeHtml(__('Zip/Postal Code')) ?></span></label>
             <div class="control">
-                <input type="text" name="billing[postcode]" value="<?= $block->escapeHtmlAttr($block->getAddress()->getPostcode()) ?>" title="<?= $block->escapeHtmlAttr(__('Zip/Postal Code')) ?>" id="zip" class="input-text validate-zip-international <?= $block->escapeHtmlAttr($this->helper(Address::class)->getAttributeValidationClass('postcode')) ?>">
+                <input type="text" name="billing[postcode]" value="<?= $escaper->escapeHtmlAttr($block->getAddress()->getPostcode()) ?>" title="<?= $escaper->escapeHtmlAttr(__('Zip/Postal Code')) ?>" id="zip" class="input-text validate-zip-international <?= $escaper->escapeHtmlAttr($this->helper(Address::class)->getAttributeValidationClass('postcode')) ?>">
             </div>
         </div>
         <div class="field country required">
-            <label class="label" for="country"><span><?= $block->escapeHtml(__('Country')) ?></span></label>
+            <label class="label" for="country"><span><?= $escaper->escapeHtml(__('Country')) ?></span></label>
             <div class="control">
                 <?= /* @noEscape */ $block->getCountryHtmlSelect($block->getAddress()->getCountryId(), 'billing[country_id]') ?>
             </div>
         </div>
     </fieldset>
     <fieldset class="fieldset payment items ccard <?= /* @noEscape */ $code ?>">
-        <legend class="legend"><span><?= $block->escapeHtml(__('Credit Card Information')) ?></span></legend><br>
+        <legend class="legend"><span><?= $escaper->escapeHtml(__('Credit Card Information')) ?></span></legend><br>
 
         <div class="field type required">
             <div class="control">
                 <?php $_ccType = $block->getCard()->getType() ?>
                 <ul class="credit-card-types">
                     <?php foreach ($block->getCcBlock()->getCcAvailableTypes() as $_typeCode => $_typeName): ?>
-                        <li class="item<?php if ($_typeCode == $_ccType): ?> _active<?php endif; ?>" data-type="<?= $block->escapeHtmlAttr($_typeCode); ?>">
-                            <img src="<?= $block->escapeUrl($block->getViewFileUrl('Magento_Payment::images/cc/' . strtolower((string)$_typeCode) . '.png')); ?>" alt="<?= $block->escapeHtmlAttr($_typeName); ?>" />
+                        <li class="item<?php if ($_typeCode == $_ccType): ?> _active<?php endif; ?>" data-type="<?= $escaper->escapeHtmlAttr($_typeCode); ?>">
+                            <img src="<?= $escaper->escapeUrl($block->getViewFileUrl('Magento_Payment::images/cc/' . strtolower((string)$_typeCode) . '.png')); ?>" alt="<?= $escaper->escapeHtmlAttr($_typeName); ?>" />
                         </li>
                     <?php endforeach; ?>
                 </ul>
-                <input type="hidden" name="payment[cc_type]" id="<?= /* @noEscape */ $code ?>-cc-type" value="<?= $block->escapeHtmlAttr($_ccType); ?>" />
+                <input type="hidden" name="payment[cc_type]" id="<?= /* @noEscape */ $code ?>-cc-type" value="<?= $escaper->escapeHtmlAttr($_ccType); ?>" />
             </div>
         </div>
         <div class="field number required">
-            <label for="<?= /* @noEscape */ $code ?>-cc-number" class="label"><span><?= $block->escapeHtml(__('CC Number')) ?></span></label>
+            <label for="<?= /* @noEscape */ $code ?>-cc-number" class="label"><span><?= $escaper->escapeHtml(__('CC Number')) ?></span></label>
             <div class="control">
-                <input type="text" id="<?= /* @noEscape */ $code ?>-cc-number" name="payment[cc_number]" title="<?= $block->escapeHtmlAttr(__('Credit Card Number')) ?>" class="input-text" value="<?= $block->escapeHtmlAttr($block->getCard()->getLabel(false)); ?>" data-validate='{"required-number":true, "validate-cc-number":"#<?= /* @noEscape */ $code ?>-cc-type", "validate-cc-type":"#<?= /* @noEscape */ $code ?>-cc-type"}' autocomplete="cc-number" />
+                <input type="text" id="<?= /* @noEscape */ $code ?>-cc-number" name="payment[cc_number]" title="<?= $escaper->escapeHtmlAttr(__('Credit Card Number')) ?>" class="input-text" value="<?= $escaper->escapeHtmlAttr($block->getCard()->getLabel(false)); ?>" data-validate='{"required-number":true, "validate-cc-number":"#<?= /* @noEscape */ $code ?>-cc-type", "validate-cc-type":"#<?= /* @noEscape */ $code ?>-cc-type"}' autocomplete="cc-number" />
             </div>
         </div>
         <div class="field date required" id="<?= /* @noEscape */ $code ?>-cc-type_exp_div">
-            <label for="<?= /* @noEscape */ $code ?>-cc-exp-month" class="label"><span><?= $block->escapeHtml(__('Expiration')) ?></span></label>
+            <label for="<?= /* @noEscape */ $code ?>-cc-exp-month" class="label"><span><?= $escaper->escapeHtml(__('Expiration')) ?></span></label>
             <div class="control">
                 <div class="fields group group-2">
                     <div class="field no-label month">
@@ -130,7 +131,7 @@ use Magento\Directory\Helper\Data;
                             <select id="<?= /* @noEscape */ $code ?>-cc-exp-month" name="payment[cc_exp_month]" class="select month" data-validate='{required:true, "validate-cc-exp":"#<?= /* @noEscape */ $code ?>-cc-exp-year"}' autocomplete="cc-exp-month">
                                 <?php $_ccExpMonth = $block->getCard()->getAdditional('cc_exp_month'); ?>
                                 <?php foreach ($block->getCcBlock()->getCcMonths() as $k => $v): ?>
-                                    <option value="<?= $k ? $block->escapeHtmlAttr($k) : '' ?>"<?php if ($k == $_ccExpMonth): ?> selected="selected"<?php endif ?>><?= $block->escapeHtml($v) ?></option>
+                                    <option value="<?= $k ? $escaper->escapeHtmlAttr($k) : '' ?>"<?php if ($k == $_ccExpMonth): ?> selected="selected"<?php endif ?>><?= $escaper->escapeHtml($v) ?></option>
                                 <?php endforeach ?>
                             </select>
                         </div>
@@ -140,7 +141,7 @@ use Magento\Directory\Helper\Data;
                             <?php $_ccExpYear = $block->getCard()->getAdditional('cc_exp_year'); ?>
                             <select id="<?= /* @noEscape */ $code ?>-cc-exp-year" name="payment[cc_exp_year]" class="select year" data-validate='{required:true}' autocomplete="cc-exp-year">
                                 <?php foreach ($block->getCcBlock()->getCcYears() as $k => $v): ?>
-                                    <option value="<?= $k ? $block->escapeHtmlAttr($k) : '' ?>"<?php if ($k == $_ccExpYear): ?> selected="selected"<?php endif ?>><?= $block->escapeHtml($v) ?></option>
+                                    <option value="<?= $k ? $escaper->escapeHtmlAttr($k) : '' ?>"<?php if ($k == $_ccExpYear): ?> selected="selected"<?php endif ?>><?= $escaper->escapeHtml($v) ?></option>
                                 <?php endforeach ?>
                             </select>
                         </div>
@@ -150,15 +151,15 @@ use Magento\Directory\Helper\Data;
         </div>
         <?php if ($block->getMethod()->getConfigData('useccv')): ?>
             <div class="field cvv required" id="<?= /* @noEscape */ $code ?>-cc-type_cvv_div">
-                <label for="<?= /* @noEscape */ $code ?>-cc-cid" class="label"><span><?= $block->escapeHtml(__('CCV')) ?></span></label>
+                <label for="<?= /* @noEscape */ $code ?>-cc-cid" class="label"><span><?= $escaper->escapeHtml(__('CCV')) ?></span></label>
                 <div class="control _with-tooltip">
-                    <input type="text" title="<?= $block->escapeHtmlAttr(__('Card Verification Number')) ?>" class="input-text cvv" id="<?= /* @noEscape */ $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true, "validate-cc-cvn":"#<?= /* @noEscape */ $code ?>-cc-type"}' autocomplete="cc-csc" maxlength="4" />
+                    <input type="text" title="<?= $escaper->escapeHtmlAttr(__('Card Verification Number')) ?>" class="input-text cvv" id="<?= /* @noEscape */ $code ?>-cc-cid" name="payment[cc_cid]" value="" data-validate='{"required-number":true, "validate-cc-cvn":"#<?= /* @noEscape */ $code ?>-cc-type"}' autocomplete="cc-csc" maxlength="4" />
                     <div class="field-tooltip tooltip note toggle">
                         <span class="field-tooltip-action tooltip-toggle action-cvv" tabindex="0" data-toggle="dropdown">
-                            <span><?= $block->escapeHtml(__('What is this?')) ?></span>
+                            <span><?= $escaper->escapeHtml(__('What is this?')) ?></span>
                         </span>
                         <div class="tooltip-content" data-target="dropdown" aria-hidden="true">
-                            <img src="<?= $block->escapeUrl($block->getViewFileUrl('Magento_Checkout::cvv.png')) ?>" alt="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" title="<?= $block->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" />
+                            <img src="<?= $escaper->escapeUrl($block->getViewFileUrl('Magento_Checkout::cvv.png')) ?>" alt="<?= $escaper->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" title="<?= $escaper->escapeHtmlAttr(__('Card Verification Number Visual Reference')) ?>" />
                         </div>
                     </div>
                 </div>
@@ -167,12 +168,12 @@ use Magento\Directory\Helper\Data;
     </fieldset>
     <div class="actions-toolbar">
         <div class="primary">
-            <button type="submit" class="action save primary" data-action="save-address" title="<?= $block->escapeHtmlAttr(__('Save')) ?>">
-                <span><?= $block->escapeHtml(__('Save')) ?></span>
+            <button type="submit" class="action save primary" data-action="save-address" title="<?= $escaper->escapeHtmlAttr(__('Save')) ?>">
+                <span><?= $escaper->escapeHtml(__('Save')) ?></span>
             </button>
         </div>
         <div class="secondary">
-            <a class="action back" href="<?= $block->escapeUrl($block->getBackUrl()) ?>"><span><?= $block->escapeHtml(__('Cancel')) ?></span></a>
+            <a class="action back" href="<?= $escaper->escapeUrl($block->getBackUrl()) ?>"><span><?= $escaper->escapeHtml(__('Cancel')) ?></span></a>
         </div>
     </div>
 </form>
@@ -186,8 +187,8 @@ use Magento\Directory\Helper\Data;
             }
             <?php if ($block->getMethod()->isAcceptJsEnabled() === true): ?>,
             "authnetcimAcceptjs": {
-                "apiLoginId": "<?= $block->escapeHtmlAttr($block->getMethod()->getConfigData('login')); ?>",
-                "clientKey": "<?= $block->escapeHtmlAttr($block->getMethod()->getConfigData('client_key')); ?>",
+                "apiLoginId": "<?= $escaper->escapeHtmlAttr($block->getMethod()->getConfigData('login')); ?>",
+                "clientKey": "<?= $escaper->escapeHtmlAttr($block->getMethod()->getConfigData('client_key')); ?>",
                 "method": "<?= /* @noEscape */ $code; ?>",
                 "formSelector": "#form-validate",
                 "submitSelector": "#form-validate button[type=submit]",

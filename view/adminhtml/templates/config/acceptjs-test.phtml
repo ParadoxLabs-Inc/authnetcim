@@ -1,8 +1,9 @@
 <?php /** @var \ParadoxLabs\Authnetcim\Block\Adminhtml\Config\AcceptjsTest $block */
+/** @var \Magento\Framework\Escaper $escaper */
 
 use Magento\Framework\View\Helper\SecureHtmlRenderer; ?>
 
-<div id="authnetcim-accept-test"><?= $block->escapeHtml(__('Testing Accept.js...')) ?></div>
+<div id="authnetcim-accept-test"><?= $escaper->escapeHtml(__('Testing Accept.js...')) ?></div>
 <?php $library = $block->getMethodInstance()->getConfigData('test') ? 'authorizeNetAcceptjsSandbox' : 'authorizeNetAcceptjs'; ?>
 <?php $inlineScript = <<<JS
     var acceptJsTest = {
@@ -34,13 +35,13 @@ use Magento\Framework\View\Helper\SecureHtmlRenderer; ?>
                 {
                     cardData: {
                         cardNumber: '4111111111111111',
-                        month: "{$block->escapeJsQuote(date('m'), '"')}",
-                        year: "{$block->escapeJsQuote(date('Y'), '"')}",
+                        month: "{$escaper->escapeJsQuote(date('m'), '"')}",
+                        year: "{$escaper->escapeJsQuote(date('Y'), '"')}",
                         cardCode: '900'
                     },
                     authData: {
-                        clientKey: "{$block->escapeJsQuote($block->getMethodInstance()->getConfigData('client_key'), '"')}",
-                        apiLoginID: "{$block->escapeJsQuote($block->getMethodInstance()->getConfigData('login'), '"')}"
+                        clientKey: "{$escaper->escapeJsQuote($block->getMethodInstance()->getConfigData('client_key'), '"')}",
+                        apiLoginID: "{$escaper->escapeJsQuote($block->getMethodInstance()->getConfigData('login'), '"')}"
                     }
                 },
                 'authnetcim_acceptJs_callback'
@@ -51,7 +52,7 @@ use Magento\Framework\View\Helper\SecureHtmlRenderer; ?>
             var element = document.getElementById('authnetcim-accept-test');
 
             if (response.messages.resultCode === 'Ok') {
-                element.innerHTML = '<strong class="testSuccess">{$block->escapeHtmlAttr(__("Accept.js connected successfully"))}.</strong>';
+                element.innerHTML = '<strong class="testSuccess">{$escaper->escapeHtmlAttr(__("Accept.js connected successfully"))}.</strong>';
             } else {
                 var messages = [];
                 for (var i = 0; i < response.messages.message.length; i++) {
@@ -61,9 +62,9 @@ use Magento\Framework\View\Helper\SecureHtmlRenderer; ?>
                     }
 
                     messages.push(
-                        "{$block->escapeJsQuote(__('Accept.js Error: %1 (%2)'), '"')}"
-                            .replace('{$block->escapeJsQuote('%1', '"')}', jQuery.mage.__(errorText))
-                            .replace('{$block->escapeJsQuote('%2', '"')}', response.messages.message[i].code)
+                        "{$escaper->escapeJsQuote(__('Accept.js Error: %1 (%2)'), '"')}"
+                            .replace('{$escaper->escapeJsQuote('%1', '"')}', jQuery.mage.__(errorText))
+                            .replace('{$escaper->escapeJsQuote('%2', '"')}', response.messages.message[i].code)
                     );
                 }
 
