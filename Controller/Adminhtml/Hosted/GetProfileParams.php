@@ -145,7 +145,7 @@ class GetProfileParams extends Action implements CsrfAwareActionInterface, HttpP
                 $customer = $this->customerRepository->getById($customerId);
 
                 $this->registry->register('current_customer', $customer);
-            } catch (NoSuchEntityException $exception) {
+            } catch (NoSuchEntityException) {
                 // Ignore 'no such customer' errors, remainder code will handle accordingly.
             }
         }

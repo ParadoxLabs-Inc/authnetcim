@@ -70,6 +70,7 @@ class PaymentMethodAssignDataObserver extends \ParadoxLabs\TokenBase\Observer\Pa
      * @param \Magento\Payment\Model\MethodInterface $method
      * @return void
      */
+    #[\Override]
     protected function assignTokenbaseData(
         InfoInterface $payment,
         DataObject $data,

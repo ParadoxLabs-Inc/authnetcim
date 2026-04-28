@@ -103,6 +103,7 @@ class Version extends Value implements
      *
      * @return $this
      */
+    #[\Override]
     protected function _afterLoad()
     {
         $this->setValue($this->_getDefaultValue());

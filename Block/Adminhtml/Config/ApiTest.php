@@ -120,6 +120,7 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
      * @param AbstractElement $element
      * @return string
      */
+    #[\Override]
     protected function _getElementHtml(AbstractElement $element)
     {
         $html = parent::_getElementHtml($element);

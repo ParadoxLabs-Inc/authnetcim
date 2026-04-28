@@ -115,7 +115,7 @@ class RestClient
         $client = $this->getHttpClient();
         $client->delete($this->getRestEndpoint() . $path);
 
-        if (strpos($client->getBody(), 'NOT_FOUND') !== false) {
+        if (str_contains($client->getBody(), 'NOT_FOUND')) {
             return;
         }
 
@@ -197,7 +197,7 @@ class RestClient
         $responseBody = $response->getBody();
 
         // Throw exception on non-2xx response code
-        if (substr((string)$responseCode, 0, 1) !== '2'
+        if (!str_starts_with((string)$responseCode, '2')
             || $responseBody === false) {
             if ($responseBody !== false) {
                 $responseJson = json_decode((string)$responseBody, true);

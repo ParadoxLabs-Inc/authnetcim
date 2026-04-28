@@ -155,6 +155,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
      *
      * @return $this
      */
+    #[\Override]
     public function beforeSave()
     {
         // Sync only if we have an info instance for payment data, and haven't already.
@@ -186,6 +187,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
      *
      * @return $this
      */
+    #[\Override]
     public function afterSave()
     {
         // On card save, store the token/ID in the registry (if any) to avoid token reuse.
@@ -211,6 +213,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
      *
      * @return $this
      */
+    #[\Override]
     public function beforeDelete()
     {
         /**
@@ -637,6 +640,7 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
      *
      * @return string
      */
+    #[\Override]
     public function getType()
     {
         $type = parent::getType();

@@ -232,7 +232,7 @@ class GraphQLRequest extends AbstractRequestHandler
             }
 
             return $card;
-        } catch (Throwable $exception) {
+        } catch (Throwable) {
             return null;
         }
     }

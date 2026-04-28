@@ -38,6 +38,7 @@ class Ach extends \ParadoxLabs\TokenBase\Block\Form\Ach
      *
      * @return string
      */
+    #[\Override]
     protected function _toHtml()
     {
         $method = $this->getTokenbaseMethod();
@@ -53,6 +54,7 @@ class Ach extends \ParadoxLabs\TokenBase\Block\Form\Ach
      *
      * @return bool
      */
+    #[\Override]
     public function hasVerification()
     {
         return false;

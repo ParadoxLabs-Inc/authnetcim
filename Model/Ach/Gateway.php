@@ -44,6 +44,7 @@ class Gateway extends \ParadoxLabs\Authnetcim\Model\Gateway
      * @throws LocalizedException
      * @throws LocalizedException
      */
+    #[\Override]
     protected function interpretTransaction($transactionResult)
     {
         $response = parent::interpretTransaction($transactionResult);
@@ -60,6 +61,7 @@ class Gateway extends \ParadoxLabs\Authnetcim\Model\Gateway
      *
      * @return string|bool CIM payment id, or false if none
      */
+    #[\Override]
     public function findDuplicateCard()
     {
         $profile         = $this->getCustomerProfile();
@@ -96,6 +98,7 @@ class Gateway extends \ParadoxLabs\Authnetcim\Model\Gateway
      * @return Response
      * @throws CommandException
      */
+    #[\Override]
     public function refund(InfoInterface $payment, $amount, $transactionId = null)
     {
         // Send last4 values for verification of ACH refunds
@@ -134,6 +137,7 @@ class Gateway extends \ParadoxLabs\Authnetcim\Model\Gateway
      * @param array $params
      * @return array
      */
+    #[\Override]
     protected function createTransactionAddRefundInfo($params)
     {
         if ($this->hasParameter('accountNumber')) {

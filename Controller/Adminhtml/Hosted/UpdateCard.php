@@ -59,6 +59,7 @@ class UpdateCard extends GetNewCard
      *
      * @return ResultInterface
      */
+    #[\Override]
     public function execute()
     {
         $this->getCustomer();

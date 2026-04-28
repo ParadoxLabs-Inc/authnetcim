@@ -41,6 +41,7 @@ class Ach extends \ParadoxLabs\TokenBase\Block\Info\Ach
      * @param DataObject|array $transport
      * @return DataObject
      */
+    #[\Override]
     protected function _prepareSpecificInformation($transport = null)
     {
         $transport = parent::_prepareSpecificInformation($transport);

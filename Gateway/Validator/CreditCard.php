@@ -59,6 +59,7 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
      * @param array $validationSubject
      * @return ResultInterface
      */
+    #[\Override]
     public function validate(array $validationSubject)
     {
         $isValid = true;

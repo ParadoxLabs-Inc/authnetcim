@@ -58,6 +58,7 @@ class Method extends AbstractMethod
      * @param InfoInterface $payment
      * @return bool
      */
+    #[\Override]
     protected function paymentContainsCard(InfoInterface $payment)
     {
         $acceptJsValue = $this->getInfoInstance()->getAdditionalInformation('acceptjs_value');
@@ -75,6 +76,7 @@ class Method extends AbstractMethod
      * @param InfoInterface $payment
      * @return CardInterface
      */
+    #[\Override]
     protected function loadOrCreateCard(InfoInterface $payment)
     {
         /** @var Payment $payment */
@@ -141,6 +143,7 @@ class Method extends AbstractMethod
      * @param InfoInterface $payment
      * @return $this
      */
+    #[\Override]
     protected function handleShippingAddress(InfoInterface $payment)
     {
         /** @var Payment $payment */
@@ -173,6 +176,7 @@ class Method extends AbstractMethod
      * @param Response $response
      * @return void
      */
+    #[\Override]
     protected function afterAuthorize(
         InfoInterface $payment,
         $amount,
@@ -191,6 +195,7 @@ class Method extends AbstractMethod
      * @param Response $response
      * @return void
      */
+    #[\Override]
     protected function afterCapture(
         InfoInterface $payment,
         $amount,
@@ -238,6 +243,7 @@ class Method extends AbstractMethod
      * @param Response $response
      * @return InfoInterface
      */
+    #[\Override]
     protected function storeTransactionStatuses(
         InfoInterface $payment,
         Response $response
@@ -272,6 +278,7 @@ class Method extends AbstractMethod
      * @return bool
      * @throws LocalizedException
      */
+    #[\Override]
     public function acceptPayment(InfoInterface $payment)
     {
         /** @var Payment $payment */
@@ -308,6 +315,7 @@ class Method extends AbstractMethod
      * @return bool
      * @throws LocalizedException
      */
+    #[\Override]
     public function denyPayment(InfoInterface $payment)
     {
         /** @var Payment $payment */

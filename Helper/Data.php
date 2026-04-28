@@ -139,6 +139,7 @@ class Data extends \ParadoxLabs\TokenBase\Helper\Data
      * @param string $type
      * @return string|null
      */
+    #[\Override]
     public function mapCcTypeToMagento($type)
     {
         if (!empty($type) && isset($this->cimCardTypeMap[ $type ])) {

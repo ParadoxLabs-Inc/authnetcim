@@ -89,6 +89,7 @@ class ConfigProvider extends CcGenericConfigProvider
      *
      * @return array
      */
+    #[\Override]
     public function getConfig()
     {
         if (!$this->methods[ static::CODE ]->isAvailable()) {

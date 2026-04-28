@@ -277,6 +277,7 @@ class Gateway extends AbstractGateway
      *
      * @return $this
      */
+    #[\Override]
     public function clearParameters()
     {
         parent::clearParameters();
@@ -397,6 +398,7 @@ class Gateway extends AbstractGateway
      * @param string $string
      * @return mixed
      */
+    #[\Override]
     protected function sanitizeLog($string)
     {
         $maskAll  = ['cardCode'];
@@ -425,6 +427,7 @@ class Gateway extends AbstractGateway
      * @param string $xml
      * @return array
      */
+    #[\Override]
     protected function xmlToArray($xml)
     {
         // Strip bad namespace out before we try to parse it. ...
@@ -633,6 +636,7 @@ class Gateway extends AbstractGateway
      * @param CardInterface $card
      * @return $this
      */
+    #[\Override]
     public function setCard(CardInterface $card)
     {
         $this->setParameter('email', $card->getCustomerEmail());
@@ -1050,6 +1054,7 @@ class Gateway extends AbstractGateway
      * @param string $authCode
      * @return $this
      */
+    #[\Override]
     public function setAuthCode($authCode)
     {
         $this->setParameter('approvalCode', $authCode);
@@ -1062,6 +1067,7 @@ class Gateway extends AbstractGateway
      *
      * @return string
      */
+    #[\Override]
     public function getTransactionId()
     {
         return $this->getParameter('transId');
@@ -1073,6 +1079,7 @@ class Gateway extends AbstractGateway
      * @param $transactionId
      * @return $this
      */
+    #[\Override]
     public function setTransactionId($transactionId)
     {
         $this->setParameter('transId', $transactionId);

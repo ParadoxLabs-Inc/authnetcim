@@ -41,6 +41,7 @@ class Cc extends \ParadoxLabs\TokenBase\Block\Info\Cc
      * @param DataObject|array $transport
      * @return DataObject
      */
+    #[\Override]
     protected function _prepareSpecificInformation($transport = null)
     {
         $transport = parent::_prepareSpecificInformation($transport);

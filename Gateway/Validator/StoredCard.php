@@ -57,6 +57,7 @@ class StoredCard extends \ParadoxLabs\TokenBase\Gateway\Validator\StoredCard
      * @param array $validationSubject
      * @return ResultInterface
      */
+    #[\Override]
     public function validate(array $validationSubject)
     {
         // If Accept.js is enabled, kick to standard CC validator

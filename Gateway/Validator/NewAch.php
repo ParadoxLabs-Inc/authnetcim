@@ -57,6 +57,7 @@ class NewAch extends \ParadoxLabs\TokenBase\Gateway\Validator\NewAch
      * @param array $validationSubject
      * @return ResultInterface
      */
+    #[\Override]
     public function validate(array $validationSubject)
     {
         /** @var Info $payment */

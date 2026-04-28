@@ -43,6 +43,7 @@ class Cc extends \ParadoxLabs\TokenBase\Block\Form\Cc
      *
      * @return string
      */
+    #[\Override]
     protected function _toHtml()
     {
         $method = $this->getTokenbaseMethod();

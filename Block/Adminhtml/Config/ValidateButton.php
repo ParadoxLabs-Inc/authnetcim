@@ -37,6 +37,7 @@ class ValidateButton extends Field
      * @param AbstractElement $element
      * @return string
      */
+    #[\Override]
     public function render(AbstractElement $element)
     {
         $element->unsScope()
@@ -52,6 +53,7 @@ class ValidateButton extends Field
      * @param AbstractElement $element
      * @return string
      */
+    #[\Override]
     protected function _getElementHtml(AbstractElement $element)
     {
         return $this->_toHtml();

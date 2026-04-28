@@ -178,9 +178,9 @@ class FrontendRequest extends AbstractRequestHandler
         // Use billing params over quote data, if given
         $post = $this->request->getPostValue('billing');
         if (!empty($post)) {
-            $post['country_id']  = $post['country_id'] ?? $post['countryId'] ?? null;
-            $post['region_id']   = $post['region_id'] ?? $post['regionId'] ?? null;
-            $post['region_code'] = $post['region_code'] ?? $post['regionCode'] ?? null;
+            $post['country_id'] ??= $post['countryId'] ?? null;
+            $post['region_id'] ??= $post['regionId'] ?? null;
+            $post['region_code'] ??= $post['regionCode'] ?? null;
 
             $address = $this->addressHelper->buildAddressFromInput($post);
             $gateway->setBillTo($address);

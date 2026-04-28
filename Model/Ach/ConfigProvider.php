@@ -32,6 +32,7 @@ class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
      *
      * @return array
      */
+    #[\Override]
     public function getConfig()
     {
         if (!$this->methods[ static::CODE ]->isAvailable()) {

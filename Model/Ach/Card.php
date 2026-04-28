@@ -37,6 +37,7 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
      * @param InfoInterface $payment
      * @return $this
      */
+    #[\Override]
     public function importPaymentInfo(InfoInterface $payment)
     {
         parent::importPaymentInfo($payment);
@@ -79,6 +80,7 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
      * @param bool $includeType
      * @return string|Phrase
      */
+    #[\Override]
     public function getLabel($includeType = true)
     {
         return sprintf(
@@ -94,6 +96,7 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
      * @param GatewayInterface $gateway
      * @return $this
      */
+    #[\Override]
     protected function setPaymentInfoOnCreate(GatewayInterface $gateway)
     {
         /** @var Info $info */
@@ -120,6 +123,7 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
      * @param GatewayInterface $gateway
      * @return $this
      */
+    #[\Override]
     protected function setPaymentInfoOnUpdate(GatewayInterface $gateway)
     {
         /** @var Info $info */
