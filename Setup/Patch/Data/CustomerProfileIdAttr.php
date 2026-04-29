@@ -152,6 +152,10 @@ class CustomerProfileIdAttr implements DataPatchInterface, PatchRevertableInterf
          * is_system must be 0 in order for attribute values to save.
          */
         $attribute = $customerSetup->getAttribute(Customer::ENTITY, 'authnetcim_profile_id');
+        if (!is_array($attribute)) {
+            return;
+        }
+
         if (!isset($attribute['is_system']) || $attribute['is_system'] != 0) {
             $customerSetup->updateAttribute(
                 Customer::ENTITY,

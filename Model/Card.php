@@ -471,10 +471,10 @@ class Card extends \ParadoxLabs\TokenBase\Model\Card
             return $this->syncCustomerPaymentProfile(false);
         }
 
-        if ($response['messages']['resultCode'] !== 'Ok'
-            && ($response['messages']['message']['code'] !== 'E00039' || empty($paymentId))) {
-            $errorCode = $response['messages']['message']['code'];
-            $errorText = $response['messages']['message']['text'];
+        if (($response['messages']['resultCode'] ?? null) !== 'Ok'
+            && (($response['messages']['message']['code'] ?? null) !== 'E00039' || empty($paymentId))) {
+            $errorCode = $response['messages']['message']['code'] ?? null;
+            $errorText = $response['messages']['message']['text'] ?? null;
 
             $this->helper->log($this->getMethod(), sprintf('API error: %s: %s', $errorCode, $errorText));
             $gateway->logLogs();

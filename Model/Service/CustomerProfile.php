@@ -118,7 +118,7 @@ class CustomerProfile
         if (!isset($response['profile']['paymentProfiles']['customerPaymentProfileId'])) {
             $paymentProfiles = [];
             foreach ($response['profile']['paymentProfiles'] as $paymentProfile) {
-                $paymentProfiles[ $paymentProfile['customerPaymentProfileId'] ] = $paymentProfile;
+                $paymentProfiles[$paymentProfile['customerPaymentProfileId'] ?? ''] = $paymentProfile;
             }
 
             ksort($paymentProfiles);
@@ -190,7 +190,7 @@ class CustomerProfile
             throw new LocalizedException(__($response['messages']['message']['text']));
         }
 
-        $paymentProfile = $response['paymentProfile'];
+        $paymentProfile = $response['paymentProfile'] ?? [];
 
         $this->setPaymentProfileDataOnCard($paymentProfile, $card);
         $this->cardRepository->save($card);
@@ -201,8 +201,8 @@ class CustomerProfile
                 "Updated card %s (ID %s) from CIM (profile_id '%s', payment_id '%s')",
                 $card->getLabel(),
                 $card->getId(),
-                $paymentProfile['customerProfileId'],
-                $paymentProfile['customerPaymentProfileId']
+                $paymentProfile['customerProfileId'] ?? '',
+                $paymentProfile['customerPaymentProfileId'] ?? ''
             )
         );
 

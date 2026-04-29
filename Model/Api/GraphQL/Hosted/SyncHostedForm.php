@@ -73,6 +73,11 @@ class SyncHostedForm implements ResolverInterface
         ?array $args = null
     ) {
         $this->graphQL->authenticate($context, true);
+
+        if (!is_array($args) || !isset($args['input']) || !is_array($args['input'])) {
+            throw new GraphQlInputException(__('Required `input` argument is missing.'));
+        }
+
         $this->hostedForm->setGraphQLContext($context, $args['input']);
 
         if (empty($args['input']['cardId']) && empty($args['input']['iframeSessionId'])) {

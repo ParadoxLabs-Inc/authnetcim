@@ -27,6 +27,7 @@ use Magento\Framework\UrlInterface;
 use Magento\Payment\Model\CcConfig;
 use Magento\Payment\Model\CcGenericConfigProvider;
 use Magento\Payment\Model\Config;
+use Magento\Payment\Model\MethodInterface;
 use ParadoxLabs\Authnetcim\Helper\Data;
 
 class ConfigProvider extends CcGenericConfigProvider
@@ -71,6 +72,16 @@ class ConfigProvider extends CcGenericConfigProvider
     }
 
     /**
+     * Get this provider's payment method instance.
+     *
+     * @return MethodInterface
+     */
+    protected function getMethod(): MethodInterface
+    {
+        return $this->methods[self::CODE];
+    }
+
+    /**
      * If card can be saved for further use
      *
      * @return boolean
@@ -92,7 +103,7 @@ class ConfigProvider extends CcGenericConfigProvider
     #[\Override]
     public function getConfig()
     {
-        if (!$this->methods[ static::CODE ]->isAvailable()) {
+        if (!$this->getMethod()->isAvailable()) {
             return [];
         }
 
@@ -153,7 +164,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function forceSaveCard()
     {
-        return $this->methods[ static::CODE ]->getConfigData('allow_unsaved') ? false : true;
+        return $this->getMethod()->getConfigData('allow_unsaved') ? false : true;
     }
 
     /**
@@ -163,7 +174,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function requireCcv()
     {
-        return $this->methods[ static::CODE ]->getConfigData('require_ccv') ? true : false;
+        return $this->getMethod()->getConfigData('require_ccv') ? true : false;
     }
 
     /**
@@ -173,7 +184,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function defaultSaveCard()
     {
-        return $this->methods[ static::CODE ]->getConfigData('savecard_opt_out') ? true : false;
+        return $this->getMethod()->getConfigData('savecard_opt_out') ? true : false;
     }
 
     /**
@@ -183,7 +194,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function getLogoImage()
     {
-        if ($this->methods[ static::CODE ]->getConfigData('show_branding')) {
+        if ($this->getMethod()->getConfigData('show_branding')) {
             return $this->ccConfig->getViewFileUrl('ParadoxLabs_Authnetcim::images/logo.png');
         }
 
@@ -197,7 +208,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function getApiLoginId()
     {
-        return $this->methods[ static::CODE ]->getConfigData('login');
+        return $this->getMethod()->getConfigData('login');
     }
 
     /**
@@ -207,8 +218,8 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function getClientKey()
     {
-        if ($this->methods[ static::CODE ]->getConfigData('form_type') === self::FORM_ACCEPTJS) {
-            return $this->methods[ static::CODE ]->getConfigData('client_key');
+        if ($this->getMethod()->getConfigData('form_type') === self::FORM_ACCEPTJS) {
+            return $this->getMethod()->getConfigData('client_key');
         }
 
         return '';
@@ -221,7 +232,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function getSignatureKey()
     {
-        return $this->methods[ static::CODE ]->getConfigData('signature_key');
+        return $this->getMethod()->getConfigData('signature_key');
     }
 
     /**
@@ -231,7 +242,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function getSandbox()
     {
-        return (bool)$this->methods[ static::CODE ]->getConfigData('test');
+        return (bool)$this->getMethod()->getConfigData('test');
     }
 
     /**
@@ -241,7 +252,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function getCanStoreBin()
     {
-        return (bool)$this->methods[ static::CODE ]->getConfigData('can_store_bin');
+        return (bool)$this->getMethod()->getConfigData('can_store_bin');
     }
 
     /**
@@ -251,7 +262,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function isWebhookEnabled(): bool
     {
-        return (bool)$this->methods[ static::CODE ]->getConfigData('enable_webhooks');
+        return (bool)$this->getMethod()->getConfigData('enable_webhooks');
     }
 
     /**
@@ -271,11 +282,11 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function getParamUrl(): string
     {
-        if ($this->methods[ static::CODE ]->getConfigData('form_type') !== self::FORM_HOSTED) {
+        if ($this->getMethod()->getConfigData('form_type') !== self::FORM_HOSTED) {
             return '';
         }
 
-        if ($this->methods[ static::CODE ]->getConfigData('payment_action') === 'order') {
+        if ($this->getMethod()->getConfigData('payment_action') === 'order') {
             return $this->urlBuilder->getUrl('authnetcim/hosted/getProfileParams', ['source' => 'checkout']);
         }
 
@@ -289,7 +300,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     public function getNewCardUrl(): string
     {
-        if ($this->methods[ static::CODE ]->getConfigData('form_type') !== self::FORM_HOSTED) {
+        if ($this->getMethod()->getConfigData('form_type') !== self::FORM_HOSTED) {
             return '';
         }
 

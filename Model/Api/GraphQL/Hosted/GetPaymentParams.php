@@ -22,6 +22,7 @@
 namespace ParadoxLabs\Authnetcim\Model\Api\GraphQL\Hosted;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
+use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use ParadoxLabs\Authnetcim\Model\Service\AcceptHosted\GraphQLRequest;
@@ -72,6 +73,11 @@ class GetPaymentParams implements ResolverInterface
         ?array $args = null
     ) {
         $this->graphQL->authenticate($context, true);
+
+        if (!is_array($args) || !isset($args['input']) || !is_array($args['input'])) {
+            throw new GraphQlInputException(__('Required `input` argument is missing.'));
+        }
+
         $this->hostedForm->setGraphQLContext($context, $args['input']);
 
         $payload                 = $this->hostedForm->getParams();

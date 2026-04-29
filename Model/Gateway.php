@@ -450,9 +450,9 @@ class Gateway extends AbstractGateway
          * Check for not-found error first. If that error makes it here, that means they attempted to use a stored card
          * that could not be found (deleted, or account change, or such). Any way about it the card is no longer valid.
          */
-        if ($transactionResult['messages']['resultCode'] !== 'Ok') {
-            $errorCode = $transactionResult['messages']['message']['code'];
-            $errorText = $transactionResult['messages']['message']['text'];
+        if (($transactionResult['messages']['resultCode'] ?? null) !== 'Ok') {
+            $errorCode = $transactionResult['messages']['message']['code'] ?? null;
+            $errorText = $transactionResult['messages']['message']['text'] ?? null;
 
             if ($errorCode === 'E00040'
                 && $errorText === 'Customer Profile ID or Customer Payment Profile ID not found.'
@@ -546,7 +546,7 @@ class Gateway extends AbstractGateway
          * OR error/decline response code
          * OR no transID on a charge txn
          */
-        if ($transactionResult['messages']['resultCode'] !== 'Ok'
+        if (($transactionResult['messages']['resultCode'] ?? null) !== 'Ok'
             || (int)$response->getResponseCode() === 2
             || (int)$response->getResponseCode() === 3
             || (empty($response->getTransactionId()) && !in_array($response->getTransactionType(), ['credit', 'void']))
@@ -925,13 +925,13 @@ class Gateway extends AbstractGateway
         }
 
         $result     = $this->updateHeldTransaction();
-        $resultData = $this->getDataFromTransactionResponse($result['transactionResponse']);
+        $resultData = $this->getDataFromTransactionResponse($result['transactionResponse'] ?? []);
 
         /** @var Response $response */
         $response = $this->responseFactory->create();
         $response->setData($resultData + ['is_approved' => false, 'is_denied' => false]);
 
-        if ((int)$response->getResponseCode() !== 1 || $result['messages']['resultCode'] !== 'Ok') {
+        if ((int)$response->getResponseCode() !== 1 || ($result['messages']['resultCode'] ?? null) !== 'Ok') {
             $this->helper->log(
                 $this->code,
                 sprintf(
@@ -972,13 +972,13 @@ class Gateway extends AbstractGateway
         }
 
         $result     = $this->updateHeldTransaction();
-        $resultData = $this->getDataFromTransactionResponse($result['transactionResponse']);
+        $resultData = $this->getDataFromTransactionResponse($result['transactionResponse'] ?? []);
 
         /** @var Response $response */
         $response = $this->responseFactory->create();
         $response->setData($resultData + ['is_approved' => false, 'is_denied' => false]);
 
-        if ((int)$response->getResponseCode() !== 2 || $result['messages']['resultCode'] !== 'Ok') {
+        if ((int)$response->getResponseCode() !== 2 || ($result['messages']['resultCode'] ?? null) !== 'Ok') {
             $this->helper->log(
                 $this->code,
                 sprintf(
@@ -1309,7 +1309,7 @@ class Gateway extends AbstractGateway
      */
     public function createCustomerProfileTransaction()
     {
-        $type = $this->getParameter('transactionType');
+        $type = (string)$this->getParameter('transactionType');
 
         $params = [
             'transaction' => [

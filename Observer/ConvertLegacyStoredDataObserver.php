@@ -189,8 +189,14 @@ class ConvertLegacyStoredDataObserver implements ObserverInterface
 
         /** @var Order $order */
         foreach ($orders as $order) {
+            $extCustomerId = $order->getExtCustomerId();
+
+            if ($extCustomerId === null) {
+                continue;
+            }
+
             $payment = $order->getPayment();
-            $payment->setData('tokenbase_id', $cards[ $order->getExtCustomerId() ]['tokenbase_id']);
+            $payment->setData('tokenbase_id', $cards[$extCustomerId]['tokenbase_id'] ?? null);
 
             $this->paymentRepository->save($payment);
 
@@ -218,7 +224,7 @@ class ConvertLegacyStoredDataObserver implements ObserverInterface
         foreach ($cards as $k => $card) {
             if (!isset($card['payment']['creditCard'], $card['billTo']['country'])
                 || $this->cardAlreadyExists($customer->getId(), $profileId, $card['customerPaymentProfileId'])) {
-                unset($cards[ $k ]);
+                unset($cards[$k]);
                 continue;
             }
 
@@ -259,24 +265,22 @@ class ConvertLegacyStoredDataObserver implements ObserverInterface
 
             $storedCard->setData('address', json_encode($addressData));
 
-            if (isset($card['payment']['creditCard'])) {
-                [$yr, $mo] = explode('-', (string)$card['payment']['creditCard']['expirationDate'], 2);
-                $day = date('t', strtotime($yr . '-' . $mo));
+            [$yr, $mo] = explode('-', (string)$card['payment']['creditCard']['expirationDate'], 2);
+            $day = date('t', strtotime($yr . '-' . $mo));
 
-                $paymentData = [
-                    'cc_type' => $this->helper->mapCcTypeToMagento($card['payment']['creditCard']['cardType']),
-                    'cc_last4' => substr((string)$card['payment']['creditCard']['cardNumber'], -4),
-                    'cc_exp_year' => $yr,
-                    'cc_exp_month' => $mo,
-                ];
+            $paymentData = [
+                'cc_type' => $this->helper->mapCcTypeToMagento($card['payment']['creditCard']['cardType']),
+                'cc_last4' => substr((string)$card['payment']['creditCard']['cardNumber'], -4),
+                'cc_exp_year' => $yr,
+                'cc_exp_month' => $mo,
+            ];
 
-                $storedCard->setData('additional', json_encode($paymentData));
-                $storedCard->setData('expires', sprintf('%s-%s-%s 23:59:59', $yr, $mo, $day));
-            }
+            $storedCard->setData('additional', json_encode($paymentData));
+            $storedCard->setData('expires', sprintf('%s-%s-%s 23:59:59', $yr, $mo, $day));
 
             $storedCard = $this->cardRepository->save($storedCard);
 
-            $cards[ $k ]['tokenbase_id'] = $storedCard->getId();
+            $cards[$k]['tokenbase_id'] = $storedCard->getId();
 
             $affectedCards++;
         }
@@ -296,10 +300,10 @@ class ConvertLegacyStoredDataObserver implements ObserverInterface
 
             // Could have one value, or several. Handle both cases.
             if (isset($profiles['billTo'])) {
-                $cards[ $profiles['customerPaymentProfileId'] ] = $profiles;
+                $cards[$profiles['customerPaymentProfileId']] = $profiles;
             } else {
                 foreach ($profiles as $card) {
-                    $cards[ $card['customerPaymentProfileId'] ] = $card;
+                    $cards[$card['customerPaymentProfileId'] ?? ''] = $card;
                 }
             }
         }
