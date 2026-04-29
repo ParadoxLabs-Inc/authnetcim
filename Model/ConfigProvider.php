@@ -79,7 +79,7 @@ class ConfigProvider extends CcGenericConfigProvider
      */
     protected function getMethod(): MethodInterface
     {
-        return $this->methods[self::CODE];
+        return $this->methods[static::CODE];
     }
 
     /**
