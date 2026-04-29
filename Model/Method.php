@@ -21,12 +21,14 @@
 
 namespace ParadoxLabs\Authnetcim\Model;
 
-use ParadoxLabs\TokenBase\Api\Data\CardInterface;
-use Magento\Sales\Model\Order\Payment;
-use Magento\Sales\Model\Order\Address;
+use Magento\Customer\Api\Data\AddressInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Sales\Api\Data\TransactionInterface;
+use Magento\Sales\Model\Order\Address;
+use Magento\Sales\Model\Order\Payment;
+use Override;
+use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 use ParadoxLabs\TokenBase\Model\AbstractMethod;
 use ParadoxLabs\TokenBase\Model\Gateway\Response;
 use Throwable;
@@ -58,7 +60,7 @@ class Method extends AbstractMethod
      * @param InfoInterface $payment
      * @return bool
      */
-    #[\Override]
+    #[Override]
     protected function paymentContainsCard(InfoInterface $payment)
     {
         $acceptJsValue = $this->getInfoInstance()->getAdditionalInformation('acceptjs_value');
@@ -76,7 +78,7 @@ class Method extends AbstractMethod
      * @param InfoInterface $payment
      * @return CardInterface
      */
-    #[\Override]
+    #[Override]
     protected function loadOrCreateCard(InfoInterface $payment)
     {
         /** @var Payment $payment */
@@ -104,12 +106,25 @@ class Method extends AbstractMethod
             && $payment->getOrder()->getExtCustomerId() != '') {
             $this->log(sprintf('loadOrCreateCard(%s %s)', $payment::class, $payment->getId()));
 
+            /** @var Address $orderBillingAddress */
+            $orderBillingAddress = $payment->getOrder()->getBillingAddress();
+            $billingAddressData  = (array)$orderBillingAddress->getData();
+
+            // AddressInterface requires an array for street
+            $billingAddressData['street'] = explode(
+                "\n",
+                str_replace("\r", '', (string)($billingAddressData['street'] ?? ''))
+            );
+
+            /** @var AddressInterface $billingAddress */
+            $billingAddress = $this->addressHelper->buildAddressFromInput($billingAddressData);
+
             /** @var Card $card */
             $card = $this->cardFactory->create();
             $card->setMethod($this->methodCode)
                  ->setMethodInstance($this)
                  ->setCustomer($this->getCustomer(), $payment)
-                 ->setAddress($payment->getOrder()->getBillingAddress())
+                 ->setAddress($billingAddress)
                  ->importLegacyData($payment);
 
             $card = $this->cardRepository->save($card);
@@ -145,7 +160,7 @@ class Method extends AbstractMethod
      * @param InfoInterface $payment
      * @return $this
      */
-    #[\Override]
+    #[Override]
     protected function handleShippingAddress(InfoInterface $payment)
     {
         /** @var Payment $payment */
@@ -178,7 +193,7 @@ class Method extends AbstractMethod
      * @param Response $response
      * @return void
      */
-    #[\Override]
+    #[Override]
     protected function afterAuthorize(
         InfoInterface $payment,
         $amount,
@@ -197,7 +212,7 @@ class Method extends AbstractMethod
      * @param Response $response
      * @return void
      */
-    #[\Override]
+    #[Override]
     protected function afterCapture(
         InfoInterface $payment,
         $amount,
@@ -245,7 +260,7 @@ class Method extends AbstractMethod
      * @param Response $response
      * @return InfoInterface
      */
-    #[\Override]
+    #[Override]
     protected function storeTransactionStatuses(
         InfoInterface $payment,
         Response $response
@@ -280,7 +295,7 @@ class Method extends AbstractMethod
      * @return bool
      * @throws LocalizedException
      */
-    #[\Override]
+    #[Override]
     public function acceptPayment(InfoInterface $payment)
     {
         /** @var Payment $payment */
@@ -317,7 +332,7 @@ class Method extends AbstractMethod
      * @return bool
      * @throws LocalizedException
      */
-    #[\Override]
+    #[Override]
     public function denyPayment(InfoInterface $payment)
     {
         /** @var Payment $payment */
