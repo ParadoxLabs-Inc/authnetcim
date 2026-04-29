@@ -410,11 +410,16 @@ class Gateway extends AbstractGateway
         }
 
         foreach ($maskFour as $val) {
-            $start  = strpos((string) $string, '<' . $val . '>');
+            $start = strpos((string) $string, '<' . $val . '>');
+
+            if ($start === false) {
+                continue;
+            }
+
             $end    = strpos((string) $string, '</' . $val . '>', $start);
             $tagLen = strlen($val) + 2;
 
-            if ($start !== false && $end > ($start + $tagLen + 4)) {
+            if ($end !== false && $end > ($start + $tagLen + 4)) {
                 $string = substr_replace($string, 'XXXX', $start + $tagLen, $end - 4 - ($start + $tagLen));
             }
         }
