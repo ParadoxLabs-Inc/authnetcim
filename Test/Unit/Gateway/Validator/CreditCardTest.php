@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ParadoxLabs\Authnetcim\Test\Unit\Gateway\Validator;
 
+use DateTime;
 use Magento\Payment\Model\Info;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Payment\Gateway\ConfigInterface;
@@ -139,7 +140,7 @@ class CreditCardTest extends TestCase
                 'code' => ['name' => 'CVV', 'size' => 3],
             ]);
 
-        $dateTimeMock = $this->createMock(\DateTime::class);
+        $dateTimeMock = $this->createMock(DateTime::class);
         $dateTimeMock->method('format')
             ->willReturn('2025');
         $this->dateProcessorMock->method('date')

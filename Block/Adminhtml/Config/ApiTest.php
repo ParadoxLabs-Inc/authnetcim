@@ -21,6 +21,7 @@
 
 namespace ParadoxLabs\Authnetcim\Block\Adminhtml\Config;
 
+use Override;
 use ParadoxLabs\Authnetcim\Model\Method;
 use Magento\Framework\Phrase;
 use ParadoxLabs\Authnetcim\Model\Gateway;
@@ -120,7 +121,7 @@ class ApiTest extends \ParadoxLabs\TokenBase\Block\Adminhtml\Config\ApiTest
      * @param AbstractElement $element
      * @return string
      */
-    #[\Override]
+    #[Override]
     protected function _getElementHtml(AbstractElement $element)
     {
         $html = parent::_getElementHtml($element);

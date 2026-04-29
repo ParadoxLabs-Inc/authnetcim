@@ -24,6 +24,7 @@ namespace ParadoxLabs\Authnetcim\Block\Adminhtml\Config;
 use Magento\Backend\Block\Widget\Button;
 use Magento\Config\Block\System\Config\Form\Field;
 use Magento\Framework\Data\Form\Element\AbstractElement;
+use Override;
 
 class ValidateButton extends Field
 {
@@ -37,7 +38,7 @@ class ValidateButton extends Field
      * @param AbstractElement $element
      * @return string
      */
-    #[\Override]
+    #[Override]
     public function render(AbstractElement $element)
     {
         $element->unsScope()
@@ -53,7 +54,7 @@ class ValidateButton extends Field
      * @param AbstractElement $element
      * @return string
      */
-    #[\Override]
+    #[Override]
     protected function _getElementHtml(AbstractElement $element)
     {
         return $this->_toHtml();

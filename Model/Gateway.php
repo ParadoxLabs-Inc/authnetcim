@@ -35,6 +35,7 @@ use Magento\Payment\Model\InfoInterface;
 use Magento\Sales\Api\Data\CreditmemoInterface;
 use Magento\Sales\Api\Data\OrderAddressInterface;
 use Magento\Sales\Model\Order\Invoice;
+use Override;
 use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 use ParadoxLabs\TokenBase\Helper\Data;
 use ParadoxLabs\TokenBase\Model\AbstractGateway;
@@ -277,7 +278,7 @@ class Gateway extends AbstractGateway
      *
      * @return $this
      */
-    #[\Override]
+    #[Override]
     public function clearParameters()
     {
         parent::clearParameters();
@@ -398,7 +399,7 @@ class Gateway extends AbstractGateway
      * @param string $string
      * @return mixed
      */
-    #[\Override]
+    #[Override]
     protected function sanitizeLog($string)
     {
         $maskAll  = ['cardCode'];
@@ -427,7 +428,7 @@ class Gateway extends AbstractGateway
      * @param string $xml
      * @return array
      */
-    #[\Override]
+    #[Override]
     protected function xmlToArray($xml)
     {
         // Strip bad namespace out before we try to parse it. ...
@@ -636,7 +637,7 @@ class Gateway extends AbstractGateway
      * @param CardInterface $card
      * @return $this
      */
-    #[\Override]
+    #[Override]
     public function setCard(CardInterface $card)
     {
         $this->setParameter('email', $card->getCustomerEmail());
@@ -1054,7 +1055,7 @@ class Gateway extends AbstractGateway
      * @param string $authCode
      * @return $this
      */
-    #[\Override]
+    #[Override]
     public function setAuthCode($authCode)
     {
         $this->setParameter('approvalCode', $authCode);
@@ -1067,7 +1068,7 @@ class Gateway extends AbstractGateway
      *
      * @return string
      */
-    #[\Override]
+    #[Override]
     public function getTransactionId()
     {
         return $this->getParameter('transId');
@@ -1079,7 +1080,7 @@ class Gateway extends AbstractGateway
      * @param $transactionId
      * @return $this
      */
-    #[\Override]
+    #[Override]
     public function setTransactionId($transactionId)
     {
         $this->setParameter('transId', $transactionId);

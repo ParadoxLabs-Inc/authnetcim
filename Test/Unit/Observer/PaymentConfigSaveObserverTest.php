@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ParadoxLabs\Authnetcim\Test\Unit\Observer;
 
+use Exception;
 use Magento\Customer\Model\Customer;
 use Magento\Eav\Api\AttributeRepositoryInterface;
 use Magento\Eav\Model\Entity\Attribute;
@@ -196,7 +197,7 @@ class PaymentConfigSaveObserverTest extends TestCase
             ]);
 
         $this->attributeRepositoryMock->method('get')
-            ->willThrowException(new \Exception('Attribute not found'));
+            ->willThrowException(new Exception('Attribute not found'));
 
         $this->helperMock->expects($this->once())
             ->method('log')

@@ -21,6 +21,7 @@ use Magento\Payment\Gateway\Validator\ResultInterfaceFactory;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Quote\Model\Quote\Payment as QuotePayment;
 use Magento\Sales\Model\Order\Payment as OrderPayment;
+use Override;
 use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider;
 use Throwable;
 
@@ -57,7 +58,7 @@ class NewAch extends \ParadoxLabs\TokenBase\Gateway\Validator\NewAch
      * @param array $validationSubject
      * @return ResultInterface
      */
-    #[\Override]
+    #[Override]
     public function validate(array $validationSubject)
     {
         /** @var Info $payment */

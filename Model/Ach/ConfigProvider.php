@@ -21,6 +21,7 @@
 
 namespace ParadoxLabs\Authnetcim\Model\Ach;
 
+use Override;
 use ParadoxLabs\TokenBase\Model\Card;
 
 class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
@@ -32,7 +33,7 @@ class ConfigProvider extends \ParadoxLabs\Authnetcim\Model\ConfigProvider
      *
      * @return array
      */
-    #[\Override]
+    #[Override]
     public function getConfig()
     {
         if (!$this->methods[ static::CODE ]->isAvailable()) {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ParadoxLabs\Authnetcim\Test\Unit\Observer;
 
+use Exception;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\Event\Observer;
@@ -98,7 +99,7 @@ class CheckoutFailureClearProfileIdObserverTest extends TestCase
             ->willReturn($customerMock);
 
         $this->customerRepositoryMock->method('save')
-            ->willThrowException(new \Exception('Save failed'));
+            ->willThrowException(new Exception('Save failed'));
 
         // Should not throw - exception is caught
         $this->observer->execute($observerMock);

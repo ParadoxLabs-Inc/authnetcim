@@ -25,6 +25,7 @@ use Magento\Payment\Gateway\Validator\ResultInterface;
 use Magento\Payment\Model\Info;
 use Magento\Payment\Gateway\ConfigInterface;
 use Magento\Payment\Gateway\Validator\ResultInterfaceFactory;
+use Override;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
 
 class StoredCard extends \ParadoxLabs\TokenBase\Gateway\Validator\StoredCard
@@ -57,7 +58,7 @@ class StoredCard extends \ParadoxLabs\TokenBase\Gateway\Validator\StoredCard
      * @param array $validationSubject
      * @return ResultInterface
      */
-    #[\Override]
+    #[Override]
     public function validate(array $validationSubject)
     {
         // If Accept.js is enabled, kick to standard CC validator

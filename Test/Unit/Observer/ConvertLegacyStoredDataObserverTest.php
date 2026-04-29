@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ParadoxLabs\Authnetcim\Test\Unit\Observer;
 
+use ArrayIterator;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Model\Customer;
@@ -28,6 +29,7 @@ use ParadoxLabs\TokenBase\Model\CardFactory;
 use ParadoxLabs\TokenBase\Model\Method\Factory as MethodFactory;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 
 class ConvertLegacyStoredDataObserverTest extends TestCase
 {
@@ -271,7 +273,7 @@ class ConvertLegacyStoredDataObserverTest extends TestCase
             ],
         ];
 
-        $reflection = new \ReflectionMethod($this->observer, 'getCardsFromProfile');
+        $reflection = new ReflectionMethod($this->observer, 'getCardsFromProfile');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->observer, $profile);
@@ -298,7 +300,7 @@ class ConvertLegacyStoredDataObserverTest extends TestCase
             ],
         ];
 
-        $reflection = new \ReflectionMethod($this->observer, 'getCardsFromProfile');
+        $reflection = new ReflectionMethod($this->observer, 'getCardsFromProfile');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->observer, $profile);
@@ -314,7 +316,7 @@ class ConvertLegacyStoredDataObserverTest extends TestCase
             'profile' => [],
         ];
 
-        $reflection = new \ReflectionMethod($this->observer, 'getCardsFromProfile');
+        $reflection = new ReflectionMethod($this->observer, 'getCardsFromProfile');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->observer, $profile);
@@ -341,7 +343,7 @@ class ConvertLegacyStoredDataObserverTest extends TestCase
             ->with($searchCriteriaMock)
             ->willReturn($searchResultsMock);
 
-        $reflection = new \ReflectionMethod($this->observer, 'cardAlreadyExists');
+        $reflection = new ReflectionMethod($this->observer, 'cardAlreadyExists');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->observer, 123, '12345', '67890');
@@ -368,7 +370,7 @@ class ConvertLegacyStoredDataObserverTest extends TestCase
             ->with($searchCriteriaMock)
             ->willReturn($searchResultsMock);
 
-        $reflection = new \ReflectionMethod($this->observer, 'cardAlreadyExists');
+        $reflection = new ReflectionMethod($this->observer, 'cardAlreadyExists');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->observer, 123, '12345', '67890');
@@ -404,7 +406,7 @@ class ConvertLegacyStoredDataObserverTest extends TestCase
         $orderCollectionMock->method('addFieldToFilter')
             ->willReturnSelf();
         $orderCollectionMock->method('getIterator')
-            ->willReturn(new \ArrayIterator([$orderMock1]));
+            ->willReturn(new ArrayIterator([$orderMock1]));
 
         $this->orderCollectionFactoryMock->method('create')
             ->willReturn($orderCollectionMock);
@@ -413,7 +415,7 @@ class ConvertLegacyStoredDataObserverTest extends TestCase
             ->method('save')
             ->with($paymentMock1);
 
-        $reflection = new \ReflectionMethod($this->observer, 'updateOrders');
+        $reflection = new ReflectionMethod($this->observer, 'updateOrders');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->observer, $cards);
@@ -425,7 +427,7 @@ class ConvertLegacyStoredDataObserverTest extends TestCase
     {
         $cards = [];
 
-        $reflection = new \ReflectionMethod($this->observer, 'updateOrders');
+        $reflection = new ReflectionMethod($this->observer, 'updateOrders');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->observer, $cards);

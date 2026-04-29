@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ParadoxLabs\Authnetcim\Test\Unit\Model\Cron;
 
+use ArrayIterator;
 use ParadoxLabs\Authnetcim\Model\Card;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
 use ParadoxLabs\Authnetcim\Model\Cron\AccountUpdater;
@@ -482,7 +483,7 @@ class AccountUpdaterTest extends TestCase
             ->willReturn(0);
 
         $collectionMock->method('getIterator')
-            ->willReturn(new \ArrayIterator([]));
+            ->willReturn(new ArrayIterator([]));
 
         $this->cardCollectionFactoryMock->method('create')
             ->willReturn($collectionMock);
@@ -539,7 +540,7 @@ class AccountUpdaterTest extends TestCase
         $collectionMock->method('count')
             ->willReturn(count($cards));
         $collectionMock->method('getIterator')
-            ->willReturn(new \ArrayIterator($cards));
+            ->willReturn(new ArrayIterator($cards));
 
         return $collectionMock;
     }

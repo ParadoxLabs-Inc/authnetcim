@@ -29,6 +29,7 @@ use Magento\Payment\Gateway\Validator\ResultInterfaceFactory;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Quote\Model\Quote\Payment as QuotePayment;
 use Magento\Sales\Model\Order\Payment as OrderPayment;
+use Override;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
 use ParadoxLabs\TokenBase\Gateway\Validator\CreditCard\Types;
 use ParadoxLabs\TokenBase\Model\Method\Factory;
@@ -59,7 +60,7 @@ class CreditCard extends \ParadoxLabs\TokenBase\Gateway\Validator\CreditCard
      * @param array $validationSubject
      * @return ResultInterface
      */
-    #[\Override]
+    #[Override]
     public function validate(array $validationSubject)
     {
         $isValid = true;

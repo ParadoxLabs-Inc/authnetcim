@@ -22,6 +22,7 @@
 namespace ParadoxLabs\Authnetcim\Helper;
 
 use Magento\Framework\Phrase;
+use Override;
 
 /**
  * Authorize.Net CIM Helper -- response translation maps et al.
@@ -139,7 +140,7 @@ class Data extends \ParadoxLabs\TokenBase\Helper\Data
      * @param string $type
      * @return string|null
      */
-    #[\Override]
+    #[Override]
     public function mapCcTypeToMagento($type)
     {
         if (!empty($type) && isset($this->cimCardTypeMap[ $type ])) {

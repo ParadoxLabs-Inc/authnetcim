@@ -31,6 +31,7 @@ use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Module\Dir;
 use Magento\Framework\Registry;
+use Override;
 use Throwable;
 
 /**
@@ -103,7 +104,7 @@ class Version extends Value implements
      *
      * @return $this
      */
-    #[\Override]
+    #[Override]
     protected function _afterLoad()
     {
         $this->setValue($this->_getDefaultValue());

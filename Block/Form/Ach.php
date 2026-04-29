@@ -21,6 +21,7 @@
 
 namespace ParadoxLabs\Authnetcim\Block\Form;
 
+use Override;
 use ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider;
 
 /**
@@ -38,7 +39,7 @@ class Ach extends \ParadoxLabs\TokenBase\Block\Form\Ach
      *
      * @return string
      */
-    #[\Override]
+    #[Override]
     protected function _toHtml()
     {
         $method = $this->getTokenbaseMethod();
@@ -54,7 +55,7 @@ class Ach extends \ParadoxLabs\TokenBase\Block\Form\Ach
      *
      * @return bool
      */
-    #[\Override]
+    #[Override]
     public function hasVerification()
     {
         return false;

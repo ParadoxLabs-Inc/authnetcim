@@ -24,6 +24,7 @@ namespace ParadoxLabs\Authnetcim\Model\Ach;
 use Magento\Sales\Model\Order\Payment\Info;
 use Magento\Sales\Model\Order\Payment;
 use Magento\Payment\Model\InfoInterface;
+use Override;
 use ParadoxLabs\Authnetcim\Block\Info\Ach;
 use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 use ParadoxLabs\TokenBase\Model\Gateway\Response;
@@ -65,7 +66,7 @@ class Method extends \ParadoxLabs\Authnetcim\Model\Method
      * @param CardInterface $card
      * @return $this
      */
-    #[\Override]
+    #[Override]
     public function setCard(CardInterface $card)
     {
         parent::setCard($card);
@@ -94,7 +95,7 @@ class Method extends \ParadoxLabs\Authnetcim\Model\Method
      * @param InfoInterface $payment
      * @return bool
      */
-    #[\Override]
+    #[Override]
     protected function paymentContainsCard(InfoInterface $payment)
     {
         /** @var Payment $payment */
@@ -113,7 +114,7 @@ class Method extends \ParadoxLabs\Authnetcim\Model\Method
      * @param Response $response
      * @return InfoInterface
      */
-    #[\Override]
+    #[Override]
     protected function fixLegacyCcType(
         InfoInterface $payment,
         Response $response

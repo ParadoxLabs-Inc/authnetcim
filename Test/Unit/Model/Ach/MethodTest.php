@@ -7,6 +7,7 @@ namespace ParadoxLabs\Authnetcim\Test\Unit\Model\Ach;
 use Magento\Payment\Model\Info;
 use ParadoxLabs\Authnetcim\Model\Ach\Method;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 
 /**
  * Tests for the ACH Method class
@@ -34,7 +35,7 @@ class MethodTest extends TestCase
                 return null;
             });
 
-        $reflection = new \ReflectionMethod($method, 'paymentContainsCard');
+        $reflection = new ReflectionMethod($method, 'paymentContainsCard');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock);
@@ -60,7 +61,7 @@ class MethodTest extends TestCase
                 return null;
             });
 
-        $reflection = new \ReflectionMethod($method, 'paymentContainsCard');
+        $reflection = new ReflectionMethod($method, 'paymentContainsCard');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock);
@@ -86,7 +87,7 @@ class MethodTest extends TestCase
                 return null;
             });
 
-        $reflection = new \ReflectionMethod($method, 'paymentContainsCard');
+        $reflection = new ReflectionMethod($method, 'paymentContainsCard');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock);
@@ -102,7 +103,7 @@ class MethodTest extends TestCase
         $paymentMock->method('getData')
             ->willReturn(null);
 
-        $reflection = new \ReflectionMethod($method, 'paymentContainsCard');
+        $reflection = new ReflectionMethod($method, 'paymentContainsCard');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock);

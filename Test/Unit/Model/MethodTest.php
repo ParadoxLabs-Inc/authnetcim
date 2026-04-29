@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ParadoxLabs\Authnetcim\Test\Unit\Model;
 
+use Closure;
 use Magento\Sales\Api\Data\TransactionInterface;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Sales\Model\Order;
@@ -19,6 +20,7 @@ use ParadoxLabs\TokenBase\Model\Card;
 use ParadoxLabs\TokenBase\Model\Gateway\Response;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 
 class MethodTest extends TestCase
 {
@@ -102,7 +104,7 @@ class MethodTest extends TestCase
 
         $paymentMock = $this->createMock(InfoInterface::class);
 
-        $reflection = new \ReflectionMethod($method, 'paymentContainsCard');
+        $reflection = new ReflectionMethod($method, 'paymentContainsCard');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock);
@@ -135,7 +137,7 @@ class MethodTest extends TestCase
                 return null;
             });
 
-        $reflection = new \ReflectionMethod($method, 'paymentContainsCard');
+        $reflection = new ReflectionMethod($method, 'paymentContainsCard');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock);
@@ -204,7 +206,7 @@ class MethodTest extends TestCase
         $method->method('getCard')
             ->willReturn($cardMock);
 
-        \Closure::bind(
+        Closure::bind(
             function () use ($helperMock, $cardRepositoryMock): void {
                 $this->helper         = $helperMock;
                 $this->cardRepository = $cardRepositoryMock;
@@ -213,7 +215,7 @@ class MethodTest extends TestCase
             AbstractMethod::class
         )();
 
-        $reflection = new \ReflectionMethod($method, 'fixLegacyCcType');
+        $reflection = new ReflectionMethod($method, 'fixLegacyCcType');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock, $responseMock);
@@ -246,7 +248,7 @@ class MethodTest extends TestCase
         $method->method('getCard')
             ->willReturn($cardMock);
 
-        $reflection = new \ReflectionMethod($method, 'fixLegacyCcType');
+        $reflection = new ReflectionMethod($method, 'fixLegacyCcType');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock, $responseMock);
@@ -285,7 +287,7 @@ class MethodTest extends TestCase
             ->method('setData')
             ->willReturnSelf();
 
-        $reflection = new \ReflectionMethod($method, 'storeTransactionStatuses');
+        $reflection = new ReflectionMethod($method, 'storeTransactionStatuses');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock, $responseMock);
@@ -331,7 +333,7 @@ class MethodTest extends TestCase
             ->with('cc_approval', 'ABC123')
             ->willReturnSelf();
 
-        $reflection = new \ReflectionMethod($method, 'storeTransactionStatuses');
+        $reflection = new ReflectionMethod($method, 'storeTransactionStatuses');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock, $responseMock);

@@ -27,6 +27,7 @@ use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Framework\Registry;
+use Override;
 use ParadoxLabs\Authnetcim\Model\Service\AcceptCustomer\BackendRequest;
 
 class UpdateCard extends GetNewCard
@@ -59,7 +60,7 @@ class UpdateCard extends GetNewCard
      *
      * @return ResultInterface
      */
-    #[\Override]
+    #[Override]
     public function execute()
     {
         $this->getCustomer();

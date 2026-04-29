@@ -22,6 +22,7 @@ use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 use ParadoxLabs\TokenBase\Model\Method\Factory as MethodFactory;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 
 class FrontendRequestTest extends TestCase
 {
@@ -386,7 +387,7 @@ class FrontendRequestTest extends TestCase
                 return null;
             });
 
-        $reflection = new \ReflectionMethod($this->frontendRequest, 'getMethodCode');
+        $reflection = new ReflectionMethod($this->frontendRequest, 'getMethodCode');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->frontendRequest);
@@ -405,7 +406,7 @@ class FrontendRequestTest extends TestCase
                 return null;
             });
 
-        $reflection = new \ReflectionMethod($this->frontendRequest, 'getMethodCode');
+        $reflection = new ReflectionMethod($this->frontendRequest, 'getMethodCode');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->frontendRequest);
@@ -418,7 +419,7 @@ class FrontendRequestTest extends TestCase
         $this->helperMock->method('getCurrentStoreId')
             ->willReturn(5);
 
-        $reflection = new \ReflectionMethod($this->frontendRequest, 'getStoreId');
+        $reflection = new ReflectionMethod($this->frontendRequest, 'getStoreId');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->frontendRequest);
@@ -442,7 +443,7 @@ class FrontendRequestTest extends TestCase
         $this->paymentResourceMock->expects($this->never())
             ->method('save');
 
-        $reflection = new \ReflectionMethod($this->frontendRequest, 'saveCardToQuote');
+        $reflection = new ReflectionMethod($this->frontendRequest, 'saveCardToQuote');
         $reflection->setAccessible(true);
 
         $reflection->invoke($this->frontendRequest, $cardMock);
@@ -476,7 +477,7 @@ class FrontendRequestTest extends TestCase
             $this->paymentResourceMock,
         );
 
-        $reflection = new \ReflectionMethod($frontendRequest, 'clearProfileId');
+        $reflection = new ReflectionMethod($frontendRequest, 'clearProfileId');
         $reflection->setAccessible(true);
 
         $reflection->invoke($frontendRequest);
@@ -508,7 +509,7 @@ class FrontendRequestTest extends TestCase
         $this->checkoutSessionMock->method('getQuote')
             ->willReturn($quoteMock);
 
-        $reflection = new \ReflectionMethod($this->frontendRequest, 'clearProfileId');
+        $reflection = new ReflectionMethod($this->frontendRequest, 'clearProfileId');
         $reflection->setAccessible(true);
 
         $reflection->invoke($this->frontendRequest);

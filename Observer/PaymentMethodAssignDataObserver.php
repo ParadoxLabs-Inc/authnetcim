@@ -21,6 +21,7 @@
 
 namespace ParadoxLabs\Authnetcim\Observer;
 
+use Override;
 use ParadoxLabs\Authnetcim\Model\Card;
 use Magento\Payment\Gateway\Command\CommandException;
 use Magento\Framework\DataObject;
@@ -70,7 +71,7 @@ class PaymentMethodAssignDataObserver extends \ParadoxLabs\TokenBase\Observer\Pa
      * @param \Magento\Payment\Model\MethodInterface $method
      * @return void
      */
-    #[\Override]
+    #[Override]
     protected function assignTokenbaseData(
         InfoInterface $payment,
         DataObject $data,

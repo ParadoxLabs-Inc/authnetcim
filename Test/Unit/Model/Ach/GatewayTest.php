@@ -8,6 +8,7 @@ use ParadoxLabs\Authnetcim\Model\Ach\Gateway;
 use ParadoxLabs\TokenBase\Model\Gateway\Response;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 
 /**
  * Tests for the ACH Gateway class
@@ -207,7 +208,7 @@ class GatewayTest extends TestCase
                 return $params[$key] ?? null;
             });
 
-        $reflection = new \ReflectionMethod($gateway, 'createTransactionAddRefundInfo');
+        $reflection = new ReflectionMethod($gateway, 'createTransactionAddRefundInfo');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($gateway, []);
@@ -229,7 +230,7 @@ class GatewayTest extends TestCase
             ->with('accountNumber')
             ->willReturn(false);
 
-        $reflection = new \ReflectionMethod($gateway, 'createTransactionAddRefundInfo');
+        $reflection = new ReflectionMethod($gateway, 'createTransactionAddRefundInfo');
         $reflection->setAccessible(true);
 
         $result = $reflection->invoke($gateway, ['existing' => 'value']);

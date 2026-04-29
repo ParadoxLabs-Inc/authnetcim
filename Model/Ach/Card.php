@@ -24,6 +24,7 @@ namespace ParadoxLabs\Authnetcim\Model\Ach;
 use Magento\Payment\Model\Info;
 use Magento\Framework\Phrase;
 use Magento\Payment\Model\InfoInterface;
+use Override;
 use ParadoxLabs\TokenBase\Api\GatewayInterface;
 
 /**
@@ -37,7 +38,7 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
      * @param InfoInterface $payment
      * @return $this
      */
-    #[\Override]
+    #[Override]
     public function importPaymentInfo(InfoInterface $payment)
     {
         parent::importPaymentInfo($payment);
@@ -80,7 +81,7 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
      * @param bool $includeType
      * @return string|Phrase
      */
-    #[\Override]
+    #[Override]
     public function getLabel($includeType = true)
     {
         return sprintf(
@@ -96,7 +97,7 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
      * @param GatewayInterface $gateway
      * @return $this
      */
-    #[\Override]
+    #[Override]
     protected function setPaymentInfoOnCreate(GatewayInterface $gateway)
     {
         /** @var Info $info */
@@ -123,7 +124,7 @@ class Card extends \ParadoxLabs\Authnetcim\Model\Card
      * @param GatewayInterface $gateway
      * @return $this
      */
-    #[\Override]
+    #[Override]
     protected function setPaymentInfoOnUpdate(GatewayInterface $gateway)
     {
         /** @var Info $info */

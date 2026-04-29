@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ParadoxLabs\Authnetcim\Test\Unit\Observer;
 
+use Exception;
 use Magento\Framework\Event;
 use Magento\Framework\Event\Observer;
 use Magento\Quote\Api\CartRepositoryInterface;
@@ -15,6 +16,7 @@ use Magento\Sales\Model\Order\Payment as OrderPayment;
 use ParadoxLabs\Authnetcim\Observer\CheckoutFailureClearAcceptjsObserver;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 
 class CheckoutFailureClearAcceptjsObserverTest extends TestCase
 {
@@ -210,7 +212,7 @@ class CheckoutFailureClearAcceptjsObserverTest extends TestCase
                 }
 
                 if ($key === 'quote') {
-                    return new \stdClass();
+                    return new stdClass();
                 }
 
                 return null;
@@ -232,7 +234,7 @@ class CheckoutFailureClearAcceptjsObserverTest extends TestCase
     {
         $paymentMock = $this->createOrderPaymentMock();
         $paymentMock->method('getAdditionalInformation')
-            ->willThrowException(new \Exception('Test exception'));
+            ->willThrowException(new Exception('Test exception'));
 
         $orderMock = $this->createMock(Order::class);
         $orderMock->method('getPayment')

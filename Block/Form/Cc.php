@@ -21,6 +21,7 @@
 
 namespace ParadoxLabs\Authnetcim\Block\Form;
 
+use Override;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
 
 /**
@@ -43,7 +44,7 @@ class Cc extends \ParadoxLabs\TokenBase\Block\Form\Cc
      *
      * @return string
      */
-    #[\Override]
+    #[Override]
     protected function _toHtml()
     {
         $method = $this->getTokenbaseMethod();

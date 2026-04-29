@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ParadoxLabs\Authnetcim\Test\Unit\Model;
 
+use Magento\Checkout\Model\Session;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\UrlInterface;
 use Magento\Payment\Model\CcConfig;
@@ -19,7 +20,7 @@ class ConfigProviderTest extends TestCase
     private ConfigProvider $configProvider;
     private CcConfig|MockObject $ccConfigMock;
     private \Magento\Payment\Helper\Data|MockObject $paymentHelperMock;
-    private \Magento\Checkout\Model\Session|MockObject $checkoutSessionMock;
+    private Session|MockObject $checkoutSessionMock;
     private CustomerSession|MockObject $customerSessionMock;
     private PaymentConfig|MockObject $paymentConfigMock;
     private Data|MockObject $dataHelperMock;
@@ -30,7 +31,7 @@ class ConfigProviderTest extends TestCase
     {
         $this->ccConfigMock = $this->createMock(CcConfig::class);
         $this->paymentHelperMock = $this->createMock(\Magento\Payment\Helper\Data::class);
-        $this->checkoutSessionMock = $this->createMock(\Magento\Checkout\Model\Session::class);
+        $this->checkoutSessionMock = $this->createMock(Session::class);
         $this->customerSessionMock = $this->createMock(CustomerSession::class);
         $this->paymentConfigMock = $this->createMock(PaymentConfig::class);
         $this->dataHelperMock = $this->createMock(Data::class);
