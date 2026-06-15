@@ -7,11 +7,12 @@
         "tokenization"
     ],
     "require": {
-        "paradoxlabs/tokenbase": "~4.8.0"
+        "php": ">=8.1",
+        "paradoxlabs/tokenbase": "~5.0.0"
     },
     "type": "magento2-module",
-    "version": "5.2.0",
-    "time": "2026-01-07",
+    "version": "6.0.0",
+    "time": "2026-04-29",
     "license": "Apache-2.0",
     "authors": [
         {
