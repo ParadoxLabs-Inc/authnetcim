@@ -1,5 +1,14 @@
 # ParadoxLabs_Authnetcim Changelog
 
+## 6.0.0 - Jun 17, 2026: PHP 8.1–8.5 compatibility
+
+**WARNING: PHP 8.1 is now the minimum. Now requires ParadoxLabs_TokenBase 5.0.**
+
+- Added support up to PHP 8.5; PHP 8.1+ is now required.
+- Added unit test coverage.
+- Fixed billing address handling on API card save to build a customer AddressInterface (type-safety fix).
+- Refactored for PHP 8.1+: constructor property promotion, readonly properties, strict types, import cleanup, and `$escaper` usage in templates.
+
 ## 5.2.0 - Jan 7, 2026
 
 - Added ability to use a different CIM customer profile for each new checkout, to bypass 10-payment-profile limit
