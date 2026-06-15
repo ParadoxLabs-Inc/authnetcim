@@ -140,9 +140,7 @@ class PaymentMethodAssignDataObserverTest extends TestCase
             ->with('tokenbase_id', null)
             ->willReturnSelf();
 
-        $extAttributesMock = $this->getMockBuilder(PaymentExtensionInterface::class)
-            ->addMethods(['setTokenbaseId', 'getTokenbaseId'])
-            ->getMockForAbstractClass();
+        $extAttributesMock = $this->createMock(PaymentExtensionInterface::class);
         $extAttributesMock->expects($this->once())
             ->method('setTokenbaseId')
             ->with(null);
