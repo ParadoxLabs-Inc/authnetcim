@@ -1,0 +1,7 @@
+# Exclude development-only files from Composer dist packages.
+# GitHub archive / Packagist dist honor export-ignore; --prefer-source is unaffected.
+/Test           export-ignore
+.gitattributes  export-ignore
+.gitignore      export-ignore
+.github/        export-ignore
+
