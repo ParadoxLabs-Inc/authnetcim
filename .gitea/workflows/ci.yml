@@ -1,0 +1,21 @@
+name: CI
+on:
+  # Extensions are in-house products with real branch development: keep push
+  # CI. Legacy Beanstalk repos default to master; newer ones to main.
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master, develop]
+  workflow_dispatch:
+# Shed superseded runs on the same ref — one shared runner, MageCheck runs are
+# long. No-op if act ignores concurrency (runs queue as before).
+concurrency:
+  group: ci-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  # Thin caller -> in-house proxy in ci-infrastructure, which wraps the mirrored
+  # MageCheck check-extension workflow and adds any house-specific jobs.
+  ci:
+    uses: paradoxlabs/ci-infrastructure/.gitea/workflows/extension-ci.yml@main
+    secrets:
+      composer_auth: ${{ secrets.COMPOSER_AUTH }}
