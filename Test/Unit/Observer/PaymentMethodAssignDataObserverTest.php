@@ -140,15 +140,45 @@ class PaymentMethodAssignDataObserverTest extends TestCase
             ->with('tokenbase_id', null)
             ->willReturnSelf();
 
-        $extAttributesMock = $this->createMock(PaymentExtensionInterface::class);
-        $extAttributesMock->expects($this->once())
-            ->method('setTokenbaseId')
-            ->with(null);
+        // setTokenbaseId() exists only on the *generated* extension-attributes class.
+        // CI's unit env has no generated code, so mocking it fails ("method does not
+        // exist"). Use a hand-written double that declares the method itself -- it
+        // works whether or not the generated interface carries tokenbase_id, on
+        // PHPUnit 9.6-12. agreement_ids is the only other contributor to this
+        // interface, so implementing all four methods satisfies it in every env.
+        $extAttributes = new class implements PaymentExtensionInterface {
+            /** @var array<int, mixed> */
+            public array $tokenbaseIdCalls = [];
+
+            public function getAgreementIds()
+            {
+                return null;
+            }
+
+            public function setAgreementIds($agreementIds)
+            {
+                return $this;
+            }
+
+            public function getTokenbaseId()
+            {
+                return null;
+            }
+
+            public function setTokenbaseId($tokenbaseId)
+            {
+                $this->tokenbaseIdCalls[] = $tokenbaseId;
+
+                return $this;
+            }
+        };
 
         $paymentMock->method('getExtensionAttributes')
-            ->willReturn($extAttributesMock);
+            ->willReturn($extAttributes);
 
         $this->observer->processAcceptJs($paymentMock, $dataMock, $tokenbaseMethodMock);
+
+        $this->assertSame([null], $extAttributes->tokenbaseIdCalls);
     }
 
     public function testProcessAcceptJsSkipsWhenDisabled(): void
