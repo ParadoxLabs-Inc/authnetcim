@@ -126,11 +126,14 @@ class FrontendRequestTest extends TestCase
     {
         $quoteMock = $this->getMockBuilder(Quote::class)
             ->disableOriginalConstructor()
-            ->addMethods(['getCustomerId'])
+            ->onlyMethods(['getData'])
             ->getMock();
 
-        $quoteMock->method('getCustomerId')
-            ->willReturn(123);
+        // getCustomerId() is magic on Quote; it routes through the real __call into getData().
+        $quoteMock->method('getData')
+            ->willReturnMap([
+                ['customer_id', null, 123],
+            ]);
 
         $this->checkoutSessionMock->method('getQuoteId')
             ->willReturn(1);

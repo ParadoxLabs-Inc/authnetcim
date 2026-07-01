@@ -26,6 +26,7 @@ use ParadoxLabs\TokenBase\Helper\Address as AddressHelper;
 use ParadoxLabs\TokenBase\Helper\Operation as OperationHelper;
 use ParadoxLabs\TokenBase\Model\CardFactory;
 use ParadoxLabs\TokenBase\Model\ResourceModel\Card\CollectionFactory as CardCollectionFactory;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -156,6 +157,7 @@ class DataTest extends TestCase
     /**
      * @dataProvider avsResponseProvider
      */
+    #[DataProvider('avsResponseProvider')]
     public function testTranslateAvsReturnsTranslation(string $code, string $expectedContains): void
     {
         $result = $this->helper->translateAvs($code);
@@ -192,6 +194,7 @@ class DataTest extends TestCase
     /**
      * @dataProvider ccvResponseProvider
      */
+    #[DataProvider('ccvResponseProvider')]
     public function testTranslateCcvReturnsTranslation(string $code, string $expectedContains): void
     {
         $result = $this->helper->translateCcv($code);
@@ -220,6 +223,7 @@ class DataTest extends TestCase
     /**
      * @dataProvider cavvResponseProvider
      */
+    #[DataProvider('cavvResponseProvider')]
     public function testTranslateCavvReturnsTranslation(string $code, string $expectedContains): void
     {
         $result = $this->helper->translateCavv($code);

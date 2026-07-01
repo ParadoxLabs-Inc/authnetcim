@@ -369,7 +369,6 @@ class MethodTest extends TestCase
 
         $paymentMock = $this->getMockBuilder(Payment::class)
             ->disableOriginalConstructor()
-            ->addMethods(['setIsTransactionApproved'])
             ->onlyMethods([
                 'getTransactionId',
                 'setData',
@@ -378,13 +377,23 @@ class MethodTest extends TestCase
             ->getMock();
         $paymentMock->method('getTransactionId')
             ->willReturn('12345');
+
+        // setIsTransactionApproved() is magic; it routes through the real __call into the
+        // stubbed setData(). Assert on the 'is_transaction_approved' key instead of the magic setter.
+        $isTransactionApprovedCalled = false;
         $paymentMock->method('setData')
-            ->willReturnSelf();
+            ->willReturnCallback(function ($key, $value = null) use ($paymentMock, &$isTransactionApprovedCalled) {
+                if ($key === 'is_transaction_approved') {
+                    $isTransactionApprovedCalled = true;
+
+                    self::assertTrue($value);
+                }
+
+                return $paymentMock;
+            });
+
         $paymentMock->method('getAuthorizationTransaction')
             ->willReturn($transactionMock);
-        $paymentMock->expects($this->once())
-            ->method('setIsTransactionApproved')
-            ->with(true);
 
         $method = $this->getMockBuilder(Method::class)
             ->disableOriginalConstructor()
@@ -397,6 +406,7 @@ class MethodTest extends TestCase
 
         $result = $method->acceptPayment($paymentMock);
 
+        $this->assertTrue($isTransactionApprovedCalled);
         $this->assertTrue($result);
     }
 
@@ -460,11 +470,22 @@ class MethodTest extends TestCase
 
         $paymentMock = $this->getMockBuilder(Payment::class)
             ->disableOriginalConstructor()
-            ->addMethods(['setIsTransactionDenied'])
+            ->onlyMethods(['setData'])
             ->getMock();
-        $paymentMock->expects($this->once())
-            ->method('setIsTransactionDenied')
-            ->with(true);
+
+        // setIsTransactionDenied() is magic; it routes through the real __call into the
+        // stubbed setData(). Assert on the 'is_transaction_denied' key instead of the magic setter.
+        $isTransactionDeniedCalled = false;
+        $paymentMock->method('setData')
+            ->willReturnCallback(function ($key, $value = null) use ($paymentMock, &$isTransactionDeniedCalled) {
+                if ($key === 'is_transaction_denied') {
+                    $isTransactionDeniedCalled = true;
+
+                    self::assertTrue($value);
+                }
+
+                return $paymentMock;
+            });
 
         $method = $this->getMockBuilder(Method::class)
             ->disableOriginalConstructor()
@@ -477,6 +498,7 @@ class MethodTest extends TestCase
 
         $result = $method->denyPayment($paymentMock);
 
+        $this->assertTrue($isTransactionDeniedCalled);
         $this->assertTrue($result);
     }
 

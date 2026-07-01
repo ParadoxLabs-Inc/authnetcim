@@ -320,10 +320,14 @@ class FrontendRequestTest extends TestCase
     {
         $quoteMock = $this->getMockBuilder(Quote::class)
             ->disableOriginalConstructor()
-            ->addMethods(['getCustomerId'])
+            ->onlyMethods(['getData'])
             ->getMock();
-        $quoteMock->method('getCustomerId')
-            ->willReturn(123);
+
+        // getCustomerId() is magic on Quote; it routes through the real __call into getData().
+        $quoteMock->method('getData')
+            ->willReturnMap([
+                ['customer_id', null, 123],
+            ]);
 
         $checkoutSessionMock = $this->getMockBuilder(CheckoutSession::class)
             ->disableOriginalConstructor()
@@ -461,13 +465,17 @@ class FrontendRequestTest extends TestCase
                 return null;
             });
 
+        // unsetData() is not declared on Session/SessionManager; it's resolved via
+        // SessionManager's own __call(), which normally proxies to an internal $storage
+        // DataObject (uninitialized here since the constructor is disabled). Mock __call()
+        // itself directly rather than relying on that proxy.
         $customerSessionMock = $this->getMockBuilder(CustomerSession::class)
             ->disableOriginalConstructor()
-            ->addMethods(['unsetData'])
+            ->onlyMethods(['__call'])
             ->getMock();
         $customerSessionMock->expects($this->once())
-            ->method('unsetData')
-            ->with('authnetcim_profile_id');
+            ->method('__call')
+            ->with('unsetData', ['authnetcim_profile_id']);
 
         $frontendRequest = new FrontendRequest(
             $this->contextMock,

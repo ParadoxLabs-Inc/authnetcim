@@ -11,6 +11,7 @@ use ParadoxLabs\Authnetcim\Model\Service\CustomerProfile;
 use ParadoxLabs\TokenBase\Api\CardRepositoryInterface;
 use ParadoxLabs\TokenBase\Api\Data\CardInterface;
 use ParadoxLabs\TokenBase\Api\MethodInterface;
+use ParadoxLabs\TokenBase\Model\Card;
 use ParadoxLabs\TokenBase\Model\Method\Factory;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -32,9 +33,13 @@ class CustomerProfileTest extends TestCase
         $this->methodFactoryMock = $this->createMock(Factory::class);
         $this->methodMock = $this->createMock(MethodInterface::class);
         $this->gatewayMock = $this->createMock(Gateway::class);
-        $this->cardMock = $this->getMockBuilder(CardInterface::class)
-            ->addMethods(['getTypeInstance', 'setData', 'getData'])
-            ->getMockForAbstractClass();
+        // getTypeInstance()/setData()/getData() aren't declared on CardInterface (they're
+        // real methods on the concrete Card model), so mock the concrete class instead of
+        // the interface -- avoids addMethods() while keeping every other CardInterface
+        // getter/setter auto-mocked (all real, declared methods on Card).
+        $this->cardMock = $this->getMockBuilder(Card::class)
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $this->customerProfile = new CustomerProfile(
             $this->helperMock,

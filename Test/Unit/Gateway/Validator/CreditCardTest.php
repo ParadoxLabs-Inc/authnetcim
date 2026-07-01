@@ -860,10 +860,10 @@ class CreditCardTest extends TestCase
 
     private function createPaymentMock(): MockObject
     {
+        // getOrder() is magic on Info; unused by tests that call this factory (getData default is null).
         return $this->getMockBuilder(Info::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['getData', 'getAdditionalInformation'])
-            ->addMethods(['getOrder'])
             ->getMock();
     }
 

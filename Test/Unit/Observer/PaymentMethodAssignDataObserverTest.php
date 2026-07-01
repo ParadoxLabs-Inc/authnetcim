@@ -6,11 +6,11 @@ namespace ParadoxLabs\Authnetcim\Test\Unit\Observer;
 
 use Magento\Customer\Api\Data\AddressInterface;
 use Magento\Framework\DataObject;
-use Magento\Payment\Model\InfoInterface;
 use Magento\Quote\Api\Data\PaymentExtensionInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Model\Quote\Payment;
+use Magento\Sales\Model\Order\Payment as OrderPayment;
 use ParadoxLabs\Authnetcim\Model\Gateway;
 use ParadoxLabs\Authnetcim\Observer\PaymentMethodAssignDataObserver;
 use ParadoxLabs\Authnetcim\Model\Service\CustomerProfile;
@@ -265,7 +265,7 @@ class PaymentMethodAssignDataObserverTest extends TestCase
 
     public function testProcessAcceptHostedSkipsNonQuotePayment(): void
     {
-        // Use InfoInterface (non-Quote\Payment)
+        // Use Sales\Order\Payment (non-Quote\Payment)
         $paymentMock = $this->createPaymentMock();
         $paymentMock->method('getAdditionalInformation')
             ->willReturn(null);
@@ -346,18 +346,19 @@ class PaymentMethodAssignDataObserverTest extends TestCase
 
         $quoteMock = $this->getMockBuilder(Quote::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getBillingAddress', 'getReservedOrderId'])
-            ->addMethods(['getBaseGrandTotal', 'getCustomerId', 'getCustomerEmail'])
+            ->onlyMethods(['getBillingAddress', 'getReservedOrderId', 'getData'])
             ->getMock();
 
-        $quoteMock->method('getBaseGrandTotal')
-            ->willReturn(100.00);
+        // getBaseGrandTotal()/getCustomerId()/getCustomerEmail() are magic on Quote;
+        // they route through the real __call into the stubbed getData().
+        $quoteMock->method('getData')
+            ->willReturnMap([
+                ['base_grand_total', null, 100.00],
+                ['customer_id', null, 1],
+                ['customer_email', null, 'test@example.com'],
+            ]);
         $quoteMock->method('getReservedOrderId')
             ->willReturn('100000001');
-        $quoteMock->method('getCustomerId')
-            ->willReturn(1);
-        $quoteMock->method('getCustomerEmail')
-            ->willReturn('test@example.com');
 
         $billingAddressMock = $this->createMock(Address::class);
         $billingAddressMock->method('getEmail')
@@ -413,17 +414,23 @@ class PaymentMethodAssignDataObserverTest extends TestCase
         $this->observer->processAcceptHosted($paymentMock, $dataMock, $tokenbaseMethodMock);
     }
 
-    private function createPaymentMock(): InfoInterface|MockObject
+    private function createPaymentMock(): OrderPayment|MockObject
     {
-        return $this->getMockBuilder(InfoInterface::class)
-            ->addMethods([
-                'setCcLast4',
+        // setCcLast4()/setData()/getExtensionAttributes() aren't declared on InfoInterface,
+        // but they ARE real methods on Sales\Order\Payment -- mock that concrete class
+        // instead (it's still not instanceof Quote\Payment, which some tests below rely on
+        // to exercise the "non-Quote payment" branch). getQuote()/getMethod() were unused
+        // magic stubs on the old InfoInterface double; dropped.
+        return $this->getMockBuilder(OrderPayment::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods([
+                'setAdditionalInformation',
+                'getAdditionalInformation',
                 'setData',
+                'setCcLast4',
                 'getExtensionAttributes',
-                'getQuote',
-                'getMethod',
             ])
-            ->getMockForAbstractClass();
+            ->getMock();
     }
 
     private function createQuotePaymentMock(): Payment|MockObject

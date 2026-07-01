@@ -670,19 +670,13 @@ class WebhookProcessorTest extends TestCase
                 'update',
                 'getAuthorizationTransaction',
             ])
-            ->addMethods([
-                'setIsTransactionApproved',
-                'setIsTransactionDenied',
-            ])
             ->getMock();
 
+        // setIsTransactionApproved()/setIsTransactionDenied() are magic; they route through
+        // the real __call into the stubbed setData(), which already returns self below.
         $paymentMock->method('setData')
             ->willReturnSelf();
         $paymentMock->method('setTransactionId')
-            ->willReturnSelf();
-        $paymentMock->method('setIsTransactionApproved')
-            ->willReturnSelf();
-        $paymentMock->method('setIsTransactionDenied')
             ->willReturnSelf();
         $paymentMock->method('update')
             ->willReturnSelf();
