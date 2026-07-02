@@ -209,7 +209,6 @@ class GatewayTest extends TestCase
             });
 
         $reflection = new ReflectionMethod($gateway, 'createTransactionAddRefundInfo');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($gateway, []);
 
@@ -231,7 +230,6 @@ class GatewayTest extends TestCase
             ->willReturn(false);
 
         $reflection = new ReflectionMethod($gateway, 'createTransactionAddRefundInfo');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($gateway, ['existing' => 'value']);
 

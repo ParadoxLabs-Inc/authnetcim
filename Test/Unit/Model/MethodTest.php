@@ -105,7 +105,6 @@ class MethodTest extends TestCase
         $paymentMock = $this->createMock(InfoInterface::class);
 
         $reflection = new ReflectionMethod($method, 'paymentContainsCard');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock);
 
@@ -138,7 +137,6 @@ class MethodTest extends TestCase
             });
 
         $reflection = new ReflectionMethod($method, 'paymentContainsCard');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock);
 
@@ -216,7 +214,6 @@ class MethodTest extends TestCase
         )();
 
         $reflection = new ReflectionMethod($method, 'fixLegacyCcType');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock, $responseMock);
 
@@ -249,7 +246,6 @@ class MethodTest extends TestCase
             ->willReturn($cardMock);
 
         $reflection = new ReflectionMethod($method, 'fixLegacyCcType');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock, $responseMock);
 
@@ -288,7 +284,6 @@ class MethodTest extends TestCase
             ->willReturnSelf();
 
         $reflection = new ReflectionMethod($method, 'storeTransactionStatuses');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock, $responseMock);
 
@@ -334,7 +329,6 @@ class MethodTest extends TestCase
             ->willReturnSelf();
 
         $reflection = new ReflectionMethod($method, 'storeTransactionStatuses');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock, $responseMock);
 

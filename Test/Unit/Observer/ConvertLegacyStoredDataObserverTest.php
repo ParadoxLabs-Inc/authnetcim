@@ -274,7 +274,6 @@ class ConvertLegacyStoredDataObserverTest extends TestCase
         ];
 
         $reflection = new ReflectionMethod($this->observer, 'getCardsFromProfile');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->observer, $profile);
 
@@ -301,7 +300,6 @@ class ConvertLegacyStoredDataObserverTest extends TestCase
         ];
 
         $reflection = new ReflectionMethod($this->observer, 'getCardsFromProfile');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->observer, $profile);
 
@@ -317,7 +315,6 @@ class ConvertLegacyStoredDataObserverTest extends TestCase
         ];
 
         $reflection = new ReflectionMethod($this->observer, 'getCardsFromProfile');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->observer, $profile);
 
@@ -344,7 +341,6 @@ class ConvertLegacyStoredDataObserverTest extends TestCase
             ->willReturn($searchResultsMock);
 
         $reflection = new ReflectionMethod($this->observer, 'cardAlreadyExists');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->observer, 123, '12345', '67890');
 
@@ -371,7 +367,6 @@ class ConvertLegacyStoredDataObserverTest extends TestCase
             ->willReturn($searchResultsMock);
 
         $reflection = new ReflectionMethod($this->observer, 'cardAlreadyExists');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->observer, 123, '12345', '67890');
 
@@ -416,7 +411,6 @@ class ConvertLegacyStoredDataObserverTest extends TestCase
             ->with($paymentMock1);
 
         $reflection = new ReflectionMethod($this->observer, 'updateOrders');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->observer, $cards);
 
@@ -428,7 +422,6 @@ class ConvertLegacyStoredDataObserverTest extends TestCase
         $cards = [];
 
         $reflection = new ReflectionMethod($this->observer, 'updateOrders');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->observer, $cards);
 

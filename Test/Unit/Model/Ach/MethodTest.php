@@ -36,7 +36,6 @@ class MethodTest extends TestCase
             });
 
         $reflection = new ReflectionMethod($method, 'paymentContainsCard');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock);
 
@@ -62,7 +61,6 @@ class MethodTest extends TestCase
             });
 
         $reflection = new ReflectionMethod($method, 'paymentContainsCard');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock);
 
@@ -88,7 +86,6 @@ class MethodTest extends TestCase
             });
 
         $reflection = new ReflectionMethod($method, 'paymentContainsCard');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock);
 
@@ -104,7 +101,6 @@ class MethodTest extends TestCase
             ->willReturn(null);
 
         $reflection = new ReflectionMethod($method, 'paymentContainsCard');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($method, $paymentMock);
 

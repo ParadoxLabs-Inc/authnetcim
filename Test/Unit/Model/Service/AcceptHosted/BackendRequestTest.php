@@ -220,7 +220,6 @@ class BackendRequestTest extends TestCase
             ->willReturn($quoteMock);
 
         $reflection = new ReflectionMethod($this->backendRequest, 'getStoreId');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->backendRequest);
 
@@ -236,7 +235,6 @@ class BackendRequestTest extends TestCase
             ->willReturn(3);
 
         $reflection = new ReflectionMethod($this->backendRequest, 'getStoreId');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->backendRequest);
 
@@ -250,7 +248,6 @@ class BackendRequestTest extends TestCase
             ->willReturn(ConfigProviderCc::CODE);
 
         $reflection = new ReflectionMethod($this->backendRequest, 'getMethodCode');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->backendRequest);
 
@@ -264,7 +261,6 @@ class BackendRequestTest extends TestCase
             ->willReturn(ConfigProviderAch::CODE);
 
         $reflection = new ReflectionMethod($this->backendRequest, 'getMethodCode');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->backendRequest);
 
@@ -278,7 +274,6 @@ class BackendRequestTest extends TestCase
             ->willReturn('invalid_method');
 
         $reflection = new ReflectionMethod($this->backendRequest, 'getMethodCode');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->backendRequest);
 
@@ -290,7 +285,6 @@ class BackendRequestTest extends TestCase
         $this->backendRequest->setMethodCode(ConfigProviderAch::CODE);
 
         $reflection = new ReflectionMethod($this->backendRequest, 'getMethodCode');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->backendRequest);
 
@@ -325,7 +319,6 @@ class BackendRequestTest extends TestCase
             ->with($builtAddressMock);
 
         $reflection = new ReflectionMethod($this->backendRequest, 'setBillingParams');
-        $reflection->setAccessible(true);
 
         $reflection->invoke($this->backendRequest, $gatewayMock);
     }
@@ -358,7 +351,6 @@ class BackendRequestTest extends TestCase
             ->with($dataModelMock);
 
         $reflection = new ReflectionMethod($this->backendRequest, 'setBillingParams');
-        $reflection->setAccessible(true);
 
         $reflection->invoke($this->backendRequest, $gatewayMock);
     }

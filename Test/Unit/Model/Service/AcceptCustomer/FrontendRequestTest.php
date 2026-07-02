@@ -392,7 +392,6 @@ class FrontendRequestTest extends TestCase
             });
 
         $reflection = new ReflectionMethod($this->frontendRequest, 'getMethodCode');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->frontendRequest);
 
@@ -411,7 +410,6 @@ class FrontendRequestTest extends TestCase
             });
 
         $reflection = new ReflectionMethod($this->frontendRequest, 'getMethodCode');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->frontendRequest);
 
@@ -424,7 +422,6 @@ class FrontendRequestTest extends TestCase
             ->willReturn(5);
 
         $reflection = new ReflectionMethod($this->frontendRequest, 'getStoreId');
-        $reflection->setAccessible(true);
 
         $result = $reflection->invoke($this->frontendRequest);
 
@@ -448,7 +445,6 @@ class FrontendRequestTest extends TestCase
             ->method('save');
 
         $reflection = new ReflectionMethod($this->frontendRequest, 'saveCardToQuote');
-        $reflection->setAccessible(true);
 
         $reflection->invoke($this->frontendRequest, $cardMock);
     }
@@ -486,7 +482,6 @@ class FrontendRequestTest extends TestCase
         );
 
         $reflection = new ReflectionMethod($frontendRequest, 'clearProfileId');
-        $reflection->setAccessible(true);
 
         $reflection->invoke($frontendRequest);
     }
@@ -518,7 +513,6 @@ class FrontendRequestTest extends TestCase
             ->willReturn($quoteMock);
 
         $reflection = new ReflectionMethod($this->frontendRequest, 'clearProfileId');
-        $reflection->setAccessible(true);
 
         $reflection->invoke($this->frontendRequest);
     }
