@@ -16,6 +16,10 @@ jobs:
   # Thin caller -> in-house proxy in ci-infrastructure, which wraps the mirrored
   # MageCheck check-extension workflow and adds any house-specific jobs.
   ci:
+    # Required — see the note in site-caller.yml: a caller job with no runs-on
+    # is scheduled with an empty label set and any runner can claim it. The
+    # nested workflow's runs-on only picks a container image, never a runner.
+    runs-on: ci
     uses: paradoxlabs/ci-infrastructure/.gitea/workflows/extension-ci.yml@main
     secrets:
       composer_auth: ${{ secrets.COMPOSER_AUTH }}
