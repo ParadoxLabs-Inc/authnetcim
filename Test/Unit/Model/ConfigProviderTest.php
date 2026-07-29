@@ -106,6 +106,80 @@ class ConfigProviderTest extends TestCase
         $this->assertTrue($result);
     }
 
+    public function testDefaultSaveCardReturnsTrueWhenOptOutEnabled(): void
+    {
+        $this->mockConfigData([
+            'allow_unsaved' => 1,
+            'savecard_opt_out' => 1,
+        ]);
+
+        $result = $this->configProvider->defaultSaveCard();
+
+        $this->assertTrue($result);
+    }
+
+    public function testDefaultSaveCardReturnsFalseWhenOptOutDisabled(): void
+    {
+        $this->mockConfigData([
+            'allow_unsaved' => 1,
+            'savecard_opt_out' => 0,
+        ]);
+
+        $result = $this->configProvider->defaultSaveCard();
+
+        $this->assertFalse($result);
+    }
+
+    public function testDefaultSaveCardReturnsTrueWhenSaveIsForced(): void
+    {
+        // allow_unsaved=0 hides the save option entirely; opt-out must not leave it unchecked,
+        // or checkout would submit save=0 and the stored card would be deactivated.
+        $this->mockConfigData([
+            'allow_unsaved' => 0,
+            'savecard_opt_out' => 0,
+        ]);
+
+        $result = $this->configProvider->defaultSaveCard();
+
+        $this->assertTrue($result);
+    }
+
+    public function testGetConfigDefaultsSaveCardOnWhenSaveIsForced(): void
+    {
+        $this->methodMock->method('isAvailable')
+            ->willReturn(true);
+        $this->mockConfigData([
+            'allow_unsaved' => 0,
+            'savecard_opt_out' => 0,
+        ]);
+
+        $this->customerSessionMock->method('isLoggedIn')
+            ->willReturn(true);
+        $this->dataHelperMock->method('getActiveCustomerCardsByMethod')
+            ->willReturn([]);
+
+        $result = $this->configProvider->getConfig();
+
+        $this->assertTrue($result['payment'][ConfigProvider::CODE]['forceSaveCard']);
+        $this->assertTrue($result['payment'][ConfigProvider::CODE]['defaultSaveCard']);
+    }
+
+    /**
+     * Stub method config values by key.
+     *
+     * @param array $values
+     * @return void
+     */
+    private function mockConfigData(array $values): void
+    {
+        $this->methodMock->method('getConfigData')
+            ->willReturnCallback(
+                static function ($key) use ($values) {
+                    return $values[$key] ?? null;
+                }
+            );
+    }
+
     public function testRequireCcvReturnsConfigValue(): void
     {
         $this->methodMock->method('getConfigData')
