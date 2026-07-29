@@ -891,6 +891,12 @@ class Gateway extends AbstractGateway
     /**
      * Run a void transaction for the given payment info
      *
+     * Note the benign case needs no isExpectedVoidFailure() classifier (TokenBase issue #5, PR #7): voiding an
+     * expired or unknown authorization comes back as Auth.Net error code 16, 'The transaction cannot be found.',
+     * which handleTransactionError() lets through and interpretTransaction() returns as a non-error response.
+     * Nothing is thrown, so there is nothing for the payment method to classify. Every other void rejection
+     * does throw, and should: it means the reversal did not happen.
+     *
      * @param InfoInterface $payment
      * @param string $transactionId
      * @return Response
