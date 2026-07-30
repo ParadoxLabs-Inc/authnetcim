@@ -23,3 +23,9 @@ jobs:
     uses: paradoxlabs/ci-infrastructure/.gitea/workflows/extension-ci.yml@main
     secrets:
       composer_auth: ${{ secrets.COMPOSER_AUTH }}
+      # Read access to the tokenbase repo, which extension CI now installs from
+      # a checkout rather than the published package. Has to be forwarded from
+      # here: a reusable workflow sees only the secrets its caller passes, so
+      # the org secret is not visible further down the chain on its own. An
+      # empty value fails the tokenbase checkout as "Repository not found".
+      dev_deps_token: ${{ secrets.DEV_DEPS_TOKEN }}
