@@ -1,5 +1,13 @@
 # ParadoxLabs_Authnetcim Changelog
 
+## 6.0.1
+
+- Added the current *.authorize.net intermediate (DigiCert Global G2 TLS RSA SHA256 2020 CA1) to the SSL bundle.
+- Removed the obsolete DigiCert SHA2 Secure Server CA intermediate and the three legacy DigiCert roots that Mozilla
+  has since removed from its trust store.
+- Updated packaged SSL certificate bundle to the Mozilla/curl Aug 13, 2026 extract, for the Authorize.net
+  certificate change on September 21, 2026.
+
 ## 6.0.0 - Jun 17, 2026: PHP 8.1–8.5 compatibility
 
 **WARNING: PHP 8.1 is now the minimum. Now requires ParadoxLabs_TokenBase 5.0.**
