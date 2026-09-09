@@ -26,6 +26,9 @@ use Magento\Framework\HTTP\Client\Socket;
 use Magento\Sales\Model\Order\Payment;
 use Magento\Sales\Model\Order\Item;
 use Magento\Customer\Api\Data\AddressInterface;
+use Magento\Framework\App\Area;
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\App\State;
 use Magento\Framework\DataObject;
 use Magento\Framework\HTTP\ClientInterfaceFactory;
 use Magento\Framework\Module\Dir;
@@ -245,6 +248,11 @@ class Gateway extends AbstractGateway
     ];
 
     /**
+     * @var State
+     */
+    protected State $appState;
+
+    /**
      * Gateway constructor.
      *
      * @param Data $helper
@@ -254,6 +262,7 @@ class Gateway extends AbstractGateway
      * @param Dir $moduleDir
      * @param Registry $registry
      * @param array $data
+     * @param State|null $appState
      */
     public function __construct(
         Data $helper,
@@ -263,6 +272,7 @@ class Gateway extends AbstractGateway
         protected readonly Dir $moduleDir,
         protected readonly Registry $registry,
         array $data = [],
+        ?State $appState = null,
     ) {
         parent::__construct(
             $helper,
@@ -271,6 +281,9 @@ class Gateway extends AbstractGateway
             $communicatorFactory,
             $data,
         );
+
+        // BC preservation -- argument added with sanitizeException()
+        $this->appState = $appState ?? ObjectManager::getInstance()->get(State::class);
     }
 
     /**
@@ -380,17 +393,74 @@ class Gateway extends AbstractGateway
                 )
             );
 
-            throw new CommandException(
-                __(
-                    sprintf(
-                        'Authorize.Net CIM Gateway Connection error: %s',
-                        $e->getMessage()
-                    )
+            throw $this->sanitizeException(
+                new CommandException(
+                    __('Authorize.Net CIM Gateway Connection error: %1', $e->getMessage()),
+                    $e instanceof \Exception ? $e : null
                 )
             );
         }
 
         return $this->lastResponse;
+    }
+
+    /**
+     * Hide the gateway's reason text from the customer.
+     *
+     * The reason text says which card details were accepted: an AVS or CVV decline confirms the card
+     * number itself was good, which is what card testers are probing for. Admin and cron get the
+     * exception unchanged. The customer gets one of the safe reasons below, or a generic message,
+     * with the original chained as the previous exception so it still reaches the log.
+     *
+     * @param CommandException $exception
+     * @return CommandException
+     */
+    protected function sanitizeException(CommandException $exception): CommandException
+    {
+        try {
+            // Only expose the gateway's text in adminhtml and cron execution. The frontend and every
+            // API area (REST, SOAP, GraphQL) can return this exception to a customer; when the area
+            // is unknown, assume it can too. Helper\Data::getIsFrontend() checks the area the same
+            // way, but does not cover SOAP and throws when the area has not been set.
+            $internal = in_array(
+                $this->appState->getAreaCode(),
+                [Area::AREA_ADMINHTML, Area::AREA_CRONTAB],
+                true
+            );
+        } catch (Throwable $e) {
+            $internal = false;
+        }
+
+        if ($internal === true) {
+            return $exception;
+        }
+
+        // Reasons a customer can act on that do not confirm the card is usable: the Authorize.Net
+        // sentences for reason codes 8, 6 and 11, and this gateway's own rewrite of an expired
+        // Accept.js token (E00114). Fragments such as 'has expired' would also match an SSL
+        // certificate error, so match the whole sentence and return only that sentence.
+        $customerSafeReasons = [
+            'The credit card has expired.',
+            'The credit card number is invalid.',
+            'A duplicate transaction has been submitted.',
+            'Invalid token. Please re-enter your payment info.',
+        ];
+
+        $message = $exception->getMessage();
+        foreach ($customerSafeReasons as $reason) {
+            if (stripos($message, $reason) !== false) {
+                return new CommandException(__($reason), $exception);
+            }
+        }
+
+        return new CommandException(
+            __(
+                'Your payment could not be processed. Please check your payment details and try '
+                . 'again, or use a different payment method. If the problem continues, contact us '
+                . 'and we can help.'
+            ),
+            $exception
+        );
     }
 
     /**
@@ -575,8 +645,10 @@ class Gateway extends AbstractGateway
                 );
             }
 
-            throw new CommandException(
-                __('Authorize.Net CIM Gateway: Transaction failed. ' . $response->getResponseReasonText())
+            throw $this->sanitizeException(
+                new CommandException(
+                    __('Authorize.Net CIM Gateway: Transaction failed. %1', $response->getResponseReasonText())
+                )
             );
         }
 
