@@ -1,5 +1,9 @@
 # ParadoxLabs_Authnetcim Changelog
 
+## 6.0.1
+
+- Updated packaged SSL certificate bundle to the Mozilla/curl Aug 13, 2026 (added new intermediate, removed obsolete ones).
+
 ## 6.0.0 - Jun 17, 2026: PHP 8.1–8.5 compatibility
 
 **WARNING: PHP 8.1 is now the minimum. Now requires ParadoxLabs_TokenBase 5.0.**
