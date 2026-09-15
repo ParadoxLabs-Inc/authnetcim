@@ -14,8 +14,8 @@
         "phpunit/phpunit": "^9.6 || ^10.5 || ^11.0 || ^12.0"
     },
     "type": "magento2-module",
-    "version": "6.0.0",
-    "time": "2026-06-17",
+    "version": "6.1.0",
+    "time": "2026-09-15",
     "license": "Apache-2.0",
     "authors": [
         {
