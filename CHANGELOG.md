@@ -2,10 +2,8 @@
 
 ## 6.1.0 - Sep 15, 2026
 
-- Changed the credit card and eCheck methods to declare themselves as gateway payment methods, for correct online refund handling.
-- Changed the ParadoxLabs_TokenBase requirement to allow 5.1.
-- Fixed the save-card option defaulting to off when card storage is mandatory, which stored the card deactivated and hid it from the customer's stored cards.
-- Updated packaged SSL certificate bundle to the Mozilla/curl Aug 13, 2026 (added new intermediate, removed obsolete ones).
+- Changed the credit card and eCheck methods to declare themselves as gateway payment methods, for better online refund handling.
+- Updated packaged SSL certificate bundle with the Mozilla/curl bundle as of Aug 13, 2026 (added new intermediate, removed obsolete ones).
 
 ## 6.0.0 - Jun 17, 2026: PHP 8.1–8.5 compatibility
 
