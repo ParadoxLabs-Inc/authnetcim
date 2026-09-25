@@ -33,12 +33,21 @@ use ParadoxLabs\Authnetcim\Model\Wallet\GatewayProvider;
 use ParadoxLabs\Authnetcim\Model\Wallet\PaymentResponseHandler;
 use ParadoxLabs\Authnetcim\Model\Wallet\WalletType;
 use ParadoxLabs\TokenBase\Helper\Data as Helper;
+use ParadoxLabs\TokenBase\Model\Gateway\Response;
 
 /**
  * Shared plumbing for wallet gateway commands.
  */
 abstract class AbstractCommand implements CommandInterface
 {
+    /**
+     * Response fields holding customer PII, masked before the response is logged.
+     */
+    private const MASKED_RESPONSE_KEYS = [
+        'customer_email',
+        'customer_ip',
+    ];
+
     /**
      * @param GatewayProvider $gatewayProvider
      * @param Config $config
@@ -144,5 +153,27 @@ abstract class AbstractCommand implements CommandInterface
     protected function log(string $message): void
     {
         $this->helper->log(WalletType::METHOD_CODE, $message);
+    }
+
+    /**
+     * Write a gateway response to the wallet log, like the card method does after each transaction.
+     *
+     * The response holds only gateway result fields (masked account number, auth code, transaction ID, ...), never
+     * the wallet token. Customer PII from transaction detail lookups is masked.
+     *
+     * @param Response $response
+     * @return void
+     */
+    protected function logResponse(Response $response): void
+    {
+        $data = $response->getData();
+
+        foreach (self::MASKED_RESPONSE_KEYS as $key) {
+            if (!empty($data[$key])) {
+                $data[$key] = 'XXX';
+            }
+        }
+
+        $this->log((string)json_encode($data));
     }
 }

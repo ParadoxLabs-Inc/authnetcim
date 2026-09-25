@@ -47,6 +47,8 @@ class AcceptPaymentCommand extends AbstractCommand
 
         $response = $this->getGateway($payment)->acceptPayment($payment, $transactionId);
 
+        $this->logResponse($response);
+
         if ($response->getData('is_approved') !== true) {
             throw new LocalizedException(__('Authorize.net did not approve the held payment.'));
         }

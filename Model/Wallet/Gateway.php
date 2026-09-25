@@ -246,6 +246,15 @@ class Gateway extends CimGateway
                 && abs((float)$amount - (float)$creditmemo->getInvoice()->getBaseGrandTotal()) < 0.0001) {
                 $refTransactionId = (string)$this->getParameter('transId');
 
+                $this->helper->log(
+                    $this->code,
+                    sprintf(
+                        "Transaction %s is unsettled; voiding it instead of refunding.\n%s",
+                        $refTransactionId,
+                        json_encode($response->getData())
+                    )
+                );
+
                 return $this->clearParameters()->void($payment, $refTransactionId);
             }
 

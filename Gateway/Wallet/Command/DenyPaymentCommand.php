@@ -46,6 +46,8 @@ class DenyPaymentCommand extends AbstractCommand
 
         $response = $this->getGateway($payment)->denyPayment($payment, $transactionId);
 
+        $this->logResponse($response);
+
         if ($response->getData('is_denied') !== true) {
             throw new LocalizedException(__('Authorize.net did not decline the held payment.'));
         }

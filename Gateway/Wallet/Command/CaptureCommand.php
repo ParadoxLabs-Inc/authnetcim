@@ -57,6 +57,8 @@ class CaptureCommand extends AbstractCommand
             $this->responseHandler->handleNewTransaction($payment, $response);
         }
 
+        $this->logResponse($response);
+
         // Set transaction id iff different from the parent -- use Magento's generated ID otherwise.
         if ($payment->getParentTransactionId() != $response->getTransactionId()) {
             $payment->setTransactionId(

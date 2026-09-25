@@ -46,6 +46,8 @@ class AuthorizeCommand extends AbstractCommand
         $gateway  = $this->getGatewayForNewTransaction($payment);
         $response = $gateway->authorize($payment, $amount);
 
+        $this->logResponse($response);
+
         $this->responseHandler->handleNewTransaction($payment, $response);
 
         $payment->setTransactionId(

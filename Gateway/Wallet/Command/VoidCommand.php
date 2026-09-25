@@ -85,6 +85,8 @@ class VoidCommand extends AbstractCommand
         try {
             $response = $this->getGateway($payment)->void($payment, $transactionId);
 
+            $this->logResponse($response);
+
             $this->responseHandler->handleFollowUpTransaction($payment, $response);
         } catch (Throwable $exception) {
             $this->log('Void failed: ' . $exception->getMessage());

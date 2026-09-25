@@ -45,6 +45,8 @@ class FetchTransactionInfoCommand extends AbstractCommand
 
         $response = $this->getGateway($payment)->fraudUpdate($payment, $transactionId);
 
+        $this->logResponse($response);
+
         if ($response->getData('is_approved')) {
             $payment->setData('parent_transaction_id', $transactionId);
 

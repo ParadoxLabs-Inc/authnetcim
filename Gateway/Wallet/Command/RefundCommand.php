@@ -65,6 +65,8 @@ class RefundCommand extends AbstractCommand
 
         $response = $gateway->refund($payment, $amount, $transactionId);
 
+        $this->logResponse($response);
+
         $this->responseHandler->handleFollowUpTransaction($payment, $response);
 
         $payment->setIsTransactionClosed(true);

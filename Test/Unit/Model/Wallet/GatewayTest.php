@@ -29,6 +29,8 @@ use Magento\Framework\Registry;
 use Magento\Payment\Gateway\Command\CommandException;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Address;
+use Magento\Sales\Model\Order\Creditmemo;
+use Magento\Sales\Model\Order\Invoice;
 use Magento\Sales\Model\Order\Payment;
 use Magento\Store\Model\Store;
 use ParadoxLabs\Authnetcim\Helper\Data;
@@ -49,6 +51,8 @@ class GatewayTest extends TestCase
 
     private Gateway $gateway;
 
+    private Data|MockObject $helper;
+
     /**
      * Requests the gateway would have sent: [[request type, params], ...]
      *
@@ -65,7 +69,8 @@ class GatewayTest extends TestCase
 
     protected function setUp(): void
     {
-        $helperMock = $this->createMock(Data::class);
+        $helperMock   = $this->createMock(Data::class);
+        $this->helper = $helperMock;
         $helperMock->method('getArrayValue')
             ->willReturnCallback(
                 static function ($data, $path, $default = '') {
@@ -326,6 +331,52 @@ class GatewayTest extends TestCase
         $this->expectException(CommandException::class);
 
         $this->gateway->refund($this->createPaymentMock(''), 5, '1234567890');
+    }
+
+    /**
+     * @return void
+     */
+    public function testFullRefundOfUnsettledTransactionFallsBackToVoidAndLogs(): void
+    {
+        $this->results[] = $this->buildErrorResult(
+            54,
+            'The referenced transaction does not meet the criteria for issuing a credit.'
+        );
+        $this->results[] = $this->buildApprovedResult('1234567890');
+
+        $messages = [];
+        $this->helper->method('log')->willReturnCallback(
+            function ($code, $message) use (&$messages) {
+                $messages[] = [
+                    $code,
+                    $message,
+                ];
+
+                return $this->helper;
+            }
+        );
+
+        $invoice = $this->createMock(Invoice::class);
+        $invoice->method('getBaseGrandTotal')->willReturn(5.0);
+
+        $creditmemo = $this->createMock(Creditmemo::class);
+        $creditmemo->method('getInvoice')->willReturn($invoice);
+
+        $payment = $this->createPaymentMock('4321');
+        $payment->method('getCreditmemo')->willReturn($creditmemo);
+
+        $response = $this->gateway->refund($payment, 5, '1234567890');
+
+        $this->assertCount(2, $this->requests);
+        $params = $this->getTransactionRequest();
+        $this->assertSame('voidTransaction', $params['transactionType']);
+        $this->assertSame('1234567890', $params['refTransId']);
+        $this->assertSame('void', $response->getData('transaction_type'));
+
+        $this->assertCount(1, $messages);
+        $this->assertSame('authnetcim_wallet', $messages[0][0]);
+        $this->assertStringContainsString('Transaction 1234567890 is unsettled; voiding it', $messages[0][1]);
+        $this->assertStringContainsString('"response_reason_code":54', $messages[0][1]);
     }
 
     /**
