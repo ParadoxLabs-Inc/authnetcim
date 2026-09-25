@@ -55,7 +55,8 @@
 
                 script.src = url;
                 script.async = true;
-                script.crossOrigin = 'anonymous';
+                // No crossOrigin attribute: pay.google.com does not send CORS headers, so a CORS-mode
+                // script request fails to load.
                 script.onload = resolve;
                 script.onerror = function () {
                     delete scriptPromises[url];
