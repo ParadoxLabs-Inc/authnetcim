@@ -80,6 +80,7 @@ class MerchantValidatorTest extends TestCase
     }
 
     /**
+     * @dataProvider urlProvider
      * @param string $url
      * @param bool $expected
      * @return void
