@@ -1,5 +1,17 @@
 # ParadoxLabs_Authnetcim Changelog
 
+## 6.2.0 - Sep 25, 2026: Apple Pay and Google Pay
+
+- Added Apple Pay and Google Pay as a new payment method (`authnetcim_wallet`), available on Luma checkout, Hyvä
+  Checkout (via ParadoxLabs_AuthnetcimHyvaCheckout 3.2+), and GraphQL. Disabled by default; configure under
+  Stores > Configuration > Sales > Payment Methods > Authorize.net CIM - Apple Pay / Google Pay.
+- Wallet payments are processed as single-use tokens: no CIM profile or stored card is created, and partial
+  capture is not supported (one capture per authorization).
+- Apple Pay requires an Apple Developer merchant ID, merchant identity certificate and key (stored encrypted in
+  config), and domain verification; Google Pay requires your Authorize.net Payment Gateway ID and, for production,
+  a Google Merchant ID. Both require Digital Payment Solutions to be enabled on the Authorize.net account.
+- Webhooks: the card notification endpoint now also handles wallet transactions.
+
 ## 6.1.0 - Sep 15, 2026
 
 - Changed the credit card and eCheck methods to declare themselves as gateway payment methods, for better online refund handling.
