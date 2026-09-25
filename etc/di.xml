@@ -447,6 +447,8 @@
         <arguments>
             <argument name="handlers" xsi:type="array">
                 <item name="default" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\Wallet\VirtualConfigValueHandler</item>
+                <!-- Active only when a wallet is fully configured, so the storefront never lists an unusable method. -->
+                <item name="active" xsi:type="string">ParadoxLabs\Authnetcim\Gateway\Wallet\ActiveValueHandler</item>
             </argument>
         </arguments>
     </virtualType>

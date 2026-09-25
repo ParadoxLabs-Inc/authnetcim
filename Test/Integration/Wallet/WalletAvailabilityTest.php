@@ -121,6 +121,7 @@ class WalletAvailabilityTest extends TestCase
     {
         $quote = $this->loadWalletQuote($this->objectManager);
 
+        $this->assertTrue($this->getMethodInstance(WalletType::METHOD_CODE)->isActive((int)$quote->getStoreId()));
         $this->assertContains(WalletType::METHOD_CODE, $this->getStorefrontMethodCodes($quote));
 
         $quote->getPayment()->importData(
@@ -154,7 +155,8 @@ class WalletAvailabilityTest extends TestCase
     }
 
     /**
-     * Enabled, but neither wallet has what it needs: the availability validator rejects it at selection.
+     * Enabled, but neither wallet has what it needs: the storefront does not list it (the 'active' value handler),
+     * and the availability validator still rejects it at selection.
      *
      * @magentoDataFixture ParadoxLabs_Authnetcim::Test/Integration/_files/wallet_quote.php
      * @magentoConfigFixture current_store payment/authnetcim/test 1
@@ -168,6 +170,12 @@ class WalletAvailabilityTest extends TestCase
     {
         $quote = $this->loadWalletQuote($this->objectManager);
 
+        $this->assertFalse($this->getMethodInstance(WalletType::METHOD_CODE)->isActive((int)$quote->getStoreId()));
+        $this->assertNotContains(
+            WalletType::METHOD_CODE,
+            $this->getStorefrontMethodCodes($quote),
+            'An enabled but unconfigured wallet must not be offered on the storefront.'
+        );
         $this->assertImportRejected($quote, self::CHECKOUT_CHECKS);
     }
 
