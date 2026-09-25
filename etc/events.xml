@@ -13,8 +13,15 @@
         <observer name="authnetcim_assign_data" instance="ParadoxLabs\Authnetcim\Observer\PaymentMethodAssignDataObserver"/>
         <observer name="authnetcim_ach_assign_data" instance="ParadoxLabs\TokenBase\Observer\PaymentMethodAssignAchDataObserver"/>
     </event>
+    <event name="payment_method_assign_data_authnetcim_wallet">
+        <observer name="authnetcim_wallet_assign_data" instance="ParadoxLabs\Authnetcim\Observer\Wallet\DataAssignObserver"/>
+    </event>
+    <event name="sales_model_service_quote_submit_success">
+        <observer name="authnetcim_wallet_clear_token" instance="ParadoxLabs\Authnetcim\Observer\Wallet\ClearTokenObserver"/>
+    </event>
     <event name="sales_model_service_quote_submit_failure">
         <observer name="authnetcim_failure_clear_acceptjs" instance="ParadoxLabs\Authnetcim\Observer\CheckoutFailureClearAcceptjsObserver"/>
         <observer name="authnetcim_failure_clear_profileid" instance="ParadoxLabs\Authnetcim\Observer\CheckoutFailureClearProfileIdObserver"/>
+        <observer name="authnetcim_wallet_clear_token" instance="ParadoxLabs\Authnetcim\Observer\Wallet\VirtualClearTokenFailureObserver"/>
     </event>
 </config>

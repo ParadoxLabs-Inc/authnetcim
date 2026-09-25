@@ -5,6 +5,7 @@
             <argument name="configProviders" xsi:type="array">
                 <item name="authnetcim_config_provider" xsi:type="object">ParadoxLabs\Authnetcim\Model\ConfigProvider</item>
                 <item name="authnetcim_ach_config_provider" xsi:type="object">ParadoxLabs\Authnetcim\Model\Ach\ConfigProvider</item>
+                <item name="authnetcim_wallet_config_provider" xsi:type="object">ParadoxLabs\Authnetcim\Model\Wallet\ConfigProvider</item>
             </argument>
         </arguments>
     </type>
@@ -27,5 +28,25 @@
 
     <type name="Magento\Framework\App\Response\HeaderProvider\XFrameOptions">
         <plugin name="authnetcim_allow_communicator_frame" type="ParadoxLabs\Authnetcim\Plugin\Magento\Framework\App\Response\HeaderProvider\XFrameOptions"/>
+    </type>
+
+    <type name="Magento\Framework\App\RouterList">
+        <arguments>
+            <argument name="routerList" xsi:type="array">
+                <item name="authnetcim_wallet" xsi:type="array">
+                    <item name="class" xsi:type="string">ParadoxLabs\Authnetcim\Controller\Router</item>
+                    <item name="disable" xsi:type="boolean">false</item>
+                    <item name="sortOrder" xsi:type="string">25</item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Magento\Csp\Model\CompositePolicyCollector">
+        <arguments>
+            <argument name="collectors" xsi:type="array">
+                <item name="authnetcim_wallet" xsi:type="object" sortOrder="50">ParadoxLabs\Authnetcim\Model\Wallet\CspPolicyCollector\Proxy</item>
+            </argument>
+        </arguments>
     </type>
 </config>

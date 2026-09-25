@@ -228,6 +228,188 @@
                     </depends>
                 </field>
             </group>
+            <group id="authnetcim_wallet" translate="label comment" type="text" sortOrder="34" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Authorize.net CIM - Apple Pay / Google Pay</label>
+                <comment><![CDATA[Digital wallet payments through your Authorize.net CIM account. Uses the API credentials, sandbox setting, card types, and line item settings from <strong>Authorize.net CIM</strong> above. Wallet payments are single-use: they are never stored as a saved card, so they cannot be used for subscriptions, reorders, or reauthorizing a partial invoice.<br><br>Before enabling a wallet, sign up for it in the Authorize.net Merchant Interface under <em>Account &gt; Digital Payment Solutions</em>.]]></comment>
+                <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Title</label>
+                </field>
+                <field id="payment_action" translate="label comment" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Payment Action</label>
+                    <source_model>ParadoxLabs\TokenBase\Model\Source\PaymentAction</source_model>
+                    <comment>'Authorize' reserves funds until the order is invoiced (one invoice only: wallet payments cannot be reauthorized). 'Capture' withdraws funds immediately.</comment>
+                </field>
+                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Payment from Applicable Countries</label>
+                    <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                </field>
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Payment from Specific Countries</label>
+                    <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                    <can_be_empty>1</can_be_empty>
+                    <depends>
+                        <field id="allowspecific">1</field>
+                    </depends>
+                </field>
+                <field id="min_order_total" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Minimum Order Total</label>
+                </field>
+                <field id="max_order_total" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Maximum Order Total</label>
+                </field>
+                <field id="sort_order" translate="label" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Sort Order</label>
+                    <frontend_class>validate-number</frontend_class>
+                </field>
+                <field id="heading_applepay" translate="label" sortOrder="1000" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Apple Pay</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                </field>
+                <field id="applepay_active" translate="label comment" type="select" sortOrder="1010" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Enable Apple Pay</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Requires an Apple Developer account, and an Authorize.net processor that supports Apple Pay. Set up a Merchant ID in Apple Developer, then in Authorize.net <em>Account &gt; Digital Payment Solutions &gt; Apple Pay</em> enter it and upload the Payment Processing Certificate signing request Authorize.net generates to Apple.]]></comment>
+                </field>
+                <field id="applepay_merchant_identifier" translate="label comment" type="text" sortOrder="1020" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Apple Merchant ID</label>
+                    <comment>Example: merchant.com.example.store</comment>
+                    <depends>
+                        <field id="applepay_active">1</field>
+                    </depends>
+                </field>
+                <field id="applepay_display_name" translate="label comment" type="text" sortOrder="1030" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Display Name</label>
+                    <comment>Business name shown in the Apple Pay sheet. Defaults to the store name. 64 characters max.</comment>
+                    <depends>
+                        <field id="applepay_active">1</field>
+                    </depends>
+                </field>
+                <field id="applepay_identity_cert" translate="label comment" type="textarea" sortOrder="1040" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Merchant Identity Certificate (PEM)</label>
+                    <backend_model>ParadoxLabs\Authnetcim\Model\Config\Backend\ApplePayCertificate</backend_model>
+                    <comment><![CDATA[The Apple Pay <strong>Merchant Identity</strong> certificate for your Merchant ID, converted to PEM (begins with -----BEGIN CERTIFICATE-----). This is not the Payment Processing certificate that Authorize.net holds.]]></comment>
+                    <depends>
+                        <field id="applepay_active">1</field>
+                    </depends>
+                </field>
+                <field id="applepay_identity_key" translate="label comment" type="obscure" sortOrder="1050" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Merchant Identity Private Key (PEM)</label>
+                    <backend_model>ParadoxLabs\Authnetcim\Model\Config\Backend\ApplePayPrivateKey</backend_model>
+                    <comment>The unencrypted private key for the certificate above (begins with -----BEGIN PRIVATE KEY-----). Stored encrypted.</comment>
+                    <depends>
+                        <field id="applepay_active">1</field>
+                    </depends>
+                </field>
+                <field id="applepay_domain_association" translate="label comment" type="textarea" sortOrder="1060" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Domain Verification File Contents</label>
+                    <comment><![CDATA[Paste the contents of the <em>apple-developer-merchantid-domain-association</em> file Apple provides when you register this store's domain. It will be served at /.well-known/apple-developer-merchantid-domain-association. If your web server does not route that path to Magento, place the file at pub/.well-known/ instead.]]></comment>
+                    <depends>
+                        <field id="applepay_active">1</field>
+                    </depends>
+                </field>
+                <field id="applepay_initiative_domains" translate="label comment" type="text" sortOrder="1070" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Headless Storefront Domains</label>
+                    <comment>Headless/PWA only: comma-separated storefront domains allowed for Apple Pay merchant validation through GraphQL. Leave blank for standard Magento storefronts.</comment>
+                    <depends>
+                        <field id="applepay_active">1</field>
+                    </depends>
+                </field>
+                <field id="applepay_button_style" translate="label" type="select" sortOrder="1080" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Button Style</label>
+                    <options>
+                        <option label="Black">black</option>
+                        <option label="White">white</option>
+                        <option label="White with outline">white-outline</option>
+                    </options>
+                    <depends>
+                        <field id="applepay_active">1</field>
+                    </depends>
+                </field>
+                <field id="applepay_button_type" translate="label" type="select" sortOrder="1090" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Button Type</label>
+                    <options>
+                        <option label="Apple Pay (plain)">plain</option>
+                        <option label="Buy with Apple Pay">buy</option>
+                        <option label="Check out with Apple Pay">check-out</option>
+                        <option label="Pay with Apple Pay">pay</option>
+                        <option label="Order with Apple Pay">order</option>
+                        <option label="Continue with Apple Pay">continue</option>
+                    </options>
+                    <depends>
+                        <field id="applepay_active">1</field>
+                    </depends>
+                </field>
+                <field id="heading_googlepay" translate="label" sortOrder="2000" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Google Pay</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                </field>
+                <field id="googlepay_active" translate="label comment" type="select" sortOrder="2010" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Enable Google Pay</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Enable Google Pay in Authorize.net under <em>Account &gt; Digital Payment Solutions &gt; Google Pay</em>. For live payments you also need a Google Merchant ID from the Google Pay &amp; Wallet Console, and must complete Google's integration review.]]></comment>
+                </field>
+                <field id="googlepay_gateway_merchant_id" translate="label comment" type="text" sortOrder="2020" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Authorize.net Payment Gateway ID</label>
+                    <comment>Numeric ID shown on your Authorize.net Merchant Interface home page. Sent to Google as the gatewayMerchantId.</comment>
+                    <frontend_class>validate-digits</frontend_class>
+                    <depends>
+                        <field id="googlepay_active">1</field>
+                    </depends>
+                </field>
+                <field id="googlepay_merchant_id" translate="label comment" type="text" sortOrder="2030" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Google Merchant ID</label>
+                    <comment>Required for live payments. Not needed in sandbox (Google TEST environment).</comment>
+                    <depends>
+                        <field id="googlepay_active">1</field>
+                    </depends>
+                </field>
+                <field id="googlepay_merchant_name" translate="label comment" type="text" sortOrder="2040" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Merchant Name</label>
+                    <comment>Business name shown in the Google Pay sheet. Defaults to the Apple Pay display name, then the store name.</comment>
+                    <depends>
+                        <field id="googlepay_active">1</field>
+                    </depends>
+                </field>
+                <field id="googlepay_auth_methods" translate="label comment" type="multiselect" sortOrder="2050" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Allowed Card Authentication</label>
+                    <options>
+                        <option label="Cards on file in the Google account (PAN_ONLY)">PAN_ONLY</option>
+                        <option label="Device tokens with cryptogram (CRYPTOGRAM_3DS)">CRYPTOGRAM_3DS</option>
+                    </options>
+                    <comment>Allowing both is recommended in the US. PAN_ONLY cards are not network tokenized and have no cryptogram.</comment>
+                    <depends>
+                        <field id="googlepay_active">1</field>
+                    </depends>
+                </field>
+                <field id="googlepay_button_color" translate="label" type="select" sortOrder="2060" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Button Color</label>
+                    <options>
+                        <option label="Default">default</option>
+                        <option label="Black">black</option>
+                        <option label="White">white</option>
+                    </options>
+                    <depends>
+                        <field id="googlepay_active">1</field>
+                    </depends>
+                </field>
+                <field id="googlepay_button_type" translate="label" type="select" sortOrder="2070" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Button Type</label>
+                    <options>
+                        <option label="Google Pay (plain)">plain</option>
+                        <option label="Buy with Google Pay">buy</option>
+                        <option label="Checkout with Google Pay">checkout</option>
+                        <option label="Pay with Google Pay">pay</option>
+                        <option label="Order with Google Pay">order</option>
+                    </options>
+                    <depends>
+                        <field id="googlepay_active">1</field>
+                    </depends>
+                </field>
+            </group>
             <group id="authnetcim_ach" translate="label" type="text" sortOrder="33" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Authorize.net CIM - ACH (eCheck)</label>
                 <frontend_model>ParadoxLabs\TokenBase\Block\Adminhtml\Config\FilterComment</frontend_model>

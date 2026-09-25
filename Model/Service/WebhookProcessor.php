@@ -42,6 +42,7 @@ use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\ResourceModel\Order\Payment\Transaction\CollectionFactory;
 use Magento\Store\Model\StoreManagerInterface;
 use ParadoxLabs\Authnetcim\Model\ConfigProvider;
+use ParadoxLabs\Authnetcim\Model\Wallet\WalletType;
 use ParadoxLabs\TokenBase\Api\GatewayInterface;
 use ParadoxLabs\TokenBase\Helper\Data;
 use ParadoxLabs\TokenBase\Model\Gateway\Response;
@@ -206,13 +207,34 @@ class WebhookProcessor
             ]
         );
         $orders->addFieldToFilter('spt.txn_id', $transactionId);
-        $orders->addFieldToFilter('sop.method', $this->configProvider->getCode());
+        $orders->addFieldToFilter('sop.method', ['in' => $this->getMethodCodes()]);
         $orders->setPageSize(1);
 
         /** @var Order $order */
         $order = $orders->getFirstItem();
 
         return $order;
+    }
+
+    /**
+     * Get the payment method codes whose orders this webhook endpoint handles.
+     *
+     * Wallet (Apple Pay/Google Pay) payments are card transactions on the same Authorize.net account, so they arrive
+     * on the card endpoint.
+     *
+     * @return string[]
+     */
+    protected function getMethodCodes(): array
+    {
+        $codes = [
+            $this->configProvider->getCode(),
+        ];
+
+        if ($this->configProvider->getCode() === ConfigProvider::CODE) {
+            $codes[] = WalletType::METHOD_CODE;
+        }
+
+        return $codes;
     }
 
     /**
