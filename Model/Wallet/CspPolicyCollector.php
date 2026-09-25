@@ -43,11 +43,15 @@ class CspPolicyCollector implements PolicyCollectorInterface
             'script-src' => [
                 'applepay.cdn-apple.com',
             ],
+            // pay.apple.com / smp-paymentservices.apple.com: the SDK's QR-code sheet and merchant status check for
+            // Apple Pay in non-Safari browsers (iPhone handoff).
             'frame-src' => [
                 'applepay.cdn-apple.com',
+                'pay.apple.com',
             ],
             'connect-src' => [
                 'applepay.cdn-apple.com',
+                'smp-paymentservices.apple.com',
             ],
             'style-src' => [
                 'applepay.cdn-apple.com',
