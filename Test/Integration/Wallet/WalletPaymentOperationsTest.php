@@ -126,10 +126,9 @@ class WalletPaymentOperationsTest extends TestCase
     }
 
     /**
-     * can_capture_partial=0 / can_capture_once=1 only gate the admin UI (the invoice qty inputs); Magento does not
-     * enforce them server-side. A programmatic (or REST) partial invoice therefore captures the partial amount and
-     * closes the authorization, and the remainder can never be captured online: a second online invoice sends
-     * nothing to the gateway and is not paid.
+     * can_capture_partial=0 only gates the admin invoice form; Magento does not enforce it server-side. The wallet
+     * capture command does: a REST or programmatic partial invoice is rejected before reaching the gateway, the
+     * authorization stays open, and a full invoice afterwards still captures.
      *
      * @magentoDataFixture ParadoxLabs_Authnetcim::Test/Integration/_files/wallet_quote.php
      * @magentoConfigFixture current_store payment/authnetcim/test 1
@@ -141,7 +140,7 @@ class WalletPaymentOperationsTest extends TestCase
      * @magentoConfigFixture current_store payment/authnetcim_wallet/googlepay_gateway_merchant_id 123456
      * @return void
      */
-    public function testPartialInvoiceCapturesOnceAndRemainderCannotBeCapturedOnline(): void
+    public function testPartialInvoiceIsRejectedAndAuthorizationStaysOpen(): void
     {
         $this->registerWalletStub($this->objectManager);
         $authTxnId = $this->placeAuthorizedOrder();
@@ -151,45 +150,52 @@ class WalletPaymentOperationsTest extends TestCase
         $this->assertFalse($method->canCapturePartial(), 'The admin invoice form must not allow partial qtys.');
         $this->assertTrue($method->canCaptureOnce());
 
-        $itemId  = (int)current($order->getAllVisibleItems())->getId();
-        $invoice = $this->invoiceOnline(
-            $order,
-            [
-                $itemId => 1,
-            ]
-        );
+        $itemId = (int)current($order->getAllVisibleItems())->getId();
 
-        $this->assertLessThan((float)$order->getBaseGrandTotal(), (float)$invoice->getBaseGrandTotal());
-        $this->assertSame(['priorAuthCaptureTransaction'], $this->getTransactionTypes());
+        try {
+            $this->invoiceOnline(
+                $order,
+                [
+                    $itemId => 1,
+                ]
+            );
+            $this->fail('A partial online invoice of a wallet authorization must be rejected.');
+        } catch (LocalizedException $exception) {
+            $this->assertSame(
+                'Apple Pay / Google Pay payments must be captured in full in a single invoice.',
+                $exception->getMessage()
+            );
+        }
 
-        $request = $this->getTransactionRequests('priorAuthCaptureTransaction')[0];
-        $this->assertSame($authTxnId, $this->readTag($request, 'refTransId'));
-        $this->assertSame(
-            $this->formatAmount((float)$invoice->getBaseGrandTotal()),
-            $this->readTag($request, 'amount')
-        );
+        $this->assertSame([], $this->clientStub->requests, 'A rejected partial capture must not reach the gateway.');
 
         $this->simulateNewRequest($this->objectManager);
         $order = $this->loadWalletOrder($this->objectManager);
 
-        $this->assertFalse(
-            $order->getPayment()->canCapture(),
-            'After one capture, the wallet authorization is closed and cannot be captured again.'
+        $this->assertCount(0, $order->getInvoiceCollection(), 'The rejected invoice must not be saved.');
+        $this->assertEquals(0.0, (float)$order->getBaseTotalPaid());
+        $this->assertSame(
+            0,
+            (int)$this->loadTransactions($this->objectManager, $order, Transaction::TYPE_AUTH)
+                ->getFirstItem()
+                ->getIsClosed(),
+            'The authorization must stay open after a rejected partial capture.'
         );
+        $this->assertTrue($order->getPayment()->canCapture());
 
-        // Second invoice for the rest, requested online.
-        $this->clientStub->requests = [];
-        $secondInvoice              = $this->invoiceOnline($order);
+        // The full invoice still captures the whole authorization.
+        $invoice = $this->invoiceOnline($order);
 
-        $this->assertSame([], $this->clientStub->requests, 'The remainder must not be sent to the gateway.');
-        $this->assertNotSame(Invoice::STATE_PAID, (int)$secondInvoice->getState());
+        $this->assertSame(['priorAuthCaptureTransaction'], $this->getTransactionTypes());
+
+        $request = $this->getTransactionRequests('priorAuthCaptureTransaction')[0];
+        $this->assertSame($authTxnId, $this->readTag($request, 'refTransId'));
+        $this->assertSame($this->formatAmount((float)$order->getBaseGrandTotal()), $this->readTag($request, 'amount'));
+        $this->assertSame(Invoice::STATE_PAID, (int)$invoice->getState());
 
         $this->simulateNewRequest($this->objectManager);
-        $this->assertEquals(
-            (float)$invoice->getBaseGrandTotal(),
-            (float)$this->loadWalletOrder($this->objectManager)->getBaseTotalPaid(),
-            'Only the first (captured) invoice may count as paid.'
-        );
+        $order = $this->loadWalletOrder($this->objectManager);
+        $this->assertEquals((float)$order->getBaseGrandTotal(), (float)$order->getBaseTotalPaid());
     }
 
     /**

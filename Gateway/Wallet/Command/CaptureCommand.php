@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace ParadoxLabs\Authnetcim\Gateway\Wallet\Command;
 
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Payment\Gateway\Command\CommandException;
 use Magento\Payment\Gateway\Helper\SubjectReader;
 use Magento\Sales\Api\Data\TransactionInterface;
@@ -34,9 +35,15 @@ use Magento\Sales\Model\Order\Payment;
 class CaptureCommand extends AbstractCommand
 {
     /**
+     * Tolerance for comparing currency amounts as floats.
+     */
+    private const AMOUNT_EPSILON = 0.0001;
+
+    /**
      * @param array $commandSubject
      * @return null
      * @throws CommandException
+     * @throws LocalizedException
      */
     public function execute(array $commandSubject)
     {
@@ -48,6 +55,8 @@ class CaptureCommand extends AbstractCommand
         $authTransactionId = $this->getOpenAuthTransactionId($payment);
 
         if ($authTransactionId !== null) {
+            $this->assertFullCapture($payment, $amount);
+
             // Admin-initiated (invoice): gateway errors are left as-is, so the merchant sees the detail.
             $response = $this->getGateway($payment)->capture($payment, $amount, $authTransactionId);
 
@@ -76,6 +85,40 @@ class CaptureCommand extends AbstractCommand
         $payment->setShouldCloseParentTransaction(true);
 
         return null;
+    }
+
+    /**
+     * Reject a prior-auth capture for less than the authorization.
+     *
+     * A wallet authorization can be captured only once: the capture closes it, and the single-use token cannot
+     * reauthorize the remainder. Magento enforces can_capture_partial=0 only in the admin invoice form, so a partial
+     * invoice from the REST API or code would otherwise capture part of the order and strand the rest.
+     *
+     * @param Payment $payment
+     * @param float $amount
+     * @return void
+     * @throws LocalizedException
+     */
+    private function assertFullCapture(
+        Payment $payment,
+        float $amount,
+    ): void {
+        $authorized = (float)$payment->getBaseAmountAuthorized();
+
+        if ($authorized > 0 && $amount < $authorized - self::AMOUNT_EPSILON) {
+            $this->log(
+                sprintf(
+                    'Rejected partial capture of %s against authorization of %s for order %s',
+                    $amount,
+                    $authorized,
+                    $payment->getOrder()->getIncrementId()
+                )
+            );
+
+            throw new LocalizedException(
+                __('Apple Pay / Google Pay payments must be captured in full in a single invoice.')
+            );
+        }
     }
 
     /**
