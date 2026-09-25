@@ -1,0 +1,30 @@
+//
+//  Authorize.net CIM - Apple Pay / Google Pay buttons
+//  _____________________________________________
+
+& when (@media-common = true) {
+    .authnetcim-wallet-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 350px;
+        width: 100%;
+
+        &.disabled {
+            opacity: .6;
+            pointer-events: none;
+        }
+    }
+
+    .authnetcim-wallet-button {
+        height: 44px;
+        width: 100%;
+
+        apple-pay-button {
+            --apple-pay-button-width: 100%;
+            --apple-pay-button-height: 44px;
+            --apple-pay-button-border-radius: 4px;
+            display: block;
+        }
+    }
+}
