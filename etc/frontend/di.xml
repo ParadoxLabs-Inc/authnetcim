@@ -41,12 +41,4 @@
             </argument>
         </arguments>
     </type>
-
-    <type name="Magento\Csp\Model\CompositePolicyCollector">
-        <arguments>
-            <argument name="collectors" xsi:type="array">
-                <item name="authnetcim_wallet" xsi:type="object" sortOrder="50">ParadoxLabs\Authnetcim\Model\Wallet\CspPolicyCollector\Proxy</item>
-            </argument>
-        </arguments>
-    </type>
 </config>
