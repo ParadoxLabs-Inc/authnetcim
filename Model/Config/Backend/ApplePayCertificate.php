@@ -31,6 +31,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
+use OpenSSLCertificate;
 use ParadoxLabs\Authnetcim\Model\Wallet\Pem;
 
 /**
@@ -91,18 +92,56 @@ class ApplePayCertificate extends Value
             );
         }
 
-        $info = openssl_x509_parse($certificate);
-        if (is_array($info) && isset($info['validTo_time_t']) && (int)$info['validTo_time_t'] < time()) {
+        $expiry = $this->pem->getCertificateExpiry($pem);
+        if ($expiry !== null && $expiry < time()) {
             throw new LocalizedException(
                 __(
                     'The Apple Pay merchant identity certificate expired on %1.',
-                    date('Y-m-d', (int)$info['validTo_time_t'])
+                    date('Y-m-d', $expiry)
                 )
             );
         }
 
+        $this->validateStoredKey($certificate);
+
         $this->setValue($pem);
 
         return parent::beforeSave();
+    }
+
+    /**
+     * Check a new certificate against the saved private key, when the key isn't being replaced in the same save.
+     *
+     * A newly posted key is checked against the posted certificate by ApplePayPrivateKey instead.
+     *
+     * @param OpenSSLCertificate $certificate
+     * @return void
+     * @throws LocalizedException
+     */
+    private function validateStoredKey(OpenSSLCertificate $certificate): void
+    {
+        $postedKey = trim((string)$this->getFieldsetDataValue('applepay_identity_key'));
+
+        if ($postedKey !== '' && preg_match('/^\*+$/', $postedKey) !== 1) {
+            return;
+        }
+
+        // Obscured (unchanged) key: compare with the saved one, decrypted by the config backend model metadata.
+        $storedKey = $this->pem->normalize((string)$this->_config->getValue(
+            'payment/authnetcim_wallet/applepay_identity_key',
+            $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+            $this->getScopeCode()
+        ));
+
+        if ($storedKey === '') {
+            return;
+        }
+
+        $key = openssl_pkey_get_private($storedKey);
+        if ($key === false || openssl_x509_check_private_key($certificate, $key) !== true) {
+            throw new LocalizedException(
+                __('The Apple Pay merchant identity certificate does not match the saved private key.')
+            );
+        }
     }
 }

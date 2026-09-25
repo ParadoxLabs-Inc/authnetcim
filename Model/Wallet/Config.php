@@ -36,9 +36,11 @@ class Config
 
     /**
      * @param ScopeConfigInterface $scopeConfig
+     * @param Pem $pem
      */
     public function __construct(
         private readonly ScopeConfigInterface $scopeConfig,
+        private readonly Pem $pem,
     ) {
     }
 
@@ -63,11 +65,16 @@ class Config
      */
     public function isApplePayEnabled(?int $storeId = null): bool
     {
+        $certificate = $this->getApplePayIdentityCert($storeId);
+
+        // An expired identity certificate fails every merchant validation, so hide Apple Pay instead of
+        // showing a button that can never work.
         return $this->isActive($storeId)
             && $this->getFlag('applepay_active', $storeId)
             && $this->getApplePayMerchantIdentifier($storeId) !== ''
-            && $this->getApplePayIdentityCert($storeId) !== ''
-            && $this->getApplePayIdentityKey($storeId) !== '';
+            && $certificate !== ''
+            && $this->getApplePayIdentityKey($storeId) !== ''
+            && !$this->pem->isCertificateExpired($certificate);
     }
 
     /**

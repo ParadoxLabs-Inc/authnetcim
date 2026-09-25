@@ -52,4 +52,37 @@ class Pem
             $label
         );
     }
+
+    /**
+     * Get a certificate's expiry (validTo) as a unix timestamp, or null if it can't be read.
+     *
+     * @param string $pem
+     * @return int|null
+     */
+    public function getCertificateExpiry(string $pem): ?int
+    {
+        $pem         = $this->normalize($pem);
+        $certificate = $pem !== '' ? openssl_x509_read($pem) : false;
+
+        if ($certificate === false) {
+            return null;
+        }
+
+        $info = openssl_x509_parse($certificate);
+
+        return is_array($info) && isset($info['validTo_time_t']) ? (int)$info['validTo_time_t'] : null;
+    }
+
+    /**
+     * Whether a certificate is unreadable or past its expiry.
+     *
+     * @param string $pem
+     * @return bool
+     */
+    public function isCertificateExpired(string $pem): bool
+    {
+        $expiry = $this->getCertificateExpiry($pem);
+
+        return $expiry === null || $expiry < time();
+    }
 }

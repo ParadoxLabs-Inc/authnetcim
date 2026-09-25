@@ -71,6 +71,7 @@
                 <item name="payment/authnetcim/trans_key" xsi:type="string">1</item>
                 <item name="payment/authnetcim_ach/login" xsi:type="string">1</item>
                 <item name="payment/authnetcim_ach/trans_key" xsi:type="string">1</item>
+                <item name="payment/authnetcim_wallet/applepay_identity_key" xsi:type="string">1</item>
             </argument>
             <argument name="environment" xsi:type="array">
                 <item name="payment/authnetcim/test" xsi:type="string">1</item>
