@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace ParadoxLabs\Authnetcim\Gateway\Wallet\Command;
 
+use Exception;
+use Magento\Framework\Phrase;
 use Magento\Payment\Gateway\Command\CommandException;
 use Magento\Payment\Gateway\CommandInterface;
 use Magento\Payment\Gateway\Helper\SubjectReader;
@@ -34,6 +36,7 @@ use ParadoxLabs\Authnetcim\Model\Wallet\PaymentResponseHandler;
 use ParadoxLabs\Authnetcim\Model\Wallet\WalletType;
 use ParadoxLabs\TokenBase\Helper\Data as Helper;
 use ParadoxLabs\TokenBase\Model\Gateway\Response;
+use Throwable;
 
 /**
  * Shared plumbing for wallet gateway commands.
@@ -129,6 +132,70 @@ abstract class AbstractCommand implements CommandInterface
         }
 
         return $gateway;
+    }
+
+    /**
+     * Run a checkout (new wallet) transaction, replacing gateway errors with a message fit for the customer.
+     *
+     * Gateway error text (e.g. 'Authorize.Net CIM Gateway Connection error: ... Unable to decrypt data. (E00027)')
+     * means nothing to a shopper. It stays in the wallet log, and on the thrown exception as its cause, which
+     * Magento writes to the exception log when order placement fails.
+     *
+     * @param Payment $payment
+     * @param WalletGateway $gateway
+     * @param callable $transaction Runs the gateway transaction and returns its Response.
+     * @return Response
+     * @throws CommandException
+     */
+    protected function runCheckoutTransaction(
+        Payment $payment,
+        WalletGateway $gateway,
+        callable $transaction,
+    ): Response {
+        try {
+            return $transaction();
+        } catch (Throwable $exception) {
+            $this->log(
+                sprintf(
+                    'Wallet payment failed for order %s: %s',
+                    $payment->getOrder()->getIncrementId(),
+                    $exception->getMessage()
+                )
+            );
+
+            throw new CommandException(
+                $this->getCustomerErrorMessage($payment, $gateway),
+                $exception instanceof Exception ? $exception : null
+            );
+        }
+    }
+
+    /**
+     * Get the customer-facing message for a failed checkout transaction.
+     *
+     * @param Payment $payment
+     * @param WalletGateway $gateway
+     * @return Phrase
+     */
+    protected function getCustomerErrorMessage(Payment $payment, WalletGateway $gateway): Phrase
+    {
+        $walletLabel = WalletType::LABELS[(string)$payment->getAdditionalInformation('wallet_type')]
+            ?? 'Apple Pay / Google Pay';
+
+        $lastResponse = $gateway->getLastResponse();
+        $responseCode = is_array($lastResponse)
+            ? (int)($lastResponse['transactionResponse']['responseCode'] ?? 0)
+            : 0;
+
+        // Response code 2: declined (by the card issuer, or by Authorize.net fraud filters).
+        if ($responseCode === 2) {
+            return __('Your %1 payment was declined. Please try another card or payment method.', $walletLabel);
+        }
+
+        return __(
+            'Your %1 payment could not be completed. Please try again or choose another payment method.',
+            $walletLabel
+        );
     }
 
     /**

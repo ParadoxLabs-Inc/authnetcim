@@ -48,11 +48,17 @@ class CaptureCommand extends AbstractCommand
         $authTransactionId = $this->getOpenAuthTransactionId($payment);
 
         if ($authTransactionId !== null) {
+            // Admin-initiated (invoice): gateway errors are left as-is, so the merchant sees the detail.
             $response = $this->getGateway($payment)->capture($payment, $amount, $authTransactionId);
 
             $this->responseHandler->handleFollowUpTransaction($payment, $response);
         } else {
-            $response = $this->getGatewayForNewTransaction($payment)->capture($payment, $amount);
+            $gateway  = $this->getGatewayForNewTransaction($payment);
+            $response = $this->runCheckoutTransaction(
+                $payment,
+                $gateway,
+                fn () => $gateway->capture($payment, $amount)
+            );
 
             $this->responseHandler->handleNewTransaction($payment, $response);
         }

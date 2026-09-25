@@ -44,7 +44,11 @@ class AuthorizeCommand extends AbstractCommand
         $this->log(sprintf('authorize(%s, %s)', $payment->getOrder()->getIncrementId(), $amount));
 
         $gateway  = $this->getGatewayForNewTransaction($payment);
-        $response = $gateway->authorize($payment, $amount);
+        $response = $this->runCheckoutTransaction(
+            $payment,
+            $gateway,
+            fn () => $gateway->authorize($payment, $amount)
+        );
 
         $this->logResponse($response);
 
