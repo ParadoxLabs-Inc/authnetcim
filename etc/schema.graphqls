@@ -1,10 +1,12 @@
 type Query {
     authnetcimHostedPaymentFormParams(input: TokenBaseAuthnetcimHostedPaymentFormInput!): TokenBaseAuthnetcimHostedParams @resolver(class: "ParadoxLabs\\Authnetcim\\Model\\Api\\GraphQL\\Hosted\\GetPaymentParams") @doc(description: "Get Authnetcim Accept Hosted form URL and parameters for charging an order.")
     authnetcimHostedProfileFormParams(input: TokenBaseAuthnetcimHostedProfileFormInput!): TokenBaseAuthnetcimHostedParams @resolver(class: "ParadoxLabs\\Authnetcim\\Model\\Api\\GraphQL\\Hosted\\GetProfileParams") @doc(description: "Get Authnetcim Accept Customer form URL and parameters for collecting payment data.")
+    authnetcimWalletConfig(cart_id: String! @doc(description: "The masked ID of the cart being checked out.")): AuthnetcimWalletConfig @resolver(class: "ParadoxLabs\\Authnetcim\\Model\\Api\\GraphQL\\Wallet\\GetConfig") @doc(description: "Get the Authorize.net Apple Pay / Google Pay client configuration for a cart. Returns enabled=false and no wallets when no wallet is enabled.") @cache(cacheable: false)
 }
 
 type Mutation {
     authnetcimSyncHostedForm(input: TokenBaseAuthnetcimHostedProfileFormInput!): TokenBaseAuthnetcimHostedCardResponse @resolver(class: "ParadoxLabs\\Authnetcim\\Model\\Api\\GraphQL\\Hosted\\SyncHostedForm") @doc(description: "Synchronize a card stored via Authorize.net Accept Customer hosted form to Magento.")
+    authnetcimApplePayValidateMerchant(input: AuthnetcimApplePayValidateMerchantInput! @doc(description: "The cart, Apple Pay validation URL and storefront domain.")): AuthnetcimApplePayValidateMerchantOutput @resolver(class: "ParadoxLabs\\Authnetcim\\Model\\Api\\GraphQL\\Wallet\\ApplePayValidateMerchant") @doc(description: "Request an Apple Pay merchant session (ApplePaySession onvalidatemerchant) for a headless storefront.")
 }
 
 input TokenBaseAuthnetcimHostedPaymentFormInput {
@@ -63,4 +65,58 @@ enum TokenBaseAuthnetcimHostedMethod {
 enum TokenBaseAuthnetcimHostedSource {
     checkout
     paymentinfo
+}
+
+input PaymentMethodInput {
+    authnetcim_wallet: AuthnetcimWalletInput @doc(description: "Authorize.net Apple Pay / Google Pay payment data. Required when the payment method code is authnetcim_wallet.")
+}
+
+input AuthnetcimWalletInput @doc(description: "Wallet payment data from the Apple Pay or Google Pay payment sheet.") {
+    wallet_type: String! @doc(description: "The wallet the token came from: applepay or googlepay.")
+    wallet_token: String! @doc(description: "The base64-encoded wallet payment token. Apple Pay: base64(JSON.stringify(payment.token.paymentData)). Google Pay: base64(paymentMethodData.tokenizationData.token).")
+    card_display: String @doc(description: "The wallet's card description for display, e.g. 'Visa 1234'.")
+}
+
+input AuthnetcimApplePayValidateMerchantInput @doc(description: "Input for Apple Pay merchant validation.") {
+    cart_id: String! @doc(description: "The masked ID of the cart being checked out.")
+    validation_url: String! @doc(description: "The validationURL from the ApplePaySession onvalidatemerchant event. Must be an Apple Pay gateway URL.")
+    domain: String! @doc(description: "The storefront host name the payment sheet was opened on, without scheme or path (e.g. shop.example.com). Must be a store base URL host or a configured Apple Pay storefront domain.")
+}
+
+type AuthnetcimApplePayValidateMerchantOutput @doc(description: "Apple Pay merchant validation result.") {
+    merchant_session: String! @doc(description: "The Apple Pay merchant session as a JSON string. Parse it and pass it to ApplePaySession.completeMerchantValidation() as-is.")
+}
+
+type AuthnetcimWalletConfig @doc(description: "Authorize.net Apple Pay / Google Pay client configuration. Field names match the config object the module's wallet/client.js expects.") {
+    enabled: Boolean! @doc(description: "Whether any wallet is enabled. When false, no other configuration is returned.")
+    wallets: [String!]! @doc(description: "The enabled wallet types, in display order: applepay, googlepay.")
+    countryCode: String @doc(description: "The merchant country code for the payment sheet.")
+    currencyCode: String @doc(description: "The cart base currency code. Authorize.net charges the base amount, so the payment sheet shows the base currency.")
+    amount: Float @doc(description: "The cart base grand total, as last saved on the cart. Use as the payment sheet total (client.js order.amount).")
+    sandbox: Boolean @doc(description: "Whether Authorize.net is in sandbox mode.")
+    applePay: AuthnetcimWalletApplePayConfig @doc(description: "Apple Pay configuration. Null when Apple Pay is not enabled.")
+    googlePay: AuthnetcimWalletGooglePayConfig @doc(description: "Google Pay configuration. Null when Google Pay is not enabled.")
+}
+
+type AuthnetcimWalletApplePayConfig @doc(description: "Apple Pay client configuration.") {
+    sdkUrl: String @doc(description: "The Apple Pay JS SDK URL.")
+    merchantIdentifier: String @doc(description: "The Apple Pay merchant identifier.")
+    displayName: String @doc(description: "The merchant name shown on the payment sheet.")
+    supportedNetworks: [String] @doc(description: "The Apple Pay card networks allowed, from the enabled Authorize.net card types.")
+    merchantCapabilities: [String] @doc(description: "The Apple Pay merchant capabilities.")
+    buttonStyle: String @doc(description: "The Apple Pay button style.")
+    buttonType: String @doc(description: "The Apple Pay button type.")
+}
+
+type AuthnetcimWalletGooglePayConfig @doc(description: "Google Pay client configuration.") {
+    sdkUrl: String @doc(description: "The Google Pay JS SDK URL.")
+    environment: String @doc(description: "The Google Pay environment: TEST or PRODUCTION.")
+    gateway: String @doc(description: "The Google Pay tokenization gateway (authorizenet).")
+    gatewayMerchantId: String @doc(description: "The Authorize.net Payment Gateway ID, used as the Google Pay gatewayMerchantId.")
+    merchantId: String @doc(description: "The Google merchant ID. Required in PRODUCTION.")
+    merchantName: String @doc(description: "The merchant name shown on the payment sheet.")
+    allowedCardNetworks: [String] @doc(description: "The Google Pay card networks allowed, from the enabled Authorize.net card types.")
+    allowedAuthMethods: [String] @doc(description: "The Google Pay card auth methods allowed (PAN_ONLY, CRYPTOGRAM_3DS).")
+    buttonColor: String @doc(description: "The Google Pay button color.")
+    buttonType: String @doc(description: "The Google Pay button type.")
 }
