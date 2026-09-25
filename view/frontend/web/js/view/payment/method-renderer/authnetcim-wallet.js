@@ -138,7 +138,8 @@ define(
              */
             onWalletClick: function (client, event) {
                 var self = this,
-                    totals = quote.totals();
+                    totals = quote.totals(),
+                    amount = totals ? parseFloat(totals.base_grand_total) : 0;
 
                 if (event && typeof event.preventDefault === 'function') {
                     event.preventDefault();
@@ -154,11 +155,20 @@ define(
                     return;
                 }
 
+                // Never open a wallet sheet for an unknown total (the customer would authorize 0.00).
+                if (!(amount > 0)) {
+                    this.messageContainer.addErrorMessage({
+                        message: $t('Unable to determine the order total. Please reload and try again.')
+                    });
+
+                    return;
+                }
+
                 this.isPlaceOrderActionAllowed(false);
 
                 client.pay(
                     {
-                        amount: totals ? totals.base_grand_total : 0
+                        amount: amount
                     },
                     this.placeWalletOrder.bind(this)
                 ).then(function () {

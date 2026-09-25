@@ -164,7 +164,22 @@
     ApplePay.prototype.pay = function (order, placeOrder) {
         var self = this,
             settings = this.config.applePay,
+            placing = false,
             session;
+
+        /**
+         * Close the sheet with the given status. Throws if the session is already gone (Apple dismisses the sheet
+         * if completePayment() isn't called within ~30s of authorization), which must not affect the outcome.
+         *
+         * @param {Number} status
+         */
+        function completePayment(status) {
+            try {
+                session.completePayment({status: status});
+            } catch (error) {
+                // Sheet already closed.
+            }
+        }
 
         return new Promise(function (resolve, reject) {
             session = new window.ApplePaySession(3, {
@@ -183,8 +198,14 @@
                 self.validateMerchant(event.validationURL).then(function (merchantSession) {
                     session.completeMerchantValidation(merchantSession);
                 }).catch(function (error) {
-                    session.abort();
+                    // Reject before abort(): abort can fire oncancel synchronously, which would hide this error.
                     reject(error);
+
+                    try {
+                        session.abort();
+                    } catch (abortError) {
+                        // Session already closed.
+                    }
                 });
             };
 
@@ -198,18 +219,27 @@
                             : ''
                     };
 
+                placing = true;
+
+                // The order outcome decides the result, not the sheet: a placed order must resolve (so the
+                // storefront redirects) even if the sheet timed out or was dismissed meanwhile.
                 Promise.resolve().then(function () {
                     return placeOrder(walletData);
                 }).then(function (result) {
-                    session.completePayment({status: window.ApplePaySession.STATUS_SUCCESS});
+                    completePayment(window.ApplePaySession.STATUS_SUCCESS);
                     resolve(result);
-                }).catch(function (error) {
-                    session.completePayment({status: window.ApplePaySession.STATUS_FAILURE});
+                }, function (error) {
+                    completePayment(window.ApplePaySession.STATUS_FAILURE);
                     reject(error);
                 });
             };
 
             session.oncancel = function () {
+                // Once authorized, the order is in flight; let its outcome settle the payment instead.
+                if (placing) {
+                    return;
+                }
+
                 reject(new CanceledError());
             };
 
