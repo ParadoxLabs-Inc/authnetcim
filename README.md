@@ -33,6 +33,7 @@ Features
 ========
 
 * Pay by credit card or ACH (eCheck)
+* Pay with Apple Pay or Google Pay (Luma, Hyvä Checkout, and GraphQL)
 * Save credit cards (tokens) for reuse
 * Add, edit, and delete saved payment data
 * Edit orders and reorder, without having to ask the customer for CC info again
@@ -71,6 +72,88 @@ you're done, click **Save Config** to save the changes.
 
 After saving, if the API connection is working properly, the 'API Test Results' setting will display "Authorize.net CIM
 connected successfully." in green.
+
+## Apple Pay and Google Pay
+
+Apple Pay and Google Pay are a separate payment method (code `authnetcim_wallet`) that runs through your Authorize.net
+CIM account. It is installed with the extension and stays disabled until configured. It uses the API credentials,
+sandbox setting, card types, and line item settings from the **Authorize.net CIM** section, so configure that first.
+
+Settings are under **Stores > Settings > Configuration > Sales > Payment Methods > Authorize.net CIM - Apple Pay /
+Google Pay**. Set **Enabled** to Yes, then enable and configure each wallet you want to offer. A wallet is only
+offered once all of its required settings are filled in.
+
+### Authorize.net prerequisites
+
+* Enable each wallet in the Authorize.net Merchant Interface under **Account > Digital Payment Solutions**.
+* Apple Pay is only available if your Authorize.net processor supports it. See Authorize.net's list of Apple Pay
+  processors, or ask Authorize.net, before setting it up.
+
+### Google Pay
+
+1. Enable Google Pay in Authorize.net under **Account > Digital Payment Solutions > Google Pay**.
+2. **Authorize.net Payment Gateway ID**: enter the numeric Payment Gateway ID shown on your Authorize.net Merchant
+   Interface home page. **This is not your API Login ID.** The API Login ID will not work here.
+3. **Google Merchant ID**: required for live payments. Register your business in the Google Pay & Wallet Console
+   (formerly the Google Pay Business Console), complete Google's integration review, and enter the merchant ID it
+   gives you. Google Pay is not offered in live mode until this is set.
+4. The Google Pay environment follows the Authorize.net CIM sandbox setting: sandbox uses Google's TEST environment
+   (no Google Merchant ID needed), live uses PRODUCTION.
+
+**Allowed Card Authentication** controls whether Google Pay offers cards saved in the Google account (`PAN_ONLY`),
+device tokens (`CRYPTOGRAM_3DS`), or both. Allowing both is recommended in the US.
+
+### Apple Pay
+
+1. In your Apple Developer account, create a **Merchant ID** (for example `merchant.com.example.store`), and enter it
+   as **Apple Merchant ID**.
+2. In Authorize.net under **Account > Digital Payment Solutions > Apple Pay**, enter the same Merchant ID. Upload the
+   Payment Processing certificate signing request that Authorize.net generates to Apple. Authorize.net holds that
+   certificate; you do not enter it in Magento.
+3. In Apple Developer, create a **Merchant Identity certificate** for the Merchant ID. Paste the certificate, in PEM
+   format (`-----BEGIN CERTIFICATE-----`), into **Merchant Identity Certificate (PEM)**, and its unencrypted private key
+   (`-----BEGIN PRIVATE KEY-----`) into **Merchant Identity Private Key (PEM)**. The private key is stored encrypted.
+   Apple issues the certificate as a `.cer` file; convert it with
+   `openssl x509 -inform der -in merchant_id.cer -out merchant_id.pem`.
+4. In Apple Developer, register each storefront domain for the Merchant ID. Paste the contents of the
+   `apple-developer-merchantid-domain-association` file Apple gives you into **Domain Verification File Contents**,
+   save, and then verify the domain with Apple. Magento serves the file at
+   `/.well-known/apple-developer-merchantid-domain-association`. If a file already exists at that path in your web
+   root, the web server serves that file instead, so update or remove it. If your web server does not pass that path
+   to Magento, put the file at `pub/.well-known/apple-developer-merchantid-domain-association` instead.
+5. **Headless Storefront Domains**: headless/PWA storefronts only. Enter the storefront domains (comma-separated) that
+   are allowed to request Apple Pay merchant validation through GraphQL. Leave blank for standard Magento storefronts.
+
+Apple Pay is only shown in browsers and devices that support it, such as Safari on iPhone, iPad, and Mac, with a card
+in Apple Wallet.
+
+### How wallet payments work
+
+* Wallet payments are single-use tokens. No CIM profile or stored card is created, so a wallet payment cannot be
+  reused for reorders, subscriptions, or order edits.
+* **Payment Action** 'Authorize' allows one capture per authorization: partial invoicing is not supported, and an
+  expired authorization cannot be reauthorized. 'Capture' charges the order immediately.
+* Refunds are made online by credit memo. A full refund of a transaction that has not settled yet is voided instead.
+  A partial refund must wait until the transaction settles.
+* The wallet payment sheet shows the order total in the store's base currency, since that is the amount
+  Authorize.net charges.
+* If the customer's browser has no usable wallet, Luma checkout hides the payment method, and Hyvä Checkout shows a
+  message asking the customer to choose another payment method.
+* Wallet payments are not available when creating orders in the admin panel.
+* Transactions held for review by Advanced Fraud Detection Suite can be accepted or denied from the order as usual.
+  The card webhook endpoint also handles wallet transactions.
+* The Apple Pay and Google Pay scripts are added to the Content Security Policy automatically when a wallet is enabled.
+
+### Hyvä Checkout and GraphQL
+
+* Hyvä Checkout: install ParadoxLabs_AuthnetcimHyvaCheckout (`paradoxlabs/authnetcim-hyva-checkout`) version 3.2 or
+  later.
+* GraphQL / headless:
+  * Query `authnetcimWalletConfig(cart_id)` returns the wallet settings and base-currency total for a cart.
+  * Mutation `authnetcimApplePayValidateMerchant` returns the Apple Pay merchant session for a storefront domain.
+  * Place the order with payment method `authnetcim_wallet` and `PaymentMethodInput.authnetcim_wallet`
+    (`wallet_type`, `wallet_token`, optional `card_display`). See the field descriptions in `etc/schema.graphqls`
+    for the token encoding.
 
 ## Applying Updates
 
