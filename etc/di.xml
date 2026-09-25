@@ -430,6 +430,13 @@
         </arguments>
     </virtualType>
 
+    <!-- ConfigurableInfo reads paymentInfoKeys/privateInfoKeys through this config; without it the block is empty. -->
+    <type name="ParadoxLabs\Authnetcim\Block\Info\Wallet">
+        <arguments>
+            <argument name="config" xsi:type="object">ParadoxLabs\Authnetcim\Gateway\Wallet\VirtualConfig</argument>
+        </arguments>
+    </type>
+
     <virtualType name="ParadoxLabs\Authnetcim\Gateway\Wallet\VirtualConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
         <arguments>
             <argument name="configInterface" xsi:type="object">ParadoxLabs\Authnetcim\Gateway\Wallet\VirtualConfig</argument>
