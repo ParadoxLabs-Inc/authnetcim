@@ -67,11 +67,6 @@ class WalletCheckoutTest extends TestCase
     private ?TestHandler $logHandler = null;
 
     /**
-     * @var bool
-     */
-    private bool $applePayIdentitySet = false;
-
-    /**
      * @inheritDoc
      */
     protected function setUp(): void
@@ -88,10 +83,8 @@ class WalletCheckoutTest extends TestCase
     {
         $this->unregisterWalletStub($this->objectManager);
 
-        if ($this->applePayIdentitySet) {
-            $this->setApplePayIdentity(null, null);
-            $this->applePayIdentitySet = false;
-        }
+        // Runtime config isn't rolled back like config fixtures are.
+        $this->setApplePayIdentity(null, null);
 
         if ($this->logHandler !== null) {
             $this->getTokenbaseLogger()->popHandler();
@@ -558,7 +551,6 @@ class WalletCheckoutTest extends TestCase
         openssl_pkey_export($key, $keyPem);
 
         $this->setApplePayIdentity($certificatePem, $keyPem);
-        $this->applePayIdentitySet = true;
     }
 
     /**
