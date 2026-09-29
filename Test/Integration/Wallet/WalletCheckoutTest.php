@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace ParadoxLabs\Authnetcim\Test\Integration\Wallet;
 
+use Magento\Framework\App\Config\MutableScopeConfigInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\PaymentMethodManagementInterface;
@@ -30,6 +31,7 @@ use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
+use Magento\Store\Model\ScopeInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\ObjectManager;
 use Monolog\Handler\TestHandler;
@@ -65,6 +67,11 @@ class WalletCheckoutTest extends TestCase
     private ?TestHandler $logHandler = null;
 
     /**
+     * @var bool
+     */
+    private bool $applePayIdentitySet = false;
+
+    /**
      * @inheritDoc
      */
     protected function setUp(): void
@@ -80,6 +87,11 @@ class WalletCheckoutTest extends TestCase
     protected function tearDown(): void
     {
         $this->unregisterWalletStub($this->objectManager);
+
+        if ($this->applePayIdentitySet) {
+            $this->setApplePayIdentity(null, null);
+            $this->applePayIdentitySet = false;
+        }
 
         if ($this->logHandler !== null) {
             $this->getTokenbaseLogger()->popHandler();
@@ -128,12 +140,11 @@ class WalletCheckoutTest extends TestCase
      * @magentoConfigFixture current_store payment/authnetcim_wallet/payment_action authorize
      * @magentoConfigFixture current_store payment/authnetcim_wallet/applepay_active 1
      * @magentoConfigFixture current_store payment/authnetcim_wallet/applepay_merchant_identifier merchant.com.example
-     * @magentoConfigFixture current_store payment/authnetcim_wallet/applepay_identity_cert integration-cert
-     * @magentoConfigFixture current_store payment/authnetcim_wallet/applepay_identity_key integration-key
      * @return void
      */
     public function testApplePayAuthorizePlacesProcessingOrder(): void
     {
+        $this->configureApplePayIdentity();
         $this->registerWalletStub($this->objectManager);
 
         $order = $this->placeWalletOrder($this->objectManager, $this->applePayData());
@@ -525,6 +536,54 @@ class WalletCheckoutTest extends TestCase
             ->addFieldToFilter('increment_id', 'test_wallet_quote');
 
         $this->assertCount(0, $orders, 'No order may be created.');
+    }
+
+    /**
+     * Store a real, currently-valid Apple Pay identity certificate and key for the current store.
+     *
+     * Apple Pay is hidden unless the certificate parses and hasn't expired, so a placeholder string (as a config
+     * fixture would have to be) leaves the method unavailable.
+     *
+     * @return void
+     */
+    private function configureApplePayIdentity(): void
+    {
+        $key  = openssl_pkey_new([
+            'private_key_type' => OPENSSL_KEYTYPE_EC,
+            'curve_name' => 'prime256v1',
+        ]);
+        $csr  = openssl_csr_new(['commonName' => 'merchant.com.example'], $key, ['digest_alg' => 'sha256']);
+        $cert = openssl_csr_sign($csr, null, $key, 1, ['digest_alg' => 'sha256']);
+        openssl_x509_export($cert, $certificatePem);
+        openssl_pkey_export($key, $keyPem);
+
+        $this->setApplePayIdentity($certificatePem, $keyPem);
+        $this->applePayIdentitySet = true;
+    }
+
+    /**
+     * Set (or clear, with null) the Apple Pay identity certificate and key on the current store.
+     *
+     * @param string|null $certificate
+     * @param string|null $key
+     * @return void
+     */
+    private function setApplePayIdentity(?string $certificate, ?string $key): void
+    {
+        $config = $this->objectManager->get(MutableScopeConfigInterface::class);
+
+        $config->setValue(
+            'payment/authnetcim_wallet/applepay_identity_cert',
+            $certificate,
+            ScopeInterface::SCOPE_STORE,
+            'default'
+        );
+        $config->setValue(
+            'payment/authnetcim_wallet/applepay_identity_key',
+            $key,
+            ScopeInterface::SCOPE_STORE,
+            'default'
+        );
     }
 
     /**
