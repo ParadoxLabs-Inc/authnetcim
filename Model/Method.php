@@ -336,7 +336,7 @@ class Method extends AbstractMethod
     public function denyPayment(InfoInterface $payment)
     {
         /** @var Payment $payment */
-        parent::acceptPayment(
+        parent::denyPayment(
             $payment
         );
 
