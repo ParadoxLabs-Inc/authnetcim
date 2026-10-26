@@ -98,15 +98,21 @@ class PemTest extends TestCase
      *
      * @param int $days
      * @param OpenSSLAsymmetricKey|null $key
+     * @param array $subject Distinguished name, as openssl_csr_new() takes it
      * @return string
      */
-    public static function createCertificate(int $days, ?OpenSSLAsymmetricKey $key = null): string
-    {
+    public static function createCertificate(
+        int $days,
+        ?OpenSSLAsymmetricKey $key = null,
+        array $subject = [
+            'commonName' => 'merchant.test',
+        ],
+    ): string {
         $key = $key ?? openssl_pkey_new([
             'private_key_type' => OPENSSL_KEYTYPE_EC,
             'curve_name' => 'prime256v1',
         ]);
-        $csr  = openssl_csr_new(['commonName' => 'merchant.test'], $key, ['digest_alg' => 'sha256']);
+        $csr  = openssl_csr_new($subject, $key, ['digest_alg' => 'sha256']);
         $cert = openssl_csr_sign($csr, null, $key, $days, ['digest_alg' => 'sha256']);
         openssl_x509_export($cert, $pem);
 

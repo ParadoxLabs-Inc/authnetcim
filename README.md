@@ -114,7 +114,9 @@ device tokens (`CRYPTOGRAM_3DS`), or both. Allowing both is recommended in the U
    format (`-----BEGIN CERTIFICATE-----`), into **Merchant Identity Certificate (PEM)**, and its unencrypted private key
    (`-----BEGIN PRIVATE KEY-----`) into **Merchant Identity Private Key (PEM)**. The private key is stored encrypted.
    Apple issues the certificate as a `.cer` file; convert it with
-   `openssl x509 -inform der -in merchant_id.cer -out merchant_id.pem`.
+   `openssl x509 -inform der -in merchant_id.cer -out merchant_id.pem`. Saving rejects a certificate that is expired,
+   issued for a different Merchant ID, or the Payment Processing certificate, and an admin notice warns you 30 days
+   before it expires (Apple certificates last about 25 months; Apple Pay is hidden at checkout once it expires).
 4. In Apple Developer, register each storefront domain for the Merchant ID. Paste the contents of the
    `apple-developer-merchantid-domain-association` file Apple gives you into **Domain Verification File Contents**,
    save, and then verify the domain with Apple. Magento serves the file at
