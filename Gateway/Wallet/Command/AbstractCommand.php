@@ -52,6 +52,12 @@ abstract class AbstractCommand implements CommandInterface
     ];
 
     /**
+     * Largest difference between the approved wallet sheet amount and the transaction amount that still matches
+     * (half a cent: both are rounded to two decimals).
+     */
+    private const APPROVED_AMOUNT_TOLERANCE = 0.005;
+
+    /**
      * @param GatewayProvider $gatewayProvider
      * @param Config $config
      * @param PaymentResponseHandler $responseHandler
@@ -100,16 +106,21 @@ abstract class AbstractCommand implements CommandInterface
      * Get a gateway loaded with the payment's wallet token and order context, for a new transaction.
      *
      * @param Payment $payment
+     * @param float $amount The (base currency) amount of the transaction about to be run.
      * @return WalletGateway
      * @throws CommandException
      */
-    protected function getGatewayForNewTransaction(Payment $payment): WalletGateway
-    {
-        $walletType = (string)$payment->getAdditionalInformation('wallet_type');
-        $token      = (string)$payment->getAdditionalInformation('wallet_token');
-        $storeId    = $payment->getOrder()->getStoreId() !== null ? (int)$payment->getOrder()->getStoreId() : null;
+    protected function getGatewayForNewTransaction(
+        Payment $payment,
+        float $amount,
+    ): WalletGateway {
+        $walletType   = (string)$payment->getAdditionalInformation('wallet_type');
+        $token        = (string)$payment->getAdditionalInformation('wallet_token');
+        $walletAmount = (string)$payment->getAdditionalInformation('wallet_amount');
+        $storeId      = $payment->getOrder()->getStoreId() !== null ? (int)$payment->getOrder()->getStoreId() : null;
 
-        // Single-use: remove the token from the payment now, so it cannot persist or be replayed.
+        // Single-use: remove the token (and its approved amount) from the payment now, so it cannot persist or be
+        // replayed.
         $this->responseHandler->clearTransientData($payment);
 
         if (!isset(WalletType::DESCRIPTORS[$walletType])
@@ -123,6 +134,8 @@ abstract class AbstractCommand implements CommandInterface
             throw new CommandException(__('Your wallet payment could not be processed. Please try again.'));
         }
 
+        $this->assertApprovedAmount($payment, $walletAmount, $amount);
+
         $gateway = $this->getGateway($payment);
         $gateway->setWalletToken(WalletType::DESCRIPTORS[$walletType], $token);
         $gateway->setOrderContext($payment, $this->config->shouldSendShippingAddress($storeId));
@@ -132,6 +145,50 @@ abstract class AbstractCommand implements CommandInterface
         }
 
         return $gateway;
+    }
+
+    /**
+     * Refuse to charge an amount other than the total the customer approved in the wallet sheet.
+     *
+     * The sheet shows the order total the storefront had when the wallet button was clicked. If the total changed
+     * since (store credit, gift card, reward points, a qty change, a missed totals refresh), the customer approved
+     * one amount and would be charged another. Both are base currency amounts. Clients that don't send the approved
+     * amount (it is optional for headless storefronts) are not checked.
+     *
+     * @param Payment $payment
+     * @param string $walletAmount The approved wallet sheet amount, or '' if the client did not send one.
+     * @param float $amount The transaction amount.
+     * @return void
+     * @throws CommandException
+     */
+    protected function assertApprovedAmount(
+        Payment $payment,
+        string $walletAmount,
+        float $amount,
+    ): void {
+        if ($walletAmount === '') {
+            return;
+        }
+
+        if (abs(round($amount, 2) - (float)$walletAmount) < self::APPROVED_AMOUNT_TOLERANCE) {
+            return;
+        }
+
+        $this->log(
+            sprintf(
+                'Rejected wallet payment for order %s: order amount %s does not match the approved wallet amount %s',
+                $payment->getOrder()->getIncrementId(),
+                number_format($amount, 2, '.', ''),
+                $walletAmount
+            )
+        );
+
+        throw new CommandException(
+            __(
+                'The order total changed after you approved your %1 payment. Please review your order and pay again.',
+                $this->getWalletLabel($payment)
+            )
+        );
     }
 
     /**
@@ -179,8 +236,7 @@ abstract class AbstractCommand implements CommandInterface
      */
     protected function getCustomerErrorMessage(Payment $payment, WalletGateway $gateway): Phrase
     {
-        $walletLabel = WalletType::LABELS[(string)$payment->getAdditionalInformation('wallet_type')]
-            ?? 'Apple Pay / Google Pay';
+        $walletLabel = $this->getWalletLabel($payment);
 
         $lastResponse = $gateway->getLastResponse();
         $responseCode = is_array($lastResponse)
@@ -196,6 +252,18 @@ abstract class AbstractCommand implements CommandInterface
             'Your %1 payment could not be completed. Please try again or choose another payment method.',
             $walletLabel
         );
+    }
+
+    /**
+     * Get the payment's wallet name for customer messages (e.g. 'Google Pay').
+     *
+     * @param Payment $payment
+     * @return string
+     */
+    protected function getWalletLabel(Payment $payment): string
+    {
+        return WalletType::LABELS[(string)$payment->getAdditionalInformation('wallet_type')]
+            ?? 'Apple Pay / Google Pay';
     }
 
     /**

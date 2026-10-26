@@ -27,7 +27,8 @@
  * pay() MUST be called synchronously inside the click handler: both wallets require a user gesture to open.
  *
  * pay(order, placeOrder) resolves after placeOrder(walletData) resolves; placeOrder receives
- * {wallet_type, wallet_token, card_display} to submit as payment additional_data.
+ * {wallet_type, wallet_token, card_display, wallet_amount} to submit as payment additional_data. wallet_amount is
+ * the total shown in the sheet; the server refuses the order if the order total no longer matches it.
  */
 (function (root, factory) {
     'use strict';
@@ -216,7 +217,8 @@
                         wallet_token: base64(JSON.stringify(token.paymentData)),
                         card_display: token.paymentMethod && token.paymentMethod.displayName
                             ? token.paymentMethod.displayName
-                            : ''
+                            : '',
+                        wallet_amount: formatAmount(order.amount)
                     };
 
                 placing = true;
@@ -409,7 +411,8 @@
             return placeOrder({
                 wallet_type: 'googlepay',
                 wallet_token: base64(method.tokenizationData.token),
-                card_display: method.description || ''
+                card_display: method.description || '',
+                wallet_amount: formatAmount(order.amount)
             });
         });
     };

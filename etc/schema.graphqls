@@ -75,6 +75,7 @@ input AuthnetcimWalletInput @doc(description: "Wallet payment data from the Appl
     wallet_type: String! @doc(description: "The wallet the token came from: applepay or googlepay.")
     wallet_token: String! @doc(description: "The base64-encoded wallet payment token. Apple Pay: base64(JSON.stringify(payment.token.paymentData)). Google Pay: base64(paymentMethodData.tokenizationData.token).")
     card_display: String @doc(description: "The wallet's card description for display, e.g. 'Visa 1234'.")
+    wallet_amount: String @doc(description: "The total shown in the wallet payment sheet, in the store's base currency with up to two decimals, e.g. '12.34'. Recommended: when sent, order placement fails if the cart total no longer matches it, so the customer is never charged an amount other than the one they approved.")
 }
 
 input AuthnetcimApplePayValidateMerchantInput @doc(description: "Input for Apple Pay merchant validation.") {

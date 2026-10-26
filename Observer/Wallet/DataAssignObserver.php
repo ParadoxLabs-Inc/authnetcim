@@ -40,6 +40,12 @@ class DataAssignObserver extends AbstractDataAssignObserver
     private const MAX_TOKEN_LENGTH = 32768;
 
     /**
+     * The approved wallet sheet total, as the client formats it (e.g. '12.34'). The D modifier stops $ from also
+     * matching before a trailing newline.
+     */
+    private const AMOUNT_PATTERN = '/^\d{1,10}(\.\d{1,2})?$/D';
+
+    /**
      * @param Observer $observer
      * @return void
      * @throws LocalizedException
@@ -75,12 +81,46 @@ class DataAssignObserver extends AbstractDataAssignObserver
             throw new LocalizedException(__('Invalid wallet payment data. Please try again.'));
         }
 
+        $amount = $this->readAmount($additionalData);
+
         $payment->setAdditionalInformation('wallet_type', $walletType);
         $payment->setAdditionalInformation('wallet_token', $token);
         $payment->setAdditionalInformation(
             'card_display',
             $this->sanitizeDisplay((string)($additionalData['card_display'] ?? ''))
         );
+
+        /**
+         * The total the customer approved in the wallet sheet, checked against the order total before the token is
+         * charged. A new token without one must not inherit the amount from an earlier attempt.
+         */
+        if ($amount !== null) {
+            $payment->setAdditionalInformation('wallet_amount', $amount);
+        } else {
+            $payment->unsAdditionalInformation('wallet_amount');
+        }
+    }
+
+    /**
+     * Get the wallet sheet total the customer approved, or null if the client did not send one.
+     *
+     * @param array $additionalData
+     * @return string|null
+     * @throws LocalizedException
+     */
+    private function readAmount(array $additionalData): ?string
+    {
+        $amount = $additionalData['wallet_amount'] ?? null;
+
+        if ($amount === null || $amount === '') {
+            return null;
+        }
+
+        if (!is_scalar($amount) || preg_match(self::AMOUNT_PATTERN, (string)$amount) !== 1) {
+            throw new LocalizedException(__('Invalid wallet payment data. Please try again.'));
+        }
+
+        return (string)$amount;
     }
 
     /**

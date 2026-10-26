@@ -136,6 +136,98 @@ class CaptureCommandTest extends TestCase
     }
 
     /**
+     * Authorize and capture at checkout for the approved wallet amount: captured as usual.
+     *
+     * @return void
+     */
+    public function testAuthCaptureOfApprovedAmountIsSent(): void
+    {
+        $this->config->method('isWalletEnabled')->willReturn(true);
+        $this->info = [
+            'wallet_type' => 'googlepay',
+            'wallet_token' => 'dG9rZW4=',
+            'wallet_amount' => '30.00',
+        ];
+
+        $this->gateway->expects($this->once())
+            ->method('capture')
+            ->with($this->anything(), 30.0)
+            ->willReturn($this->buildResponse());
+
+        $this->command->execute($this->buildSubject(30.0, 0.0, null));
+
+        $this->assertArrayNotHasKey('wallet_token', $this->info);
+        $this->assertArrayNotHasKey('wallet_amount', $this->info);
+    }
+
+    /**
+     * Authorize and capture when the order total no longer matches the approved wallet amount: no gateway call.
+     *
+     * @return void
+     */
+    public function testAuthCaptureOfChangedTotalIsRejectedWithoutGatewayCall(): void
+    {
+        $this->config->method('isWalletEnabled')->willReturn(true);
+        $this->info = [
+            'wallet_type' => 'googlepay',
+            'wallet_token' => 'dG9rZW4=',
+            'wallet_amount' => '35.00',
+        ];
+
+        $this->gateway->expects($this->never())->method('setWalletToken');
+        $this->gateway->expects($this->never())->method('capture');
+
+        $this->expectException(CommandException::class);
+        $this->expectExceptionMessage(
+            'The order total changed after you approved your Google Pay payment. Please review your order and pay '
+            . 'again.'
+        );
+
+        $this->command->execute($this->buildSubject(30.0, 0.0, null));
+    }
+
+    /**
+     * Authorize and capture without an approved amount (headless client that doesn't send it): no check.
+     *
+     * @return void
+     */
+    public function testAuthCaptureWithoutApprovedAmountIsSent(): void
+    {
+        $this->config->method('isWalletEnabled')->willReturn(true);
+        $this->info = [
+            'wallet_type' => 'applepay',
+            'wallet_token' => 'dG9rZW4=',
+        ];
+
+        $this->gateway->expects($this->once())
+            ->method('capture')
+            ->with($this->anything(), 30.0)
+            ->willReturn($this->buildResponse());
+
+        $this->command->execute($this->buildSubject(30.0, 0.0, null));
+    }
+
+    /**
+     * Capturing an existing authorization charges no new wallet token, so the approved amount is not involved.
+     *
+     * @return void
+     */
+    public function testPriorAuthCaptureIgnoresApprovedAmount(): void
+    {
+        $this->info = [
+            'wallet_type' => 'googlepay',
+            'wallet_amount' => '1.00',
+        ];
+
+        $this->gateway->expects($this->once())
+            ->method('capture')
+            ->with($this->anything(), 30.0, '60012345')
+            ->willReturn($this->buildResponse());
+
+        $this->command->execute($this->buildSubject(30.0, 30.0, '60012345'));
+    }
+
+    /**
      * @return void
      */
     public function testClosedAuthorizationWithoutTokenIsNotCapturedAsPartial(): void

@@ -30,6 +30,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Payment\Observer\AbstractDataAssignObserver;
 use ParadoxLabs\Authnetcim\Observer\Wallet\DataAssignObserver;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -48,6 +49,13 @@ class DataAssignObserverTest extends TestCase
         $this->payment->method('setAdditionalInformation')->willReturnCallback(
             function ($key, $value = null) {
                 $this->info[$key] = $value;
+
+                return $this->payment;
+            }
+        );
+        $this->payment->method('unsAdditionalInformation')->willReturnCallback(
+            function ($key = null) {
+                unset($this->info[$key]);
 
                 return $this->payment;
             }
@@ -82,6 +90,109 @@ class DataAssignObserverTest extends TestCase
         ]);
 
         $this->assertSame([], $this->info);
+    }
+
+    /**
+     * The approved wallet sheet total is kept with the token, for the order total check before the charge.
+     *
+     * @return void
+     */
+    public function testAssignsApprovedWalletAmount(): void
+    {
+        $this->execute([
+            'wallet_type' => 'applepay',
+            'wallet_token' => 'dG9rZW4=',
+            'wallet_amount' => '1234.50',
+        ]);
+
+        $this->assertSame('dG9rZW4=', $this->info['wallet_token']);
+        $this->assertSame('1234.50', $this->info['wallet_amount']);
+    }
+
+    /**
+     * A new token without an amount must not inherit the amount assigned with an earlier token.
+     *
+     * @return void
+     */
+    public function testTokenWithoutAmountClearsStaleWalletAmount(): void
+    {
+        $this->info['wallet_amount'] = '99.99';
+
+        $this->execute([
+            'wallet_type' => 'googlepay',
+            'wallet_token' => 'dG9rZW4=',
+            'wallet_amount' => '',
+        ]);
+
+        $this->assertSame('dG9rZW4=', $this->info['wallet_token']);
+        $this->assertArrayNotHasKey('wallet_amount', $this->info);
+    }
+
+    /**
+     * The placeOrder re-import carries no token; it must leave an assigned amount alone and never fail on it.
+     *
+     * @return void
+     */
+    public function testEmptyTokenLeavesWalletAmountAlone(): void
+    {
+        $this->info['wallet_amount'] = '25.00';
+
+        $this->execute([
+            'wallet_type' => 'googlepay',
+            'wallet_amount' => 'not-an-amount',
+        ]);
+
+        $this->assertSame(
+            [
+                'wallet_amount' => '25.00',
+            ],
+            $this->info
+        );
+    }
+
+    /**
+     * @return array
+     */
+    public static function invalidAmountProvider(): array
+    {
+        return [
+            'three decimals' => ['12.345'],
+            'negative' => ['-12.34'],
+            'exponent' => ['1e3'],
+            'comma decimal' => ['12,34'],
+            'currency symbol' => ['$12.34'],
+            'leading space' => [' 12.34'],
+            'trailing newline' => ["12.34\n"],
+            'trailing dot' => ['12.'],
+            'too many digits' => ['12345678901'],
+            'text' => ['twelve'],
+            'array' => [
+                [
+                    '12.34',
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider invalidAmountProvider
+     * @param mixed $amount
+     * @return void
+     */
+    #[DataProvider('invalidAmountProvider')]
+    public function testRejectsInvalidWalletAmount(mixed $amount): void
+    {
+        try {
+            $this->execute([
+                'wallet_type' => 'googlepay',
+                'wallet_token' => 'dG9rZW4=',
+                'wallet_amount' => $amount,
+            ]);
+            $this->fail('Expected LocalizedException');
+        } catch (LocalizedException $exception) {
+            $this->assertSame('Invalid wallet payment data. Please try again.', $exception->getMessage());
+            $this->assertSame([], $this->info, 'Nothing may be assigned from invalid wallet data.');
+        }
     }
 
     /**

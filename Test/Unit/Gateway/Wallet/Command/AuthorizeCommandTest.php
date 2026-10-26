@@ -35,6 +35,7 @@ use ParadoxLabs\Authnetcim\Model\Wallet\GatewayProvider;
 use ParadoxLabs\Authnetcim\Model\Wallet\PaymentResponseHandler;
 use ParadoxLabs\TokenBase\Helper\Data as Helper;
 use ParadoxLabs\TokenBase\Model\Gateway\Response;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -42,7 +43,15 @@ class AuthorizeCommandTest extends TestCase
 {
     private Config|MockObject $config;
     private Gateway|MockObject $gateway;
+    private GatewayProvider|MockObject $provider;
     private AuthorizeCommand $command;
+
+    /**
+     * Wallet log messages written.
+     *
+     * @var string[]
+     */
+    private array $messages = [];
 
     /**
      * Payment additional_information backing store.
@@ -61,17 +70,24 @@ class AuthorizeCommandTest extends TestCase
         $this->config  = $this->createMock(Config::class);
         $this->gateway = $this->createMock(Gateway::class);
 
-        $provider = $this->createMock(GatewayProvider::class);
-        $provider->method('get')->willReturn($this->gateway);
+        $this->provider = $this->createMock(GatewayProvider::class);
+        $this->provider->method('get')->willReturn($this->gateway);
 
         $transactionRepository = $this->createMock(TransactionRepository::class);
         $transactionRepository->method('getByTransactionId')->willReturn(false);
 
+        $helper = $this->createMock(Helper::class);
+        $helper->method('log')->willReturnCallback(
+            function ($code, $message) {
+                $this->messages[] = (string)$message;
+            }
+        );
+
         $this->command = new AuthorizeCommand(
-            $provider,
+            $this->provider,
             $this->config,
             new PaymentResponseHandler($transactionRepository),
-            $this->createMock(Helper::class)
+            $helper
         );
     }
 
@@ -150,6 +166,131 @@ class AuthorizeCommandTest extends TestCase
         ];
 
         $this->expectException(CommandException::class);
+
+        $this->command->execute($this->buildSubject(25.0));
+    }
+
+    /**
+     * @return array
+     */
+    public static function matchingAmountProvider(): array
+    {
+        return [
+            'exact' => [25.0, '25.00'],
+            'no decimals' => [25.0, '25'],
+            'one decimal' => [25.5, '25.5'],
+            'rounds to the same cent' => [24.996, '25.00'],
+        ];
+    }
+
+    /**
+     * The customer approved the amount being charged: authorize as usual, and drop the amount with the token.
+     *
+     * @dataProvider matchingAmountProvider
+     * @param float $amount
+     * @param string $walletAmount
+     * @return void
+     */
+    #[DataProvider('matchingAmountProvider')]
+    public function testMatchingApprovedAmountIsAuthorized(float $amount, string $walletAmount): void
+    {
+        $this->config->method('isWalletEnabled')->willReturn(true);
+        $this->info = [
+            'wallet_type' => 'googlepay',
+            'wallet_token' => 'dG9rZW4=',
+            'wallet_amount' => $walletAmount,
+        ];
+
+        $this->gateway->expects($this->once())
+            ->method('authorize')
+            ->with($this->anything(), $amount)
+            ->willReturn(
+                new Response([
+                    'transaction_id' => '60012345',
+                ])
+            );
+
+        $this->command->execute($this->buildSubject($amount));
+
+        $this->assertArrayNotHasKey('wallet_token', $this->info);
+        $this->assertArrayNotHasKey('wallet_amount', $this->info, 'The approved amount must not be persisted.');
+    }
+
+    /**
+     * @return array
+     */
+    public static function mismatchedAmountProvider(): array
+    {
+        return [
+            'total went up' => [25.0, '24.99'],
+            'total went down' => [20.0, '25.00'],
+            'store credit applied' => [0.01, '25.00'],
+        ];
+    }
+
+    /**
+     * The order total changed after the customer approved the wallet sheet: never charge the new amount.
+     *
+     * @dataProvider mismatchedAmountProvider
+     * @param float $amount
+     * @param string $walletAmount
+     * @return void
+     */
+    #[DataProvider('mismatchedAmountProvider')]
+    public function testMismatchedApprovedAmountIsRejectedWithoutGatewayCall(float $amount, string $walletAmount): void
+    {
+        $this->config->method('isWalletEnabled')->willReturn(true);
+        $this->info = [
+            'wallet_type' => 'applepay',
+            'wallet_token' => 'dG9rZW4=',
+            'wallet_amount' => $walletAmount,
+        ];
+
+        $this->provider->expects($this->never())->method('get');
+        $this->gateway->expects($this->never())->method('setWalletToken');
+        $this->gateway->expects($this->never())->method('authorize');
+
+        try {
+            $this->command->execute($this->buildSubject($amount));
+            $this->fail('Expected CommandException');
+        } catch (CommandException $exception) {
+            $this->assertSame(
+                'The order total changed after you approved your Apple Pay payment. Please review your order and '
+                . 'pay again.',
+                $exception->getMessage()
+            );
+        }
+
+        $this->assertArrayNotHasKey('wallet_token', $this->info, 'The spent token must still be cleared.');
+        $this->assertArrayNotHasKey('wallet_amount', $this->info);
+
+        $logged = implode("\n", $this->messages);
+        $this->assertStringContainsString('100000123', $logged);
+        $this->assertStringContainsString(number_format($amount, 2, '.', ''), $logged);
+        $this->assertStringContainsString($walletAmount, $logged);
+    }
+
+    /**
+     * Headless clients may omit the approved amount; the order is then authorized without the check.
+     *
+     * @return void
+     */
+    public function testAbsentApprovedAmountIsAuthorized(): void
+    {
+        $this->config->method('isWalletEnabled')->willReturn(true);
+        $this->info = [
+            'wallet_type' => 'googlepay',
+            'wallet_token' => 'dG9rZW4=',
+        ];
+
+        $this->gateway->expects($this->once())
+            ->method('authorize')
+            ->with($this->anything(), 25.0)
+            ->willReturn(
+                new Response([
+                    'transaction_id' => '60012345',
+                ])
+            );
 
         $this->command->execute($this->buildSubject(25.0));
     }

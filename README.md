@@ -156,8 +156,10 @@ in Apple Wallet.
   * Query `authnetcimWalletConfig(cart_id)` returns the wallet settings and base-currency total for a cart.
   * Mutation `authnetcimApplePayValidateMerchant` returns the Apple Pay merchant session for a storefront domain.
   * Place the order with payment method `authnetcim_wallet` and `PaymentMethodInput.authnetcim_wallet`
-    (`wallet_type`, `wallet_token`, optional `card_display`). See the field descriptions in `etc/schema.graphqls`
-    for the token encoding.
+    (`wallet_type`, `wallet_token`, optional `card_display` and `wallet_amount`). See the field descriptions in
+    `etc/schema.graphqls` for the token encoding.
+  * Send `wallet_amount`, the total shown in the wallet sheet (e.g. `12.34`). Order placement then fails if the cart
+    total changed after the customer approved the payment, instead of charging a different amount.
 
 ## Applying Updates
 

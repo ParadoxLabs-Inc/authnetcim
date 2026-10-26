@@ -62,7 +62,7 @@ class CaptureCommand extends AbstractCommand
 
             $this->responseHandler->handleFollowUpTransaction($payment, $response);
         } else {
-            $gateway  = $this->getGatewayForNewTransaction($payment);
+            $gateway  = $this->getGatewayForNewTransaction($payment, $amount);
             $response = $this->runCheckoutTransaction(
                 $payment,
                 $gateway,

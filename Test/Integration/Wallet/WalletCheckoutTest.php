@@ -387,6 +387,145 @@ class WalletCheckoutTest extends TestCase
     }
 
     /**
+     * The customer approved the current order total in the wallet sheet: the order is placed and authorized for that
+     * amount, and the approved amount is not kept on the order or the cart.
+     *
+     * @magentoDataFixture ParadoxLabs_Authnetcim::Test/Integration/_files/wallet_quote.php
+     * @magentoConfigFixture current_store payment/authnetcim/test 1
+     * @magentoConfigFixture current_store payment/authnetcim/login integration_login
+     * @magentoConfigFixture current_store payment/authnetcim/trans_key integrationkey00
+     * @magentoConfigFixture current_store payment/authnetcim_wallet/active 1
+     * @magentoConfigFixture current_store payment/authnetcim_wallet/payment_action authorize
+     * @magentoConfigFixture current_store payment/authnetcim_wallet/googlepay_active 1
+     * @magentoConfigFixture current_store payment/authnetcim_wallet/googlepay_gateway_merchant_id 123456
+     * @return void
+     */
+    public function testApprovedWalletAmountPlacesOrder(): void
+    {
+        $this->registerWalletStub($this->objectManager);
+
+        $approvedAmount = $this->getQuoteBaseGrandTotal();
+        $this->assertGreaterThan(0, (float)$approvedAmount, 'Precondition: the fixture cart has a total.');
+
+        $data                  = $this->googlePayData();
+        $data['wallet_amount'] = $approvedAmount;
+
+        $order = $this->placeWalletOrder($this->objectManager, $data);
+
+        $this->assertSame(['authOnlyTransaction'], $this->getTransactionTypes());
+        $this->assertSame(
+            $approvedAmount,
+            $this->readTag($this->getTransactionRequests('authOnlyTransaction')[0], 'amount'),
+            'The approved amount must be the amount authorized.'
+        );
+        $this->assertSame(Order::STATE_PROCESSING, $order->getState());
+        $this->assertNull(
+            $order->getPayment()->getAdditionalInformation('wallet_amount'),
+            'The approved amount is single-use data and must not be persisted on the order.'
+        );
+        $this->assertNull(
+            $this->loadWalletQuote($this->objectManager)->getPayment()->getAdditionalInformation('wallet_amount'),
+            'The approved amount must not be persisted on the cart.'
+        );
+    }
+
+    /**
+     * The order total changed after the customer approved the wallet sheet (store credit, a qty change, a missed
+     * totals refresh): checkout fails with no request to Authorize.net, and the token and amount leave the cart.
+     *
+     * @magentoDataFixture ParadoxLabs_Authnetcim::Test/Integration/_files/wallet_quote.php
+     * @magentoConfigFixture current_store payment/authnetcim/test 1
+     * @magentoConfigFixture current_store payment/authnetcim/login integration_login
+     * @magentoConfigFixture current_store payment/authnetcim/trans_key integrationkey00
+     * @magentoConfigFixture current_store payment/authnetcim_wallet/active 1
+     * @magentoConfigFixture current_store payment/authnetcim_wallet/payment_action authorize
+     * @magentoConfigFixture current_store payment/authnetcim_wallet/googlepay_active 1
+     * @magentoConfigFixture current_store payment/authnetcim_wallet/googlepay_gateway_merchant_id 123456
+     * @return void
+     */
+    public function testChangedOrderTotalFailsWithoutGatewayCall(): void
+    {
+        $stub = $this->registerWalletStub($this->objectManager);
+
+        $data                  = $this->googlePayData();
+        $data['wallet_amount'] = number_format((float)$this->getQuoteBaseGrandTotal() + 5, 2, '.', '');
+
+        $exception = $this->placeExpectingFailure($data);
+
+        $this->assertInstanceOf(LocalizedException::class, $exception);
+        $this->assertSame(
+            'The order total changed after you approved your Google Pay payment. Please review your order and pay '
+            . 'again.',
+            $exception->getMessage()
+        );
+        $this->assertSame([], $stub->requests, 'A changed total must never reach the gateway.');
+        $this->assertNoOrderPlaced();
+
+        $this->simulateNewRequest($this->objectManager);
+        $cartPayment = $this->loadWalletQuote($this->objectManager)->getPayment();
+        $this->assertNull(
+            $cartPayment->getAdditionalInformation('wallet_token'),
+            'A failed checkout must not leave the single-use token on the cart.'
+        );
+        $this->assertNull($cartPayment->getAdditionalInformation('wallet_amount'));
+    }
+
+    /**
+     * GraphQL/Hyvä: the approved amount assigned by setPaymentMethod survives the placeOrder re-import, so the total
+     * check still applies (a wiped amount would silently skip it and charge the changed total).
+     *
+     * @magentoDataFixture ParadoxLabs_Authnetcim::Test/Integration/_files/wallet_quote.php
+     * @magentoConfigFixture current_store payment/authnetcim/test 1
+     * @magentoConfigFixture current_store payment/authnetcim/login integration_login
+     * @magentoConfigFixture current_store payment/authnetcim/trans_key integrationkey00
+     * @magentoConfigFixture current_store payment/authnetcim_wallet/active 1
+     * @magentoConfigFixture current_store payment/authnetcim_wallet/payment_action authorize
+     * @magentoConfigFixture current_store payment/authnetcim_wallet/googlepay_active 1
+     * @magentoConfigFixture current_store payment/authnetcim_wallet/googlepay_gateway_merchant_id 123456
+     * @return void
+     */
+    public function testPlaceOrderReplayKeepsApprovedAmount(): void
+    {
+        $stub = $this->registerWalletStub($this->objectManager);
+
+        $data                  = $this->googlePayData();
+        $data['wallet_amount'] = number_format((float)$this->getQuoteBaseGrandTotal() + 5, 2, '.', '');
+
+        // Request 1: set the payment method on the cart (REST/GraphQL setPaymentMethodOnCart).
+        $cartId = (int)$this->loadWalletQuote($this->objectManager)->getId();
+        $this->objectManager->create(PaymentMethodManagementInterface::class)->set(
+            $cartId,
+            $this->buildWalletPayment($this->objectManager, $data)
+        );
+
+        $this->simulateNewRequest($this->objectManager);
+
+        // Request 2: placeOrder passes the cart's own payment back in, which QuoteManagement re-imports.
+        $quote = $this->loadWalletQuote($this->objectManager);
+        $this->assertSame(
+            $data['wallet_amount'],
+            $quote->getPayment()->getAdditionalInformation('wallet_amount'),
+            'Precondition: the approved amount is on the saved cart payment.'
+        );
+
+        $exception = null;
+
+        try {
+            $this->objectManager->create(CartManagementInterface::class)->placeOrder(
+                (int)$quote->getId(),
+                $quote->getPayment()
+            );
+        } catch (Throwable $placeException) {
+            $exception = $placeException;
+        }
+
+        $this->assertInstanceOf(LocalizedException::class, $exception, 'Checkout was expected to fail.');
+        $this->assertStringContainsString('The order total changed', $exception->getMessage());
+        $this->assertSame([], $stub->requests, 'A changed total must never reach the gateway.');
+        $this->assertNoOrderPlaced();
+    }
+
+    /**
      * The gateway debug log (sandbox mode) records the request with the wallet token masked, and the method log
      * records the gateway response after the transaction.
      *
@@ -515,6 +654,16 @@ class WalletCheckoutTest extends TestCase
         }
 
         $this->fail('Checkout was expected to fail.');
+    }
+
+    /**
+     * Get the fixture cart's base grand total as the wallet client formats the sheet amount (e.g. '30.00').
+     *
+     * @return string
+     */
+    private function getQuoteBaseGrandTotal(): string
+    {
+        return number_format((float)$this->loadWalletQuote($this->objectManager)->getBaseGrandTotal(), 2, '.', '');
     }
 
     /**

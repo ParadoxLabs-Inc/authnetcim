@@ -48,6 +48,7 @@ class AdditionalDataProviderTest extends TestCase
                 'wallet_type' => 'applepay',
                 'wallet_token' => 'eyJ0b2tlbiI6MX0=',
                 'card_display' => 'Visa 1234',
+                'wallet_amount' => '12.34',
             ],
         ]);
 
@@ -56,6 +57,7 @@ class AdditionalDataProviderTest extends TestCase
                 'wallet_type' => 'applepay',
                 'wallet_token' => 'eyJ0b2tlbiI6MX0=',
                 'card_display' => 'Visa 1234',
+                'wallet_amount' => '12.34',
             ],
             $result
         );

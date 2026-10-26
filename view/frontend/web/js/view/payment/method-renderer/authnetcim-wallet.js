@@ -28,6 +28,7 @@ define(
         'Magento_Checkout/js/model/payment/additional-validators',
         'Magento_Checkout/js/action/redirect-on-success',
         'Magento_Checkout/js/action/select-payment-method',
+        'Magento_Checkout/js/action/get-totals',
         'Magento_Checkout/js/checkout-data',
         'mage/translate',
         'ParadoxLabs_Authnetcim/js/wallet/client',
@@ -40,6 +41,7 @@ define(
         additionalValidators,
         redirectOnSuccessAction,
         selectPaymentMethodAction,
+        getTotalsAction,
         checkoutData,
         $t,
         walletClient
@@ -213,7 +215,15 @@ define(
              * @param {Error} error
              */
             handleError: function (error) {
-                if (error && (error.canceled || error.handled)) {
+                if (error && error.canceled) {
+                    return;
+                }
+
+                // The server may have recalculated the total at placement (e.g. tax by billing address); reload it so
+                // a retry shows, and the customer approves, the current total instead of failing the same way again.
+                getTotalsAction([]);
+
+                if (error && error.handled) {
                     return;
                 }
 
@@ -233,7 +243,8 @@ define(
                     'additional_data': this.walletData ? {
                         'wallet_type': this.walletData.wallet_type,
                         'wallet_token': this.walletData.wallet_token,
-                        'card_display': this.walletData.card_display
+                        'card_display': this.walletData.card_display,
+                        'wallet_amount': this.walletData.wallet_amount
                     } : null
                 };
             }

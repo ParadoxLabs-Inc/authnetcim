@@ -49,10 +49,12 @@ class PaymentResponseHandler
     ];
 
     /**
-     * Payment additional_information keys that must never be persisted after a transaction.
+     * Payment additional_information keys that must never be persisted after a transaction: the single-use token,
+     * and the wallet sheet amount it was approved for.
      */
     public const TRANSIENT_KEYS = [
         'wallet_token',
+        'wallet_amount',
     ];
 
     /**

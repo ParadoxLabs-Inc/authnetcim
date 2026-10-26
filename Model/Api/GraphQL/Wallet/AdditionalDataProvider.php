@@ -39,6 +39,7 @@ class AdditionalDataProvider implements AdditionalDataProviderInterface
         'wallet_type',
         'wallet_token',
         'card_display',
+        'wallet_amount',
     ];
 
     /**
