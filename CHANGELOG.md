@@ -10,6 +10,10 @@
 - Apple Pay requires an Apple Developer merchant ID, merchant identity certificate and key (stored encrypted in
   config), and domain verification; Google Pay requires your Authorize.net Payment Gateway ID and, for production,
   a Google Merchant ID. Both require Digital Payment Solutions to be enabled on the Authorize.net account.
+- The Apple Pay identity certificate is checked on save (expiry, Merchant ID, not the Payment Processing
+  certificate), and an admin notice warns 30 days before it expires.
+- Wallet orders are refused if the order total changed after the customer approved the payment sheet, and a wallet
+  transaction is voided automatically if checkout fails after payment.
 - Webhooks: the card notification endpoint now also handles wallet transactions.
 
 ## 6.1.0 - Sep 15, 2026
