@@ -25,6 +25,9 @@
  *
  * Flow: isAvailable() once per page (also preloads the wallet SDK), renderButton(), then pay() from the button click.
  * pay() MUST be called synchronously inside the click handler: both wallets require a user gesture to open.
+ * Async checks (e.g. checkout validation) therefore can't run before pay(); pass them in its optional third argument,
+ * {beforeAuthorize: function(): Promise}. Apple Pay runs it while the open sheet waits on merchant validation, before
+ * the customer can authorize, and aborts the sheet if it rejects. Google Pay can't (see GooglePay.prototype.pay).
  *
  * pay(order, placeOrder) resolves after placeOrder(walletData) resolves; placeOrder receives
  * {wallet_type, wallet_token, card_display, wallet_amount} to submit as payment additional_data. wallet_amount is
@@ -158,13 +161,18 @@
     /**
      * Open the Apple Pay sheet and place the order with the resulting token.
      *
+     * hooks.beforeAuthorize runs alongside merchant validation, while the sheet still shows its spinner and can't be
+     * authorized. If it rejects, pay() rejects with that same error and the sheet is aborted.
+     *
      * @param {Object} order {amount, currencyCode?, countryCode?}
      * @param {Function} placeOrder function(walletData): Promise
+     * @param {Object} [hooks] {beforeAuthorize?: function(): Promise}
      * @returns {Promise}
      */
-    ApplePay.prototype.pay = function (order, placeOrder) {
+    ApplePay.prototype.pay = function (order, placeOrder, hooks) {
         var self = this,
             settings = this.config.applePay,
+            beforeAuthorize = hooks && typeof hooks.beforeAuthorize === 'function' ? hooks.beforeAuthorize : null,
             placing = false,
             session;
 
@@ -196,8 +204,13 @@
             });
 
             session.onvalidatemerchant = function (event) {
-                self.validateMerchant(event.validationURL).then(function (merchantSession) {
-                    session.completeMerchantValidation(merchantSession);
+                // The customer can't authorize until completeMerchantValidation(), so the caller's checks run now,
+                // in parallel, and the sheet only becomes payable once both have passed.
+                Promise.all([
+                    self.validateMerchant(event.validationURL),
+                    beforeAuthorize ? Promise.resolve().then(beforeAuthorize) : null
+                ]).then(function (results) {
+                    session.completeMerchantValidation(results[0]);
                 }).catch(function (error) {
                     // Reject before abort(): abort can fire oncancel synchronously, which would hide this error.
                     reject(error);
@@ -374,11 +387,15 @@
     /**
      * Open the Google Pay sheet and place the order with the resulting token.
      *
+     * hooks.beforeAuthorize is NOT run: loadPaymentData() opens a popup that needs the click's user activation, so
+     * nothing can be awaited before it.
+     *
      * @param {Object} order {amount, currencyCode?, countryCode?}
      * @param {Function} placeOrder function(walletData): Promise
+     * @param {Object} [hooks] Accepted for parity with ApplePay; not run (see above).
      * @returns {Promise}
      */
-    GooglePay.prototype.pay = function (order, placeOrder) {
+    GooglePay.prototype.pay = function (order, placeOrder, hooks) {
         var settings = this.config.googlePay,
             request = {
                 apiVersion: 2,
