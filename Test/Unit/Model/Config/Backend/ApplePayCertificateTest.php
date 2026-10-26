@@ -167,6 +167,10 @@ class ApplePayCertificateTest extends TestCase
         string $savedMerchantId,
         ?string $error,
     ): void {
+        if (is_array($uid) && PHP_VERSION_ID < 80400) {
+            $this->markTestSkipped('openssl_csr_new() only accepts multi-valued subject fields on PHP 8.4+.');
+        }
+
         $subject = [];
         if ($uid !== null) {
             $subject['UID']        = $uid;
