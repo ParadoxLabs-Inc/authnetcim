@@ -135,6 +135,8 @@ in Apple Wallet.
   expired authorization cannot be reauthorized. 'Capture' charges the order immediately.
 * Refunds are made online by credit memo. A full refund of a transaction that has not settled yet is voided instead.
   A partial refund must wait until the transaction settles.
+* If checkout fails after the payment went through (for example, the order could not be saved), the authorization or
+  capture is voided automatically, so the customer's card is not left on hold for an order that doesn't exist.
 * The wallet payment sheet shows the order total in the store's base currency, since that is the amount
   Authorize.net charges.
 * If the customer's browser has no usable wallet, Luma checkout hides the payment method, and Hyvä Checkout shows a

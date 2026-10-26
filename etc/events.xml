@@ -23,5 +23,6 @@
         <observer name="authnetcim_failure_clear_acceptjs" instance="ParadoxLabs\Authnetcim\Observer\CheckoutFailureClearAcceptjsObserver"/>
         <observer name="authnetcim_failure_clear_profileid" instance="ParadoxLabs\Authnetcim\Observer\CheckoutFailureClearProfileIdObserver"/>
         <observer name="authnetcim_wallet_clear_token" instance="ParadoxLabs\Authnetcim\Observer\Wallet\VirtualClearTokenFailureObserver"/>
+        <observer name="authnetcim_wallet_void_transaction" instance="ParadoxLabs\Authnetcim\Observer\Wallet\CheckoutFailureVoidObserver"/>
     </event>
 </config>
