@@ -272,11 +272,11 @@
                 <field id="applepay_active" translate="label comment" type="select" sortOrder="1010" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Enable Apple Pay</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment><![CDATA[Requires an Apple Developer account, and an Authorize.net processor that supports Apple Pay. Set up a Merchant ID in Apple Developer, then in Authorize.net <em>Account &gt; Digital Payment Solutions &gt; Apple Pay</em> enter it and upload the Payment Processing Certificate signing request Authorize.net generates to Apple.]]></comment>
+                    <comment><![CDATA[Requires an Apple Developer account and an Authorize.net processor that supports Apple Pay. Your Merchant ID needs two certificates:<br>&bull; <strong>Payment Processing</strong>: set up in Authorize.net under <em>Account &gt; Digital Payment Solutions &gt; Apple Pay</em>. Stays there.<br>&bull; <strong>Merchant Identity</strong>: you create it, and enter it and its private key below.<br>See the extension README for step-by-step setup.]]></comment>
                 </field>
                 <field id="applepay_merchant_identifier" translate="label comment" type="text" sortOrder="1020" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Apple Merchant ID</label>
-                    <comment>Example: merchant.com.example.store</comment>
+                    <comment>Example: merchant.com.example.store. Use a separate Merchant ID for each Authorize.net account, including sandbox.</comment>
                     <depends>
                         <field id="applepay_active">1</field>
                     </depends>
@@ -291,7 +291,7 @@
                 <field id="applepay_identity_cert" translate="label comment" type="textarea" sortOrder="1040" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Merchant Identity Certificate (PEM)</label>
                     <backend_model>ParadoxLabs\Authnetcim\Model\Config\Backend\ApplePayCertificate</backend_model>
-                    <comment><![CDATA[The Apple Pay <strong>Merchant Identity</strong> certificate for your Merchant ID, converted to PEM (begins with -----BEGIN CERTIFICATE-----). This is not the Payment Processing certificate that Authorize.net holds.]]></comment>
+                    <comment><![CDATA[Your <strong>Merchant Identity</strong> certificate (not Payment Processing), in PEM format: begins with -----BEGIN CERTIFICATE-----. Convert the .cer file from Apple with:<br><code>openssl x509 -inform der -in merchant_id.cer -out merchant_id.pem</code>]]></comment>
                     <depends>
                         <field id="applepay_active">1</field>
                     </depends>
@@ -299,14 +299,14 @@
                 <field id="applepay_identity_key" translate="label comment" type="obscure" sortOrder="1050" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Merchant Identity Private Key (PEM)</label>
                     <backend_model>ParadoxLabs\Authnetcim\Model\Config\Backend\ApplePayPrivateKey</backend_model>
-                    <comment>The unencrypted private key for the certificate above (begins with -----BEGIN PRIVATE KEY-----). Stored encrypted.</comment>
+                    <comment><![CDATA[The private key created along with the certificate request you uploaded to Apple, unencrypted: begins with -----BEGIN PRIVATE KEY----- or -----BEGIN RSA PRIVATE KEY-----. Apple does not provide it. If you made the request in Keychain Access, export the certificate as .p12 and run:<br><code>openssl pkcs12 -in merchant_id.p12 -nocerts -nodes -out merchant_id.key</code><br>Stored encrypted.]]></comment>
                     <depends>
                         <field id="applepay_active">1</field>
                     </depends>
                 </field>
                 <field id="applepay_domain_association" translate="label comment" type="textarea" sortOrder="1060" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Domain Verification File Contents</label>
-                    <comment><![CDATA[Paste the contents of the <em>apple-developer-merchantid-domain-association</em> file Apple provides when you register this store's domain. It will be served at /.well-known/apple-developer-merchantid-domain-association. If your web server does not route that path to Magento, place the file at pub/.well-known/ instead.]]></comment>
+                    <comment><![CDATA[Paste the contents of the <em>apple-developer-merchantid-domain-association</em> file Apple provides when you register this store's domain. It will be served at /.well-known/apple-developer-merchantid-domain-association, which Apple's servers must be able to reach (allow 17.0.0.0/8 if the site is IP-restricted). If your web server does not route that path to Magento, place the file at pub/.well-known/ instead.]]></comment>
                     <depends>
                         <field id="applepay_active">1</field>
                     </depends>

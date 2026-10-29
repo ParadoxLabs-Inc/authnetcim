@@ -105,28 +105,58 @@ device tokens (`CRYPTOGRAM_3DS`), or both. Allowing both is recommended in the U
 
 ### Apple Pay
 
-1. In your Apple Developer account, create a **Merchant ID** (for example `merchant.com.example.store`), and enter it
-   as **Apple Merchant ID**.
-2. In Authorize.net under **Account > Digital Payment Solutions > Apple Pay**, enter the same Merchant ID. Upload the
-   Payment Processing certificate signing request that Authorize.net generates to Apple. Authorize.net holds that
-   certificate; you do not enter it in Magento.
-3. In Apple Developer, create a **Merchant Identity certificate** for the Merchant ID. Paste the certificate, in PEM
-   format (`-----BEGIN CERTIFICATE-----`), into **Merchant Identity Certificate (PEM)**, and its unencrypted private key
-   (`-----BEGIN PRIVATE KEY-----`) into **Merchant Identity Private Key (PEM)**. The private key is stored encrypted.
-   Apple issues the certificate as a `.cer` file; convert it with
-   `openssl x509 -inform der -in merchant_id.cer -out merchant_id.pem`. Saving rejects a certificate that is expired,
-   issued for a different Merchant ID, or the Payment Processing certificate, and an admin notice warns you 30 days
-   before it expires (Apple certificates last about 25 months; Apple Pay is hidden at checkout once it expires).
-4. In Apple Developer, register each storefront domain for the Merchant ID. Paste the contents of the
-   `apple-developer-merchantid-domain-association` file Apple gives you into **Domain Verification File Contents**,
-   save, and then verify the domain with Apple. Magento serves the file at
-   `/.well-known/apple-developer-merchantid-domain-association`. If a file already exists at that path in your web
-   root, the web server serves that file instead, so update or remove it. If your web server does not pass that path
-   to Magento, put the file at `pub/.well-known/apple-developer-merchantid-domain-association` instead.
+Apple Pay needs two different certificates for the same Merchant ID. Don't mix them up:
+
+| Certificate        | Who creates the request | Where it goes                                   |
+|--------------------|-------------------------|-------------------------------------------------|
+| Payment Processing | Authorize.net           | Authorize.net only. Nothing to enter in Magento. |
+| Merchant Identity  | You                     | Magento: the certificate and its private key.   |
+
+Use a separate Merchant ID for each Authorize.net account, including your sandbox account. Apple Pay payments are
+encrypted for one Payment Processing certificate, so one Merchant ID can't serve two Authorize.net accounts.
+
+1. **Merchant ID.** In Apple Developer under **Certificates, Identifiers & Profiles > Identifiers**, create a Merchant
+   ID (for example `merchant.com.example.store`). Enter it as **Apple Merchant ID**.
+2. **Payment Processing certificate.** In Authorize.net under **Account > Digital Payment Solutions > Apple Pay**, enter
+   the same Merchant ID and follow Authorize.net's steps to create this certificate with Apple. Authorize.net keeps its
+   private key; you never see it.
+3. **Merchant Identity certificate.** Create a private key and certificate request on any computer with OpenSSL:
+
+   ```bash
+   openssl req -new -newkey rsa:2048 -nodes -keyout merchant_id.key -out merchant_id.csr -subj "/CN=merchant.com.example.store"
+   ```
+
+   In Apple Developer, open the Merchant ID, create an **Apple Pay Merchant Identity Certificate**, upload
+   `merchant_id.csr`, and download `merchant_id.cer`. Convert it to PEM:
+
+   ```bash
+   openssl x509 -inform der -in merchant_id.cer -out merchant_id.pem
+   ```
+
+   Paste `merchant_id.pem` into **Merchant Identity Certificate (PEM)** and `merchant_id.key` into **Merchant Identity
+   Private Key (PEM)**. The key is stored encrypted. Keep `merchant_id.key` private; Apple does not have a copy.
+
+   If you created the request with Keychain Access on a Mac instead, the private key is in that Mac's keychain. Export
+   the certificate and key together as `merchant_id.p12`, then extract the key with
+   `openssl pkcs12 -in merchant_id.p12 -nocerts -nodes -out merchant_id.key` (add `-legacy` if OpenSSL 3 refuses the
+   file).
+
+   The certificate lasts about 25 months. An admin notice warns you 30 days before it expires, and Apple Pay is hidden
+   at checkout once it has. To renew, repeat this step.
+4. **Domain verification.** In Apple Developer, add each storefront domain to the Merchant ID. Paste the contents of
+   the `apple-developer-merchantid-domain-association` file Apple gives you into **Domain Verification File Contents**,
+   save, then click Verify in Apple Developer. Magento serves the file at
+   `/.well-known/apple-developer-merchantid-domain-association`.
+   * Apple's servers (`17.0.0.0/8`) must be able to reach that URL. On a password- or IP-restricted site, such as
+     staging, allow them for that path.
+   * If a file already exists at that path in your web root, the web server serves it instead, so update or remove
+     it. If your web server does not pass that path to Magento, put the file at
+     `pub/.well-known/apple-developer-merchantid-domain-association` instead.
 5. **Headless Storefront Domains**: headless/PWA storefronts only. Enter the storefront domains (comma-separated) that
    are allowed to request Apple Pay merchant validation through GraphQL. Leave blank for standard Magento storefronts.
 
-Apple Pay is only shown in browsers and devices that support it, such as Safari on iPhone, iPad, and Mac, with a card
+Apple Pay is only offered once the Merchant ID, certificate, and private key are all saved and the certificate has not
+expired. It is only shown in browsers and devices that support it, such as Safari on iPhone, iPad, and Mac, with a card
 in Apple Wallet.
 
 ### How wallet payments work
