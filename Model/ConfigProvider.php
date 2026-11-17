@@ -47,7 +47,6 @@ class ConfigProvider extends CcGenericConfigProvider
      * @param Config $paymentConfig
      * @param Data $dataHelper
      * @param UrlInterface $urlBuilder
-     * @param array $methodCodes
      */
     public function __construct(
         CcConfig $ccConfig,
@@ -56,8 +55,7 @@ class ConfigProvider extends CcGenericConfigProvider
         protected readonly Session $customerSession,
         protected readonly Config $paymentConfig,
         protected readonly Data $dataHelper,
-        protected readonly UrlInterface $urlBuilder,
-        array $methodCodes = []
+        protected readonly UrlInterface $urlBuilder
     ) {
         parent::__construct($ccConfig, $this->paymentHelper, [static::CODE]);
     }

@@ -100,6 +100,8 @@ class GraphQLRequest extends AbstractRequestHandler
      */
     public function getCustomerProfileId(): string
     {
+        $payment = null;
+
         // If we were given a card ID, get the profile ID from that
         if ($this->graphQlArgs['source'] === 'paymentinfo') {
             $card = $this->getCardModel();

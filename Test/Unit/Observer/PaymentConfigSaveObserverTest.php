@@ -168,7 +168,9 @@ class PaymentConfigSaveObserverTest extends TestCase
         $adapterMock = $this->createMock(AdapterInterface::class);
         $adapterMock->method('getTableName')
             ->willReturn('customer_entity_varchar');
-        $adapterMock->method('delete')
+        $adapterMock->expects($this->once())
+            ->method('delete')
+            ->with('customer_entity_varchar', ['attribute_id=?' => 123])
             ->willReturn(3);
 
         $this->resourceConnectionMock->method('getConnection')

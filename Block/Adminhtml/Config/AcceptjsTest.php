@@ -58,7 +58,7 @@ class AcceptjsTest extends ApiTest
         Factory $methodFactory,
         array $data = []
     ) {
-        $this->setTemplate('ParadoxLabs_Authnetcim::config/acceptjs-test.phtml');
+        $data += ['template' => 'ParadoxLabs_Authnetcim::config/acceptjs-test.phtml'];
         parent::__construct($context, $helper, $storeFactory, $websiteFactory, $methodFactory, $data);
     }
 

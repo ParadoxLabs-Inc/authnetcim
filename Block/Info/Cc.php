@@ -22,7 +22,7 @@
 namespace ParadoxLabs\Authnetcim\Block\Info;
 
 use Override;
-use ParadoxLabs\TokenBase\Helper\Data;
+use ParadoxLabs\Authnetcim\Helper\Data;
 use Magento\Framework\DataObject;
 use Magento\Sales\Model\Order\Payment\Info;
 
@@ -31,11 +31,6 @@ use Magento\Sales\Model\Order\Payment\Info;
  */
 class Cc extends \ParadoxLabs\TokenBase\Block\Info\Cc
 {
-    /**
-     * @var \ParadoxLabs\Authnetcim\Helper\Data
-     */
-    protected readonly Data $helper;
-
     /**
      * Prepare credit card related payment info
      *
@@ -49,6 +44,9 @@ class Cc extends \ParadoxLabs\TokenBase\Block\Info\Cc
         $data      = [];
 
         if ($this->getIsSecureMode() === false && $this->isEcheck() === false) {
+            /** @var Data $helper */
+            $helper = $this->helper;
+
             /** @var Info $info */
             $info = $this->getInfo();
 
@@ -71,15 +69,15 @@ class Cc extends \ParadoxLabs\TokenBase\Block\Info\Cc
             }
 
             if (!empty($avs)) {
-                $data[ (string)__('AVS Response') ] = $this->helper->translateAvs($avs);
+                $data[ (string)__('AVS Response') ] = $helper->translateAvs($avs);
             }
 
             if (!empty($ccv)) {
-                $data[ (string)__('CCV Response') ] = $this->helper->translateCcv($ccv);
+                $data[ (string)__('CCV Response') ] = $helper->translateCcv($ccv);
             }
 
             if (!empty($cavv)) {
-                $data[ (string)__('CAVV Response') ] = $this->helper->translateCavv($cavv);
+                $data[ (string)__('CAVV Response') ] = $helper->translateCavv($cavv);
             }
         }
 
