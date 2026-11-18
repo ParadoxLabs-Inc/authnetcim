@@ -61,9 +61,7 @@ class InitWebhooks extends Action
     ) {
         parent::__construct($context);
 
-        if ($this->getRequest()->getParam('method') === 'authnetcim_ach') {
-            $this->apiTester = $achApiTester;
-        }
+        $this->achApiTest = $achApiTester;
     }
 
     /**
@@ -180,7 +178,7 @@ class InitWebhooks extends Action
      */
     protected function getStore(): int
     {
-        return (int)$this->apiTester->getMethodInstance()->getData('store');
+        return (int)$this->getApiTester()->getMethodInstance()->getData('store');
     }
 
     /**
@@ -192,6 +190,18 @@ class InitWebhooks extends Action
      */
     protected function getConfigData(string $key)
     {
-        return $this->apiTester->getMethodInstance()->getConfigData($key);
+        return $this->getApiTester()->getMethodInstance()->getConfigData($key);
+    }
+
+    /**
+     * Get the API tester for the requested payment method.
+     *
+     * @return ApiTest
+     */
+    protected function getApiTester(): ApiTest
+    {
+        return $this->getRequest()->getParam('method') === 'authnetcim_ach'
+            ? $this->achApiTest
+            : $this->apiTester;
     }
 }

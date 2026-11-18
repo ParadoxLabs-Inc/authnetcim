@@ -22,7 +22,6 @@
 namespace ParadoxLabs\Authnetcim\Block\Info;
 
 use Override;
-use ParadoxLabs\TokenBase\Helper\Data;
 use Magento\Framework\DataObject;
 use Magento\Sales\Model\Order\Payment;
 
@@ -31,11 +30,6 @@ use Magento\Sales\Model\Order\Payment;
  */
 class Ach extends \ParadoxLabs\TokenBase\Block\Info\Ach
 {
-    /**
-     * @var \ParadoxLabs\Authnetcim\Helper\Data
-     */
-    protected readonly Data $helper;
-
     /**
      * Prepare payment info
      *
