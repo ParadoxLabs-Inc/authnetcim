@@ -272,7 +272,7 @@
                 <field id="applepay_active" translate="label comment" type="select" sortOrder="1010" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Enable Apple Pay</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment><![CDATA[Requires an Apple Developer account and an Authorize.net processor that supports Apple Pay. Your Merchant ID needs two certificates:<br>&bull; <strong>Payment Processing</strong>: set up in Authorize.net under <em>Account &gt; Digital Payment Solutions &gt; Apple Pay</em>. Stays there.<br>&bull; <strong>Merchant Identity</strong>: you create it, and enter it and its private key below.<br>See the extension README for step-by-step setup.]]></comment>
+                    <comment><![CDATA[Requires an Apple Developer account and an Authorize.net processor that supports Apple Pay. Your Merchant ID needs two certificates:<br>&bull; <strong>Payment Processing</strong>: set up in Authorize.net under <em>Account &gt; Digital Payment Solutions &gt; Apple Pay</em>. Stays there.<br>&bull; <strong>Merchant Identity</strong>: you create it, and upload it below.<br>See the extension README for step-by-step setup.]]></comment>
                 </field>
                 <field id="applepay_merchant_identifier" translate="label comment" type="text" sortOrder="1020" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Apple Merchant ID</label>
@@ -291,7 +291,7 @@
                 <field id="applepay_identity_status" translate="label comment" sortOrder="1035" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Merchant Identity Certificate</label>
                     <frontend_model>ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ApplePayCertificateStatus</frontend_model>
-                    <comment><![CDATA[<strong>Generate Certificate Request</strong> creates a private key on this server (stored encrypted, never shown) and downloads its certificate request (.csr). In Apple Developer, open your Merchant ID, create an <strong>Apple Pay Merchant Identity Certificate</strong> with that file, then upload the .cer file Apple gives you below and save. Your current certificate keeps working until then. Renew the same way.]]></comment>
+                    <comment><![CDATA[<strong>Generate New Certificate Request</strong> creates a private key on this server (stored encrypted, never shown) and downloads its certificate request (.csr). In Apple Developer, open your Merchant ID, create an <strong>Apple Pay Merchant Identity Certificate</strong> with that file, then upload the .cer file Apple gives you below and save. Your current certificate keeps working until then. Renew the same way.]]></comment>
                     <depends>
                         <field id="applepay_active">1</field>
                     </depends>
@@ -300,7 +300,7 @@
                     <label>Upload Merchant Identity Certificate (.cer)</label>
                     <frontend_model>ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ApplePayCertificateFile</frontend_model>
                     <backend_model>ParadoxLabs\Authnetcim\Model\Config\Backend\ApplePayCertificateFile</backend_model>
-                    <comment><![CDATA[The .cer file from Apple for the certificate request generated above. Replaces the certificate below when you save.]]></comment>
+                    <comment><![CDATA[The merchant_id.cer file from Apple for the certificate request generated above. Replaces the certificate below when you save.]]></comment>
                     <depends>
                         <field id="applepay_active">1</field>
                     </depends>
@@ -316,7 +316,7 @@
                 <field id="applepay_identity_key" translate="label comment" type="obscure" sortOrder="1050" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Merchant Identity Private Key (PEM)</label>
                     <backend_model>ParadoxLabs\Authnetcim\Model\Config\Backend\ApplePayPrivateKey</backend_model>
-                    <comment><![CDATA[Set automatically when you use <strong>Generate Certificate Request</strong>; leave unchanged. Only if you created the certificate request yourself, paste its unencrypted private key here: begins with -----BEGIN PRIVATE KEY----- or -----BEGIN RSA PRIVATE KEY-----. Stored encrypted.]]></comment>
+                    <comment><![CDATA[Set automatically when you use <strong>Generate New Certificate Request</strong>; leave unchanged. Only if you created the certificate request yourself, paste its unencrypted private key here: begins with -----BEGIN PRIVATE KEY----- or -----BEGIN RSA PRIVATE KEY-----. Stored encrypted.]]></comment>
                     <depends>
                         <field id="applepay_active">1</field>
                     </depends>
