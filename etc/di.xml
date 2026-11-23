@@ -77,6 +77,12 @@
             <argument name="environment" xsi:type="array">
                 <item name="payment/authnetcim/test" xsi:type="string">1</item>
                 <item name="payment/authnetcim_ach/test" xsi:type="string">1</item>
+                <item name="payment/authnetcim_wallet/applepay_merchant_identifier" xsi:type="string">1</item>
+                <item name="payment/authnetcim_wallet/applepay_identity_cert" xsi:type="string">1</item>
+                <item name="payment/authnetcim_wallet/applepay_domain_association" xsi:type="string">1</item>
+                <item name="payment/authnetcim_wallet/applepay_initiative_domains" xsi:type="string">1</item>
+                <item name="payment/authnetcim_wallet/googlepay_gateway_merchant_id" xsi:type="string">1</item>
+                <item name="payment/authnetcim_wallet/googlepay_merchant_id" xsi:type="string">1</item>
             </argument>
         </arguments>
     </type>
