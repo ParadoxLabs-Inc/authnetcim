@@ -4,23 +4,16 @@
 
 - Added Apple Pay and Google Pay as a new payment method (`authnetcim_wallet`), available on Luma checkout, Hyvä
   Checkout (via ParadoxLabs_AuthnetcimHyvaCheckout 3.2+), and GraphQL. Disabled by default; configure under
-  Stores > Configuration > Sales > Payment Methods > Authorize.net CIM - Apple Pay / Google Pay.
-- Wallet payments are processed as single-use tokens: no CIM profile or stored card is created, and partial
-  capture is not supported (one capture per authorization).
-- Apple Pay requires an Apple Developer merchant ID, merchant identity certificate and key (stored encrypted in
-  config), and domain verification; Google Pay requires your Authorize.net Payment Gateway ID and, for production,
-  a Google Merchant ID. Both require Digital Payment Solutions to be enabled on the Authorize.net account.
-- The Apple Pay identity certificate is checked on save (expiry, Merchant ID, not the Payment Processing
-  certificate), and an admin notice warns 30 days before it expires.
-- Apple Pay setup no longer needs OpenSSL on the command line: **Generate Certificate Request** creates the identity
-  key on the server (stored encrypted) and downloads the CSR for Apple, and the `.cer` file from Apple is uploaded
-  directly. The current certificate keeps working until the new one is saved, and the settings page shows the saved
-  certificate's Merchant ID, validity, and key match. The certificate and key PEM fields are no longer shown in
-  admin; for a certificate request made outside Magento, set the key with `bin/magento config:set` and upload the
-  `.cer` as usual.
-- Wallet orders are refused if the order total changed after the customer approved the payment sheet, and a wallet
-  transaction is voided automatically if checkout fails after payment.
-- Webhooks: the card notification endpoint now also handles wallet transactions.
+  Stores > Configuration > Sales > Payment Methods > Authorize.net CIM - Apple Pay / Google Pay. Requires Digital
+  Payment Solutions on the Authorize.net account.
+- Wallet payments are single-use tokens: no CIM profile or stored card is created, and only one capture per
+  authorization is supported.
+- Apple Pay setup is done in admin: generate the certificate request, upload the `.cer` from Apple. The certificate
+  is validated on upload, its status is shown on the settings page, and an admin notice warns 30 days before it
+  expires.
+- Wallet orders are refused if the total changed after the customer approved payment, and the wallet transaction is
+  voided automatically if checkout fails after payment.
+- The webhook endpoint also handles wallet transactions.
 
 ## 6.1.0 - Sep 15, 2026
 
