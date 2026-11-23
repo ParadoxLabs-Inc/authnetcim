@@ -94,6 +94,81 @@ class PemTest extends TestCase
     }
 
     /**
+     * Apple's .cer download is binary DER; it converts to PEM for the same certificate.
+     *
+     * @return void
+     */
+    public function testDerCertificateFileConvertsToPem(): void
+    {
+        $pem = self::createCertificate(30);
+        $der = base64_decode(preg_replace('/-----[^-]+-----|\s+/', '', $pem));
+
+        $converted = (new Pem())->certificateFromFile($der);
+
+        $this->assertStringStartsWith("-----BEGIN CERTIFICATE-----\n", $converted);
+        $this->assertSame(
+            openssl_x509_fingerprint($pem, 'sha256'),
+            openssl_x509_fingerprint($converted, 'sha256')
+        );
+    }
+
+    /**
+     * @return void
+     */
+    public function testPemCertificateFileIsNormalized(): void
+    {
+        $pem = self::createCertificate(30);
+
+        $this->assertSame((new Pem())->normalize($pem), (new Pem())->certificateFromFile("\r\n" . $pem));
+        $this->assertSame('', (new Pem())->certificateFromFile(''));
+    }
+
+    /**
+     * @return void
+     */
+    public function testIsKeyForCertificate(): void
+    {
+        $key   = openssl_pkey_new([
+            'private_key_type' => OPENSSL_KEYTYPE_EC,
+            'curve_name' => 'prime256v1',
+        ]);
+        $other = openssl_pkey_new([
+            'private_key_type' => OPENSSL_KEYTYPE_EC,
+            'curve_name' => 'prime256v1',
+        ]);
+        openssl_pkey_export($key, $keyPem);
+        openssl_pkey_export($other, $otherPem);
+
+        $certificate = self::createCertificate(30, $key);
+
+        $this->assertTrue((new Pem())->isKeyForCertificate($certificate, $keyPem));
+        $this->assertTrue((new Pem())->isKeyForCertificate(openssl_x509_read($certificate), $keyPem));
+        $this->assertFalse((new Pem())->isKeyForCertificate($certificate, $otherPem));
+        $this->assertFalse((new Pem())->isKeyForCertificate($certificate, 'not a key'));
+        $this->assertFalse((new Pem())->isKeyForCertificate('not a certificate', $keyPem));
+    }
+
+    /**
+     * @return void
+     */
+    public function testGetMerchantIdsAndStart(): void
+    {
+        $pem = self::createCertificate(
+            30,
+            null,
+            [
+                'UID' => 'merchant.com.example',
+                'commonName' => 'Merchant ID: merchant.com.example',
+            ]
+        );
+
+        $this->assertSame(['merchant.com.example'], (new Pem())->getMerchantIds($pem));
+        $this->assertSame([], (new Pem())->getMerchantIds(self::createCertificate(30)));
+        $this->assertSame([], (new Pem())->getMerchantIds('not a certificate'));
+        $this->assertSame(1577836800, (new Pem())->getCertificateStart(self::EXPIRED_CERTIFICATE));
+    }
+
+    /**
      * Self-signed EC certificate valid for the given number of days.
      *
      * @param int $days

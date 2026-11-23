@@ -288,10 +288,26 @@
                         <field id="applepay_active">1</field>
                     </depends>
                 </field>
+                <field id="applepay_identity_status" translate="label comment" sortOrder="1035" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Merchant Identity Certificate</label>
+                    <frontend_model>ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ApplePayCertificateStatus</frontend_model>
+                    <comment><![CDATA[<strong>Generate Certificate Request</strong> creates a private key on this server (stored encrypted, never shown) and downloads its certificate request (.csr). In Apple Developer, open your Merchant ID, create an <strong>Apple Pay Merchant Identity Certificate</strong> with that file, then upload the .cer file Apple gives you below and save. Your current certificate keeps working until then. Renew the same way.]]></comment>
+                    <depends>
+                        <field id="applepay_active">1</field>
+                    </depends>
+                </field>
+                <field id="applepay_identity_cert_file" translate="label comment" type="file" sortOrder="1038" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Upload Merchant Identity Certificate (.cer)</label>
+                    <backend_model>ParadoxLabs\Authnetcim\Model\Config\Backend\ApplePayCertificateFile</backend_model>
+                    <comment><![CDATA[The .cer file from Apple for the certificate request generated above. Replaces the certificate below when you save.]]></comment>
+                    <depends>
+                        <field id="applepay_active">1</field>
+                    </depends>
+                </field>
                 <field id="applepay_identity_cert" translate="label comment" type="textarea" sortOrder="1040" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Merchant Identity Certificate (PEM)</label>
                     <backend_model>ParadoxLabs\Authnetcim\Model\Config\Backend\ApplePayCertificate</backend_model>
-                    <comment><![CDATA[Your <strong>Merchant Identity</strong> certificate (not Payment Processing), in PEM format: begins with -----BEGIN CERTIFICATE-----. Convert the .cer file from Apple with:<br><code>openssl x509 -inform der -in merchant_id.cer -out merchant_id.pem</code>]]></comment>
+                    <comment><![CDATA[Filled in from the uploaded .cer file. To enter it manually instead, paste your <strong>Merchant Identity</strong> certificate (not Payment Processing) in PEM format: begins with -----BEGIN CERTIFICATE-----.]]></comment>
                     <depends>
                         <field id="applepay_active">1</field>
                     </depends>
@@ -299,7 +315,7 @@
                 <field id="applepay_identity_key" translate="label comment" type="obscure" sortOrder="1050" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Merchant Identity Private Key (PEM)</label>
                     <backend_model>ParadoxLabs\Authnetcim\Model\Config\Backend\ApplePayPrivateKey</backend_model>
-                    <comment><![CDATA[The private key created along with the certificate request you uploaded to Apple, unencrypted: begins with -----BEGIN PRIVATE KEY----- or -----BEGIN RSA PRIVATE KEY-----. Apple does not provide it. If you made the request in Keychain Access, export the certificate as .p12 and run:<br><code>openssl pkcs12 -in merchant_id.p12 -nocerts -nodes -out merchant_id.key</code><br>Stored encrypted.]]></comment>
+                    <comment><![CDATA[Set automatically when you use <strong>Generate Certificate Request</strong>; leave unchanged. Only if you created the certificate request yourself, paste its unencrypted private key here: begins with -----BEGIN PRIVATE KEY----- or -----BEGIN RSA PRIVATE KEY-----. Stored encrypted.]]></comment>
                     <depends>
                         <field id="applepay_active">1</field>
                     </depends>

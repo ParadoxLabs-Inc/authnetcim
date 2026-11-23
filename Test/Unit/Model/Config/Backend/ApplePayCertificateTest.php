@@ -31,6 +31,8 @@ use Magento\Framework\Model\Context;
 use Magento\Framework\Registry;
 use OpenSSLAsymmetricKey;
 use ParadoxLabs\Authnetcim\Model\Config\Backend\ApplePayCertificate;
+use ParadoxLabs\Authnetcim\Model\Wallet\ApplePay\CertificateUpload;
+use ParadoxLabs\Authnetcim\Model\Wallet\ApplePay\PendingIdentityKey;
 use ParadoxLabs\Authnetcim\Model\Wallet\Pem;
 use ParadoxLabs\Authnetcim\Test\Unit\Model\Wallet\PemTest;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -96,6 +98,105 @@ class ApplePayCertificateTest extends TestCase
         $this->expectException(LocalizedException::class);
         // The date renders in the server timezone (2020-12-31 or 2021-01-01).
         $this->expectExceptionMessage('certificate expired on');
+        $model->beforeSave();
+    }
+
+    /**
+     * An uploaded .cer file replaces the posted PEM text.
+     *
+     * @return void
+     */
+    public function testUploadedCertificateReplacesPostedText(): void
+    {
+        $key      = $this->createKey();
+        $uploaded = PemTest::createCertificate(30, $key);
+
+        $model = $this->createModel(
+            PemTest::createCertificate(30, $this->createKey()),
+            '******',
+            $this->exportKey($key),
+            uploadedCertificate: $uploaded
+        );
+        $model->beforeSave();
+
+        $this->assertSame((new Pem())->normalize($uploaded), $model->getValue());
+    }
+
+    /**
+     * A certificate for the pending key (renewal) is accepted even though it doesn't match the active key.
+     *
+     * @return void
+     */
+    public function testCertificateMatchingPendingKeySaves(): void
+    {
+        $pendingKey = $this->createKey();
+
+        $model = $this->createModel(
+            PemTest::createCertificate(30, $pendingKey),
+            '******',
+            $this->exportKey($this->createKey()),
+            pendingKey: $this->exportKey($pendingKey)
+        );
+        $model->beforeSave();
+
+        $this->assertStringStartsWith('-----BEGIN CERTIFICATE-----', (string)$model->getValue());
+    }
+
+    /**
+     * First setup: no key saved yet, certificate for the pending key.
+     *
+     * @return void
+     */
+    public function testCertificateMatchingPendingKeyWithNoSavedKeySaves(): void
+    {
+        $pendingKey = $this->createKey();
+
+        $model = $this->createModel(
+            PemTest::createCertificate(30, $pendingKey),
+            '',
+            '',
+            pendingKey: $this->exportKey($pendingKey)
+        );
+        $model->beforeSave();
+
+        $this->assertStringStartsWith('-----BEGIN CERTIFICATE-----', (string)$model->getValue());
+    }
+
+    /**
+     * @return void
+     */
+    public function testCertificateMatchingNeitherKeyIsRejected(): void
+    {
+        $model = $this->createModel(
+            PemTest::createCertificate(30, $this->createKey()),
+            '',
+            '',
+            pendingKey: $this->exportKey($this->createKey())
+        );
+
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('latest certificate request generated here');
+        $model->beforeSave();
+    }
+
+    /**
+     * An inherited (unposted) key field can't take the pending key, so the save must stop.
+     *
+     * @return void
+     */
+    public function testCertificateMatchingPendingKeyWithInheritedKeyFieldIsRejected(): void
+    {
+        $pendingKey = $this->createKey();
+
+        $model = $this->createModel(
+            PemTest::createCertificate(30, $pendingKey),
+            null,
+            '',
+            pendingKey: $this->exportKey($pendingKey)
+        );
+
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('Merchant Identity Private Key');
         $model->beforeSave();
     }
 
@@ -250,18 +351,22 @@ class ApplePayCertificateTest extends TestCase
      * Model saving at website scope (where the certificate is usually set), with the given posted fieldset values.
      *
      * @param string $certificate
-     * @param string $postedKey
+     * @param string|null $postedKey Null: key field inherited (not posted)
      * @param string $savedKey
      * @param array $fieldsetData
      * @param string $savedMerchantId Merchant ID saved for the website
+     * @param string $uploadedCertificate
+     * @param string $pendingKey Pending key at the save scope
      * @return ApplePayCertificate
      */
     private function createModel(
         string $certificate,
-        string $postedKey,
+        ?string $postedKey,
         string $savedKey,
         array $fieldsetData = [],
         string $savedMerchantId = '',
+        string $uploadedCertificate = '',
+        string $pendingKey = '',
     ): ApplePayCertificate {
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
@@ -274,6 +379,14 @@ class ApplePayCertificateTest extends TestCase
             }
         );
 
+        $certificateUpload = $this->createMock(CertificateUpload::class);
+        $certificateUpload->method('getPem')->willReturn($uploadedCertificate);
+
+        $pendingIdentityKey = $this->createMock(PendingIdentityKey::class);
+        $pendingIdentityKey->method('get')->willReturnCallback(
+            static fn (string $scope, int $scopeId): string => $scope === 'websites' && $scopeId === 1 ? $pendingKey : ''
+        );
+
         $context = $this->createMock(Context::class);
         $context->method('getEventDispatcher')->willReturn($this->createMock(ManagerInterface::class));
 
@@ -283,6 +396,8 @@ class ApplePayCertificateTest extends TestCase
             $scopeConfig,
             $this->createMock(TypeListInterface::class),
             new Pem(),
+            $certificateUpload,
+            $pendingIdentityKey,
             null,
             null,
             [
@@ -291,9 +406,12 @@ class ApplePayCertificateTest extends TestCase
                 'scope' => 'websites',
                 'scope_id' => 1,
                 'scope_code' => 'base',
-                'fieldset_data' => [
-                    'applepay_identity_key' => $postedKey,
-                ] + $fieldsetData,
+                'fieldset_data' => array_filter(
+                    [
+                        'applepay_identity_key' => $postedKey,
+                    ],
+                    static fn ($value): bool => $value !== null
+                ) + $fieldsetData,
             ],
         );
     }

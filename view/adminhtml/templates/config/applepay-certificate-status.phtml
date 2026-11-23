@@ -1,0 +1,168 @@
+<?php
+use Magento\Framework\View\Helper\SecureHtmlRenderer;
+
+/** @var \ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ApplePayCertificateStatus $block */
+/** @var \Magento\Framework\Escaper $escaper */
+/** @var SecureHtmlRenderer|null $secureRenderer */
+
+$status      = $block->getCertificateStatus();
+$pendingDate = $block->getPendingRequestDate();
+$htmlId      = (string)$block->getData('html_id');
+$buttonId    = $htmlId . '_generate';
+$resultsId   = $htmlId . '_results';
+?>
+<div id="<?= $escaper->escapeHtmlAttr($htmlId) ?>" class="authnetcim-applepay-certificate-status">
+    <?php if ($status === null): ?>
+        <p><?= $escaper->escapeHtml(__('No Merchant Identity certificate saved.')) ?></p>
+    <?php else: ?>
+        <ul style="list-style: none; margin: 0 0 1em;">
+            <li>
+                <strong><?= $escaper->escapeHtml(__('Merchant ID:')) ?></strong>
+                <?= $escaper->escapeHtml(
+                    $status['merchant_ids'] !== [] ? implode(', ', $status['merchant_ids']) : __('not named')
+                ) ?>
+            </li>
+            <li>
+                <strong><?= $escaper->escapeHtml(__('Valid:')) ?></strong>
+                <?php if ($status['valid_to'] === null): ?>
+                    <span class="message-error" style="color: #e22626;">
+                        <?= $escaper->escapeHtml(__('The saved certificate could not be read.')) ?>
+                    </span>
+                <?php else: ?>
+                    <?= $escaper->escapeHtml(sprintf('%s – %s', $status['valid_from'] ?? '?', $status['valid_to'])) ?>
+                    <?php if ($status['severity'] === 'error'): ?>
+                        <span style="color: #e22626; font-weight: 600;">
+                            <?= $escaper->escapeHtml(__('(expired: Apple Pay is hidden at checkout)')) ?>
+                        </span>
+                    <?php elseif ($status['severity'] === 'warning'): ?>
+                        <span style="color: #eb5202; font-weight: 600;">
+                            <?= $escaper->escapeHtml(__('(expires in %1 days)', $status['days_left'])) ?>
+                        </span>
+                    <?php else: ?>
+                        <?= $escaper->escapeHtml(__('(%1 days left)', $status['days_left'])) ?>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </li>
+            <li>
+                <strong><?= $escaper->escapeHtml(__('Private key:')) ?></strong>
+                <?php if ($status['key_status'] === 'match'): ?>
+                    <span style="color: #185b00;">
+                        <?= $escaper->escapeHtml(__('saved, matches the certificate')) ?>
+                    </span>
+                <?php elseif ($status['key_status'] === 'missing'): ?>
+                    <span style="color: #e22626;"><?= $escaper->escapeHtml(__('not saved')) ?></span>
+                <?php else: ?>
+                    <span style="color: #e22626;">
+                        <?= $escaper->escapeHtml(__('does not match the certificate')) ?>
+                    </span>
+                <?php endif; ?>
+            </li>
+        </ul>
+    <?php endif; ?>
+
+    <?php if ($pendingDate !== null): ?>
+        <p class="authnetcim-applepay-pending">
+            <?= $escaper->escapeHtml(
+                __(
+                    'Certificate request generated %1 is waiting for its certificate from Apple. Upload the .cer'
+                    . ' file below when you have it.',
+                    $pendingDate
+                )
+            ) ?>
+            <a href="<?= $escaper->escapeUrl($block->getDownloadUrl()) ?>">
+                <?= $escaper->escapeHtml(__('Download request again')) ?>
+            </a>
+        </p>
+    <?php endif; ?>
+
+    <button type="button" class="action-default scalable" id="<?= $escaper->escapeHtmlAttr($buttonId) ?>">
+        <span><?= $escaper->escapeHtml(
+            $status === null && $pendingDate === null
+                ? __('Generate Certificate Request')
+                : __('Generate New Certificate Request')
+        ) ?></span>
+    </button>
+    <div class="message message-success" id="<?= $escaper->escapeHtmlAttr($resultsId) ?>"
+         style="display: none; margin-top: 1em;"></div>
+</div>
+<?php
+$config = [
+    'url' => $block->getGenerateUrl(),
+    'buttonId' => $buttonId,
+    'resultsId' => $resultsId,
+    'merchantIdInput' => $block->getMerchantIdInputName(),
+    'confirm' => $pendingDate !== null
+        ? (string)__(
+            'This replaces the certificate request that is waiting for its certificate. A certificate Apple issues'
+            . ' for the earlier request will no longer be accepted. Continue?'
+        )
+        : '',
+];
+
+$inlineScript = 'require(["jquery", "Magento_Ui/js/modal/alert", "Magento_Ui/js/modal/confirm", "mage/translate"],'
+    . ' function ($, alert, confirm) {'
+    . ' var config = ' . json_encode($config, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . ';'
+    . <<<'JS'
+    function showError(message) {
+        try {
+            alert({title: $.mage.__('Error'), content: $('<div>').text(message).html()});
+        } catch (error) {
+            window.alert(message);
+        }
+    }
+
+    function generate() {
+        $('#' + config.resultsId).hide();
+        $('body').trigger('processStart');
+
+        $.post({
+            url: config.url,
+            data: {
+                merchantId: $('input[name="' + config.merchantIdInput + '"]').val() || ''
+            },
+            dataType: 'json'
+        }).done(function (response) {
+            var blob = new Blob([response.csr], {type: 'application/pkcs10'}),
+                link = document.createElement('a');
+
+            link.href = URL.createObjectURL(blob);
+            link.download = response.filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
+
+            $('#' + config.resultsId).text(response.message).show();
+        }).fail(function (jqXHR) {
+            var message = $.mage.__('An error occurred. Please try again.');
+
+            if (jqXHR.responseJSON && jqXHR.responseJSON.message) {
+                message = jqXHR.responseJSON.message;
+            }
+
+            showError(message);
+        }).always(function () {
+            $('body').trigger('processStop');
+        });
+    }
+
+    $('#' + config.buttonId).on('click', function () {
+        if (!config.confirm) {
+            generate();
+
+            return;
+        }
+
+        confirm({
+            content: $('<div>').text(config.confirm).html(),
+            actions: {confirm: generate}
+        });
+    });
+});
+JS;
+?>
+<?php if (isset($secureRenderer) && $secureRenderer instanceof SecureHtmlRenderer): ?>
+    <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $inlineScript, false) ?>
+<?php else: ?>
+    <script><?= /* @noEscape */ $inlineScript ?></script>
+<?php endif; ?>

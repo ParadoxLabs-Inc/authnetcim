@@ -12,6 +12,10 @@
   a Google Merchant ID. Both require Digital Payment Solutions to be enabled on the Authorize.net account.
 - The Apple Pay identity certificate is checked on save (expiry, Merchant ID, not the Payment Processing
   certificate), and an admin notice warns 30 days before it expires.
+- Apple Pay setup no longer needs OpenSSL on the command line: **Generate Certificate Request** creates the identity
+  key on the server (stored encrypted) and downloads the CSR for Apple, and the `.cer` file from Apple is uploaded
+  directly. The current certificate keeps working until the new one is saved, and the settings page shows the saved
+  certificate's Merchant ID, validity, and key match. Manual PEM entry remains available.
 - Wallet orders are refused if the order total changed after the customer approved the payment sheet, and a wallet
   transaction is voided automatically if checkout fails after payment.
 - Webhooks: the card notification endpoint now also handles wallet transactions.

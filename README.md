@@ -120,29 +120,33 @@ encrypted for one Payment Processing certificate, so one Merchant ID can't serve
 2. **Payment Processing certificate.** In Authorize.net under **Account > Digital Payment Solutions > Apple Pay**, enter
    the same Merchant ID and follow Authorize.net's steps to create this certificate with Apple. Authorize.net keeps its
    private key; you never see it.
-3. **Merchant Identity certificate.** Create a private key and certificate request on any computer with OpenSSL:
+3. **Merchant Identity certificate.** In Magento, click **Generate Certificate Request**. This creates a private key
+   on the server (stored encrypted; you never see it) and downloads a certificate request, `merchant_id.csr`.
 
-   ```bash
-   openssl req -new -newkey rsa:2048 -nodes -keyout merchant_id.key -out merchant_id.csr -subj "/CN=merchant.com.example.store"
-   ```
+   In Apple Developer, open the Merchant ID, create an **Apple Pay Merchant Identity Certificate**, upload the `.csr`
+   file, and download `merchant_id.cer`. Upload that file in Magento under **Upload Merchant Identity Certificate
+   (.cer)** and save. The settings page then shows the certificate's Merchant ID, validity dates, and whether the
+   private key matches.
 
-   In Apple Developer, open the Merchant ID, create an **Apple Pay Merchant Identity Certificate**, upload
-   `merchant_id.csr`, and download `merchant_id.cer`. Convert it to PEM:
-
-   ```bash
-   openssl x509 -inform der -in merchant_id.cer -out merchant_id.pem
-   ```
-
-   Paste `merchant_id.pem` into **Merchant Identity Certificate (PEM)** and `merchant_id.key` into **Merchant Identity
-   Private Key (PEM)**. The key is stored encrypted. Keep `merchant_id.key` private; Apple does not have a copy.
-
-   If you created the request with Keychain Access on a Mac instead, the private key is in that Mac's keychain. Export
-   the certificate and key together as `merchant_id.p12`, then extract the key with
-   `openssl pkcs12 -in merchant_id.p12 -nocerts -nodes -out merchant_id.key` (add `-legacy` if OpenSSL 3 refuses the
-   file).
+   * Generate the request and upload the certificate in the same configuration scope (Default Config or a website).
+   * If you lose the `.csr` file before Apple issues the certificate, use **Download request again**. Generating a
+     new request replaces the waiting one, and a certificate issued for the earlier request is then rejected.
+   * Your current certificate keeps working until the new one is saved.
 
    The certificate lasts about 25 months. An admin notice warns you 30 days before it expires, and Apple Pay is hidden
    at checkout once it has. To renew, repeat this step.
+
+   **Manual alternative:** create the key and request yourself, then paste the certificate and the unencrypted key
+   into **Merchant Identity Certificate (PEM)** and **Merchant Identity Private Key (PEM)**:
+
+   ```bash
+   openssl req -new -newkey rsa:2048 -nodes -keyout merchant_id.key -out merchant_id.csr -subj "/CN=merchant.com.example.store"
+   openssl x509 -inform der -in merchant_id.cer -out merchant_id.pem
+   ```
+
+   If you created the request with Keychain Access on a Mac, export the certificate and key together as
+   `merchant_id.p12`, then extract the key with `openssl pkcs12 -in merchant_id.p12 -nocerts -nodes -out
+   merchant_id.key` (add `-legacy` if OpenSSL 3 refuses the file).
 4. **Domain verification.** In Apple Developer, add each storefront domain to the Merchant ID. Paste the contents of
    the `apple-developer-merchantid-domain-association` file Apple gives you into **Domain Verification File Contents**,
    save, then click Verify in Apple Developer. Magento serves the file at

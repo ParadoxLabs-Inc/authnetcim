@@ -1,0 +1,6 @@
+# Minimal OpenSSL config for Apple Pay certificate requests (Model/Wallet/ApplePay/CertificateRequest).
+# Used instead of the server's openssl.cnf, which may be missing and adds sample subject defaults.
+[ req ]
+distinguished_name = req_distinguished_name
+
+[ req_distinguished_name ]

@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace ParadoxLabs\Authnetcim\Model\Wallet;
 
+use OpenSSLCertificate;
+
 /**
  * PEM helpers for the Apple Pay merchant identity certificate and key.
  */
@@ -54,6 +56,53 @@ class Pem
     }
 
     /**
+     * Get a certificate file's contents as PEM: binary DER (Apple's .cer download) is converted, PEM is normalized.
+     *
+     * The result is not validated; read it with openssl_x509_read() to check it is a certificate.
+     *
+     * @param string $contents
+     * @return string
+     */
+    public function certificateFromFile(string $contents): string
+    {
+        if (str_contains($contents, '-----BEGIN')) {
+            return $this->normalize($contents);
+        }
+
+        if ($contents === '') {
+            return '';
+        }
+
+        return sprintf(
+            "-----BEGIN CERTIFICATE-----\n%s-----END CERTIFICATE-----\n",
+            chunk_split(base64_encode($contents), 64, "\n")
+        );
+    }
+
+    /**
+     * Whether a PEM private key belongs to the given certificate.
+     *
+     * @param OpenSSLCertificate|string $certificate
+     * @param string $privateKey
+     * @return bool
+     */
+    public function isKeyForCertificate(OpenSSLCertificate|string $certificate, string $privateKey): bool
+    {
+        $privateKey = $this->normalize($privateKey);
+        $key        = $privateKey !== '' ? openssl_pkey_get_private($privateKey) : false;
+
+        if (is_string($certificate)) {
+            $certificate = $this->normalize($certificate);
+        }
+
+        if ($key === false || $certificate === '') {
+            return false;
+        }
+
+        return openssl_x509_check_private_key($certificate, $key) === true;
+    }
+
+    /**
      * Get a certificate's expiry (validTo) as a unix timestamp, or null if it can't be read.
      *
      * @param string $pem
@@ -71,6 +120,49 @@ class Pem
         $info = openssl_x509_parse($certificate);
 
         return is_array($info) && isset($info['validTo_time_t']) ? (int)$info['validTo_time_t'] : null;
+    }
+
+    /**
+     * Get the Merchant ID(s) a certificate names: subject UID(s), and a "Merchant ID: ..." common name.
+     *
+     * @param OpenSSLCertificate|string $certificate
+     * @return string[]
+     */
+    public function getMerchantIds(OpenSSLCertificate|string $certificate): array
+    {
+        if (is_string($certificate)) {
+            $certificate = $this->normalize($certificate);
+            $certificate = $certificate !== '' ? openssl_x509_read($certificate) : false;
+        }
+
+        $info    = $certificate !== false ? openssl_x509_parse($certificate) : false;
+        $subject = is_array($info) && is_array($info['subject'] ?? null) ? $info['subject'] : [];
+        $ids     = (array)($subject['UID'] ?? []);
+
+        foreach ((array)($subject['CN'] ?? []) as $commonName) {
+            if (preg_match('/^Merchant ID:\s*(\S+)$/i', trim((string)$commonName), $matches) === 1) {
+                $ids[] = $matches[1];
+            }
+        }
+
+        $ids = array_map(static fn ($id): string => trim((string)$id), $ids);
+
+        return array_values(array_unique(array_filter($ids, static fn (string $id): bool => $id !== '')));
+    }
+
+    /**
+     * Get a certificate's start (validFrom) as a unix timestamp, or null if it can't be read.
+     *
+     * @param string $pem
+     * @return int|null
+     */
+    public function getCertificateStart(string $pem): ?int
+    {
+        $pem         = $this->normalize($pem);
+        $certificate = $pem !== '' ? openssl_x509_read($pem) : false;
+        $info        = $certificate !== false ? openssl_x509_parse($certificate) : false;
+
+        return is_array($info) && isset($info['validFrom_time_t']) ? (int)$info['validFrom_time_t'] : null;
     }
 
     /**

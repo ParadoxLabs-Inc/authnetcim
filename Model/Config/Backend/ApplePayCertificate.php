@@ -32,10 +32,14 @@ use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use OpenSSLCertificate;
+use ParadoxLabs\Authnetcim\Model\Wallet\ApplePay\CertificateUpload;
+use ParadoxLabs\Authnetcim\Model\Wallet\ApplePay\PendingIdentityKey;
 use ParadoxLabs\Authnetcim\Model\Wallet\Pem;
 
 /**
  * Validate and normalize the Apple Pay merchant identity certificate on save.
+ *
+ * An uploaded .cer file (CertificateUpload) replaces the posted PEM text.
  */
 class ApplePayCertificate extends Value
 {
@@ -47,16 +51,13 @@ class ApplePayCertificate extends Value
     private const PROCESSING_CERTIFICATE_CN = 'Apple Pay Payment Processing';
 
     /**
-     * Subject CN of the Merchant Identity certificate, capturing the Merchant ID ("Merchant ID: merchant.com.example").
-     */
-    private const IDENTITY_CERTIFICATE_CN_PATTERN = '/^Merchant ID:\s*(\S+)$/i';
-
-    /**
      * @param Context $context
      * @param Registry $registry
      * @param ScopeConfigInterface $config
      * @param TypeListInterface $cacheTypeList
      * @param Pem $pem
+     * @param CertificateUpload $certificateUpload
+     * @param PendingIdentityKey $pendingIdentityKey
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
@@ -67,6 +68,8 @@ class ApplePayCertificate extends Value
         ScopeConfigInterface $config,
         TypeListInterface $cacheTypeList,
         private readonly Pem $pem,
+        private readonly CertificateUpload $certificateUpload,
+        private readonly PendingIdentityKey $pendingIdentityKey,
         ?AbstractResource $resource = null,
         ?AbstractDb $resourceCollection = null,
         array $data = [],
@@ -88,7 +91,8 @@ class ApplePayCertificate extends Value
      */
     public function beforeSave()
     {
-        $value = trim((string)$this->getValue());
+        $uploaded = $this->certificateUpload->getPem();
+        $value    = $uploaded !== '' ? $uploaded : trim((string)$this->getValue());
 
         if ($value === '') {
             $this->setValue('');
@@ -142,8 +146,6 @@ class ApplePayCertificate extends Value
         $info    = openssl_x509_parse($certificate);
         $subject = is_array($info) && is_array($info['subject'] ?? null) ? $info['subject'] : [];
 
-        $certificateMerchantIds = $this->getSubjectValues($subject, 'UID');
-
         foreach ($this->getSubjectValues($subject, 'CN') as $commonName) {
             if (stripos($commonName, self::PROCESSING_CERTIFICATE_CN) === 0) {
                 throw new LocalizedException(
@@ -153,13 +155,9 @@ class ApplePayCertificate extends Value
                     )
                 );
             }
-
-            if (preg_match(self::IDENTITY_CERTIFICATE_CN_PATTERN, $commonName, $matches) === 1) {
-                $certificateMerchantIds[] = trim($matches[1]);
-            }
         }
 
-        $certificateMerchantIds = array_values(array_unique(array_filter($certificateMerchantIds)));
+        $certificateMerchantIds = $this->pem->getMerchantIds($certificate);
         $merchantId             = $this->getMerchantIdentifier();
 
         if ($certificateMerchantIds === [] || $merchantId === '') {
@@ -215,9 +213,10 @@ class ApplePayCertificate extends Value
     }
 
     /**
-     * Check a new certificate against the saved private key, when the key isn't being replaced in the same save.
+     * Check a new certificate against the saved or pending private key, when no new key is posted in the same save.
      *
-     * A newly posted key is checked against the posted certificate by ApplePayPrivateKey instead.
+     * A newly posted key is checked against the posted certificate by ApplePayPrivateKey instead. A certificate for
+     * the pending key (from Generate Certificate Request) is accepted; ApplePayPrivateKey then makes that key active.
      *
      * @param OpenSSLCertificate $certificate
      * @return void
@@ -225,9 +224,29 @@ class ApplePayCertificate extends Value
      */
     private function validateStoredKey(OpenSSLCertificate $certificate): void
     {
-        $postedKey = trim((string)$this->getFieldsetDataValue('applepay_identity_key'));
+        $postedKey = $this->getFieldsetDataValue('applepay_identity_key');
+        $postedKey = $postedKey !== null ? trim((string)$postedKey) : null;
 
-        if ($postedKey !== '' && preg_match('/^\*+$/', $postedKey) !== 1) {
+        if ($postedKey !== null && $postedKey !== '' && preg_match('/^\*+$/', $postedKey) !== 1) {
+            return;
+        }
+
+        $pendingKey = $this->pendingIdentityKey->get(
+            $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+            (int)$this->getScopeId()
+        );
+
+        if ($pendingKey !== '' && $this->pem->isKeyForCertificate($certificate, $pendingKey)) {
+            // The key field is not posted while it inherits its value, so it could not take the pending key.
+            if ($postedKey === null) {
+                throw new LocalizedException(
+                    __(
+                        'To save this certificate, first uncheck "Use Default" / "Use Website" for Merchant Identity'
+                        . ' Private Key (PEM), so the key generated for its certificate request can be saved with it.'
+                    )
+                );
+            }
+
             return;
         }
 
@@ -238,14 +257,19 @@ class ApplePayCertificate extends Value
             $this->getScopeCode()
         ));
 
-        if ($storedKey === '') {
+        if ($storedKey === '' && $pendingKey === '') {
             return;
         }
 
-        $key = openssl_pkey_get_private($storedKey);
-        if ($key === false || openssl_x509_check_private_key($certificate, $key) !== true) {
+        if ($storedKey === '' || !$this->pem->isKeyForCertificate($certificate, $storedKey)) {
             throw new LocalizedException(
-                __('The Apple Pay merchant identity certificate does not match the saved private key.')
+                $pendingKey !== ''
+                    ? __(
+                        'The Apple Pay merchant identity certificate does not match the saved private key or the'
+                        . ' latest certificate request generated here. Upload the certificate Apple issued for the'
+                        . ' latest request.'
+                    )
+                    : __('The Apple Pay merchant identity certificate does not match the saved private key.')
             );
         }
     }

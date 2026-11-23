@@ -32,15 +32,22 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
+use ParadoxLabs\Authnetcim\Model\Wallet\ApplePay\CertificateUpload;
+use ParadoxLabs\Authnetcim\Model\Wallet\ApplePay\PendingIdentityKey;
 use ParadoxLabs\Authnetcim\Model\Wallet\Pem;
 
 /**
  * Validate, normalize, and encrypt the Apple Pay merchant identity private key on save.
  *
  * The admin field is single-line (obscured), so pasted keys lose their line breaks; normalize them back.
+ *
+ * When the key is left unchanged and the certificate saved with it was issued for the pending key (from Generate
+ * Certificate Request), the pending key becomes the active key.
  */
 class ApplePayPrivateKey extends Encrypted
 {
+    private bool $pendingKeyActivated = false;
+
     /**
      * @param Context $context
      * @param Registry $registry
@@ -48,6 +55,8 @@ class ApplePayPrivateKey extends Encrypted
      * @param TypeListInterface $cacheTypeList
      * @param EncryptorInterface $encryptor
      * @param Pem $pem
+     * @param CertificateUpload $certificateUpload
+     * @param PendingIdentityKey $pendingIdentityKey
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
@@ -59,6 +68,8 @@ class ApplePayPrivateKey extends Encrypted
         TypeListInterface $cacheTypeList,
         EncryptorInterface $encryptor,
         private readonly Pem $pem,
+        private readonly CertificateUpload $certificateUpload,
+        private readonly PendingIdentityKey $pendingIdentityKey,
         ?AbstractResource $resource = null,
         ?AbstractDb $resourceCollection = null,
         array $data = [],
@@ -81,9 +92,9 @@ class ApplePayPrivateKey extends Encrypted
      */
     public function beforeSave()
     {
-        $value = trim((string)$this->getValue());
+        $value       = trim((string)$this->getValue());
+        $certificate = $this->getPostedCertificate();
 
-        // Obscured or empty values are handled as-is by the parent (unchanged or cleared).
         if ($value !== '' && preg_match('/^\*+$/', $value) !== 1) {
             $pem = $this->pem->normalize($value);
             $key = $pem !== '' ? openssl_pkey_get_private($pem) : false;
@@ -93,16 +104,71 @@ class ApplePayPrivateKey extends Encrypted
                 );
             }
 
-            $certificate = $this->pem->normalize((string)$this->getFieldsetDataValue('applepay_identity_cert'));
-            if ($certificate !== '' && openssl_x509_check_private_key($certificate, $key) !== true) {
+            if ($certificate !== '' && !$this->pem->isKeyForCertificate($certificate, $pem)) {
                 throw new LocalizedException(
                     __('The Apple Pay merchant identity private key does not match the certificate.')
                 );
             }
 
             $this->setValue($pem);
+        } elseif ($certificate !== '') {
+            $this->activatePendingKey($certificate);
         }
 
+        // Obscured or empty values are handled as-is by the parent (unchanged or cleared).
         parent::beforeSave();
+    }
+
+    /**
+     * Remove the pending key once it has been saved as the active key.
+     *
+     * @return $this
+     */
+    public function afterSave()
+    {
+        if ($this->pendingKeyActivated) {
+            $this->pendingIdentityKey->delete($this->getConfigScope(), (int)$this->getScopeId());
+        }
+
+        return parent::afterSave();
+    }
+
+    /**
+     * Make the pending key active if the certificate being saved was issued for it.
+     *
+     * @param string $certificate
+     * @return void
+     */
+    private function activatePendingKey(string $certificate): void
+    {
+        $pendingKey = $this->pendingIdentityKey->get($this->getConfigScope(), (int)$this->getScopeId());
+
+        if ($pendingKey !== '' && $this->pem->isKeyForCertificate($certificate, $pendingKey)) {
+            $this->setValue($this->pem->normalize($pendingKey));
+            $this->pendingKeyActivated = true;
+        }
+    }
+
+    /**
+     * Get the certificate saved alongside this key: an uploaded .cer file, else the posted PEM text.
+     *
+     * @return string
+     * @throws LocalizedException
+     */
+    private function getPostedCertificate(): string
+    {
+        $uploaded = $this->certificateUpload->getPem();
+
+        return $uploaded !== ''
+            ? $uploaded
+            : $this->pem->normalize((string)$this->getFieldsetDataValue('applepay_identity_cert'));
+    }
+
+    /**
+     * @return string
+     */
+    private function getConfigScope(): string
+    {
+        return $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
     }
 }
