@@ -71,12 +71,21 @@
                 <item name="payment/authnetcim/trans_key" xsi:type="string">1</item>
                 <item name="payment/authnetcim_ach/login" xsi:type="string">1</item>
                 <item name="payment/authnetcim_ach/trans_key" xsi:type="string">1</item>
+                <item name="payment/authnetcim/signature_key" xsi:type="string">1</item>
+                <item name="payment/authnetcim_ach/signature_key" xsi:type="string">1</item>
                 <item name="payment/authnetcim_wallet/applepay_identity_key" xsi:type="string">1</item>
                 <item name="payment/authnetcim_wallet/applepay_identity_key_pending" xsi:type="string">1</item>
             </argument>
             <argument name="environment" xsi:type="array">
                 <item name="payment/authnetcim/test" xsi:type="string">1</item>
                 <item name="payment/authnetcim_ach/test" xsi:type="string">1</item>
+                <item name="payment/authnetcim/client_key" xsi:type="string">1</item>
+                <item name="payment/authnetcim/hosted_custom_communicator_url" xsi:type="string">1</item>
+                <item name="payment/authnetcim_ach/hosted_custom_communicator_url" xsi:type="string">1</item>
+                <item name="payment/authnetcim/enable_webhooks" xsi:type="string">1</item>
+                <item name="payment/authnetcim_ach/enable_webhooks" xsi:type="string">1</item>
+                <item name="payment/authnetcim/verify_ssl" xsi:type="string">1</item>
+                <item name="payment/authnetcim_ach/verify_ssl" xsi:type="string">1</item>
                 <item name="payment/authnetcim_wallet/applepay_merchant_identifier" xsi:type="string">1</item>
                 <item name="payment/authnetcim_wallet/applepay_identity_cert" xsi:type="string">1</item>
                 <item name="payment/authnetcim_wallet/applepay_domain_association" xsi:type="string">1</item>
