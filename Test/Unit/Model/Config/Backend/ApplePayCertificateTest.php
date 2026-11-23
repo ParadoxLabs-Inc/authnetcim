@@ -27,6 +27,7 @@ use Magento\Framework\App\Cache\TypeListInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Event\ManagerInterface;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Message\ManagerInterface as MessageManagerInterface;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Registry;
 use OpenSSLAsymmetricKey;
@@ -169,14 +170,57 @@ class ApplePayCertificateTest extends TestCase
     {
         $model = $this->createModel(
             PemTest::createCertificate(30, $this->createKey()),
-            '',
-            '',
+            '******',
+            $this->exportKey($this->createKey()),
             pendingKey: $this->exportKey($this->createKey())
         );
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('latest certificate request generated here');
         $model->beforeSave();
+    }
+
+    /**
+     * With no saved key there is nothing to mismatch: a pending request must not block the config save.
+     *
+     * @return void
+     */
+    public function testCertificateNotMatchingPendingKeyWithNoSavedKeyWarnsAndSaves(): void
+    {
+        $messageManager = $this->createMock(MessageManagerInterface::class);
+        $messageManager->expects($this->once())->method('addWarningMessage');
+
+        $model = $this->createModel(
+            PemTest::createCertificate(30, $this->createKey()),
+            '',
+            '',
+            pendingKey: $this->exportKey($this->createKey()),
+            messageManager: $messageManager
+        );
+
+        $model->beforeSave();
+
+        $this->assertStringStartsWith('-----BEGIN CERTIFICATE-----', (string)$model->getValue());
+    }
+
+    /**
+     * @return void
+     */
+    public function testCertificateWithNoSavedOrPendingKeySavesWithoutWarning(): void
+    {
+        $messageManager = $this->createMock(MessageManagerInterface::class);
+        $messageManager->expects($this->never())->method('addWarningMessage');
+
+        $model = $this->createModel(
+            PemTest::createCertificate(30, $this->createKey()),
+            '',
+            '',
+            messageManager: $messageManager
+        );
+
+        $model->beforeSave();
+
+        $this->assertStringStartsWith('-----BEGIN CERTIFICATE-----', (string)$model->getValue());
     }
 
     /**
@@ -357,6 +401,7 @@ class ApplePayCertificateTest extends TestCase
      * @param string $savedMerchantId Merchant ID saved for the website
      * @param string $uploadedCertificate
      * @param string $pendingKey Pending key at the save scope
+     * @param MessageManagerInterface|null $messageManager
      * @return ApplePayCertificate
      */
     private function createModel(
@@ -367,6 +412,7 @@ class ApplePayCertificateTest extends TestCase
         string $savedMerchantId = '',
         string $uploadedCertificate = '',
         string $pendingKey = '',
+        ?MessageManagerInterface $messageManager = null,
     ): ApplePayCertificate {
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
@@ -398,6 +444,7 @@ class ApplePayCertificateTest extends TestCase
             new Pem(),
             $certificateUpload,
             $pendingIdentityKey,
+            $messageManager ?? $this->createMock(MessageManagerInterface::class),
             null,
             null,
             [

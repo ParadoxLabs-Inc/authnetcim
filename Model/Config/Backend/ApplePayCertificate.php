@@ -28,6 +28,7 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Value;
 use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
@@ -58,6 +59,7 @@ class ApplePayCertificate extends Value
      * @param Pem $pem
      * @param CertificateUpload $certificateUpload
      * @param PendingIdentityKey $pendingIdentityKey
+     * @param ManagerInterface $messageManager
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
@@ -70,6 +72,7 @@ class ApplePayCertificate extends Value
         private readonly Pem $pem,
         private readonly CertificateUpload $certificateUpload,
         private readonly PendingIdentityKey $pendingIdentityKey,
+        private readonly ManagerInterface $messageManager,
         ?AbstractResource $resource = null,
         ?AbstractDb $resourceCollection = null,
         array $data = [],
@@ -257,11 +260,22 @@ class ApplePayCertificate extends Value
             $this->getScopeCode()
         ));
 
-        if ($storedKey === '' && $pendingKey === '') {
+        // No key to check against: save, but say so when a certificate request is waiting for a different certificate.
+        if ($storedKey === '') {
+            if ($pendingKey !== '') {
+                $this->messageManager->addWarningMessage(
+                    __(
+                        'The Apple Pay merchant identity certificate was not issued for the latest certificate'
+                        . ' request generated here, and no private key is saved for it. Apple Pay will not work'
+                        . ' until you upload the certificate Apple issued for that request.'
+                    )
+                );
+            }
+
             return;
         }
 
-        if ($storedKey === '' || !$this->pem->isKeyForCertificate($certificate, $storedKey)) {
+        if (!$this->pem->isKeyForCertificate($certificate, $storedKey)) {
             throw new LocalizedException(
                 $pendingKey !== ''
                     ? __(

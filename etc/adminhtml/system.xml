@@ -298,6 +298,7 @@
                 </field>
                 <field id="applepay_identity_cert_file" translate="label comment" type="file" sortOrder="1038" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Upload Merchant Identity Certificate (.cer)</label>
+                    <frontend_model>ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ApplePayCertificateFile</frontend_model>
                     <backend_model>ParadoxLabs\Authnetcim\Model\Config\Backend\ApplePayCertificateFile</backend_model>
                     <comment><![CDATA[The .cer file from Apple for the certificate request generated above. Replaces the certificate below when you save.]]></comment>
                     <depends>
