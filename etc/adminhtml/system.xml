@@ -300,26 +300,19 @@
                     <label>Upload Merchant Identity Certificate (.cer)</label>
                     <frontend_model>ParadoxLabs\Authnetcim\Block\Adminhtml\Config\ApplePayCertificateFile</frontend_model>
                     <backend_model>ParadoxLabs\Authnetcim\Model\Config\Backend\ApplePayCertificateFile</backend_model>
-                    <comment><![CDATA[The merchant_id.cer file from Apple for the certificate request generated above. Replaces the certificate below when you save.]]></comment>
+                    <comment><![CDATA[The merchant_id.cer file from Apple for the certificate request generated above. Replaces the current certificate when you save.]]></comment>
                     <depends>
                         <field id="applepay_active">1</field>
                     </depends>
                 </field>
-                <field id="applepay_identity_cert" translate="label comment" type="textarea" sortOrder="1040" showInDefault="1" showInWebsite="1" showInStore="0">
+                <!-- Not shown in admin: the .cer upload saves these. Set with bin/magento config:set for a certificate request made outside Magento. -->
+                <field id="applepay_identity_cert" translate="label" type="textarea" sortOrder="1040" showInDefault="0" showInWebsite="0" showInStore="0">
                     <label>Merchant Identity Certificate (PEM)</label>
                     <backend_model>ParadoxLabs\Authnetcim\Model\Config\Backend\ApplePayCertificate</backend_model>
-                    <comment><![CDATA[Filled in from the uploaded .cer file. To enter it manually instead, paste your <strong>Merchant Identity</strong> certificate (not Payment Processing) in PEM format: begins with -----BEGIN CERTIFICATE-----.]]></comment>
-                    <depends>
-                        <field id="applepay_active">1</field>
-                    </depends>
                 </field>
-                <field id="applepay_identity_key" translate="label comment" type="obscure" sortOrder="1050" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="applepay_identity_key" translate="label" type="obscure" sortOrder="1050" showInDefault="0" showInWebsite="0" showInStore="0">
                     <label>Merchant Identity Private Key (PEM)</label>
                     <backend_model>ParadoxLabs\Authnetcim\Model\Config\Backend\ApplePayPrivateKey</backend_model>
-                    <comment><![CDATA[Set automatically when you use <strong>Generate New Certificate Request</strong>; leave unchanged. Only if you created the certificate request yourself, paste its unencrypted private key here: begins with -----BEGIN PRIVATE KEY----- or -----BEGIN RSA PRIVATE KEY-----. Stored encrypted.]]></comment>
-                    <depends>
-                        <field id="applepay_active">1</field>
-                    </depends>
                 </field>
                 <field id="applepay_domain_association" translate="label comment" type="textarea" sortOrder="1060" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Domain Verification File Contents</label>

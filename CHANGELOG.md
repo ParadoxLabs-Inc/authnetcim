@@ -15,7 +15,9 @@
 - Apple Pay setup no longer needs OpenSSL on the command line: **Generate Certificate Request** creates the identity
   key on the server (stored encrypted) and downloads the CSR for Apple, and the `.cer` file from Apple is uploaded
   directly. The current certificate keeps working until the new one is saved, and the settings page shows the saved
-  certificate's Merchant ID, validity, and key match. Manual PEM entry remains available.
+  certificate's Merchant ID, validity, and key match. The certificate and key PEM fields are no longer shown in
+  admin; for a certificate request made outside Magento, set the key with `bin/magento config:set` and upload the
+  `.cer` as usual.
 - Wallet orders are refused if the order total changed after the customer approved the payment sheet, and a wallet
   transaction is voided automatically if checkout fails after payment.
 - Webhooks: the card notification endpoint now also handles wallet transactions.

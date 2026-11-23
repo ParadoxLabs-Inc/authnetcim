@@ -19,6 +19,7 @@
  * @link https://support.paradoxlabs.com
  */
 
+
 declare(strict_types=1);
 
 namespace ParadoxLabs\Authnetcim\Test\Unit\Model\Config\Backend;
@@ -30,137 +31,67 @@ use Magento\Framework\Event\ManagerInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Registry;
-use OpenSSLAsymmetricKey;
 use ParadoxLabs\Authnetcim\Model\Config\Backend\ApplePayPrivateKey;
-use ParadoxLabs\Authnetcim\Model\Wallet\ApplePay\CertificateUpload;
-use ParadoxLabs\Authnetcim\Model\Wallet\ApplePay\PendingIdentityKey;
 use ParadoxLabs\Authnetcim\Model\Wallet\Pem;
-use ParadoxLabs\Authnetcim\Test\Unit\Model\Wallet\PemTest;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Key set with bin/magento config:set.
+ */
 class ApplePayPrivateKeyTest extends TestCase
 {
-    private PendingIdentityKey&MockObject $pendingIdentityKey;
-
     /**
-     * Unchanged key + uploaded certificate for the pending key: the pending key becomes active, then is removed.
+     * A key pasted on one line (as a shell argument may be) is normalized and encrypted.
      *
      * @return void
      */
-    public function testPendingKeyActivatedByUploadedCertificate(): void
+    public function testValidKeyIsNormalizedAndEncrypted(): void
     {
-        $pendingKey = $this->createKey();
-        $pendingPem = $this->exportKey($pendingKey);
+        $key = openssl_pkey_new([
+            'private_key_type' => OPENSSL_KEYTYPE_EC,
+            'curve_name' => 'prime256v1',
+        ]);
+        openssl_pkey_export($key, $pem);
 
-        $model = $this->createModel('******', '', PemTest::createCertificate(30, $pendingKey), $pendingPem);
-        $model->beforeSave();
-
-        $this->assertTrue($model->isSaveAllowed());
-        $this->assertSame('enc:' . (new Pem())->normalize($pendingPem), $model->getValue());
-
-        $this->pendingIdentityKey->expects($this->once())->method('delete')->with('websites', 1);
-        $model->afterSave();
-    }
-
-    /**
-     * First setup: empty key field, certificate pasted as PEM text.
-     *
-     * @return void
-     */
-    public function testPendingKeyActivatedByPostedCertificate(): void
-    {
-        $pendingKey = $this->createKey();
-        $pendingPem = $this->exportKey($pendingKey);
-
-        $model = $this->createModel('', PemTest::createCertificate(30, $pendingKey), '', $pendingPem);
-        $model->beforeSave();
-
-        $this->assertSame('enc:' . (new Pem())->normalize($pendingPem), $model->getValue());
-    }
-
-    /**
-     * A certificate for some other key leaves the saved key (and the pending one) alone.
-     *
-     * @return void
-     */
-    public function testPendingKeyKeptWhenCertificateDoesNotMatch(): void
-    {
-        $model = $this->createModel(
-            '******',
-            PemTest::createCertificate(30, $this->createKey()),
-            '',
-            $this->exportKey($this->createKey())
-        );
-        $model->beforeSave();
-
-        $this->assertFalse($model->isSaveAllowed());
-
-        $this->pendingIdentityKey->expects($this->never())->method('delete');
-        $model->afterSave();
-    }
-
-    /**
-     * A manually entered key is checked against the uploaded certificate.
-     *
-     * @return void
-     */
-    public function testPostedKeyNotMatchingUploadedCertificateIsRejected(): void
-    {
-        $model = $this->createModel(
-            $this->exportKey($this->createKey()),
-            '',
-            PemTest::createCertificate(30, $this->createKey()),
-            ''
-        );
-
-        $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('does not match the certificate');
-        $model->beforeSave();
-    }
-
-    /**
-     * @return void
-     */
-    public function testPostedKeyMatchingCertificateSaves(): void
-    {
-        $key = $this->createKey();
-        $pem = $this->exportKey($key);
-
-        $model = $this->createModel(str_replace("\n", ' ', $pem), PemTest::createCertificate(30, $key), '', '');
+        $model = $this->createModel(str_replace("\n", ' ', $pem));
         $model->beforeSave();
 
         $this->assertSame('enc:' . (new Pem())->normalize($pem), $model->getValue());
     }
 
     /**
-     * Key model saving at website scope.
-     *
-     * @param string $postedKey
-     * @param string $postedCertificate PEM text posted in the certificate field
-     * @param string $uploadedCertificate
-     * @param string $pendingKey
+     * @return void
+     */
+    public function testInvalidKeyIsRejected(): void
+    {
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('not a valid, unencrypted PEM private key');
+
+        $this->createModel('-----BEGIN PRIVATE KEY-----nope-----END PRIVATE KEY-----')->beforeSave();
+    }
+
+    /**
+     * @return void
+     */
+    public function testEmptyValueClears(): void
+    {
+        $model = $this->createModel('');
+        $model->beforeSave();
+
+        $this->assertSame('', (string)$model->getValue());
+    }
+
+    /**
+     * @param string $value
      * @return ApplePayPrivateKey
      */
-    private function createModel(
-        string $postedKey,
-        string $postedCertificate,
-        string $uploadedCertificate,
-        string $pendingKey,
-    ): ApplePayPrivateKey {
+    private function createModel(string $value): ApplePayPrivateKey
+    {
         $context = $this->createMock(Context::class);
         $context->method('getEventDispatcher')->willReturn($this->createMock(ManagerInterface::class));
 
         $encryptor = $this->createMock(EncryptorInterface::class);
         $encryptor->method('encrypt')->willReturnCallback(static fn (string $value): string => 'enc:' . $value);
-
-        $certificateUpload = $this->createMock(CertificateUpload::class);
-        $certificateUpload->method('getPem')->willReturn($uploadedCertificate);
-
-        $this->pendingIdentityKey = $this->createMock(PendingIdentityKey::class);
-        $this->pendingIdentityKey->method('get')->willReturnCallback(
-            static fn (string $scope, int $scopeId): string => $scope === 'websites' && $scopeId === 1 ? $pendingKey : ''
-        );
 
         return new ApplePayPrivateKey(
             $context,
@@ -169,43 +100,15 @@ class ApplePayPrivateKeyTest extends TestCase
             $this->createMock(TypeListInterface::class),
             $encryptor,
             new Pem(),
-            $certificateUpload,
-            $this->pendingIdentityKey,
             null,
             null,
             [
-                'value' => $postedKey,
-                'path' => 'payment/authnetcim_wallet/applepay_identity_key',
+                'value' => $value,
+                'path' => ApplePayPrivateKey::PATH,
                 'scope' => 'websites',
                 'scope_id' => 1,
                 'scope_code' => 'base',
-                'fieldset_data' => [
-                    'applepay_identity_cert' => $postedCertificate,
-                    'applepay_identity_key' => $postedKey,
-                ],
             ],
         );
-    }
-
-    /**
-     * @return OpenSSLAsymmetricKey
-     */
-    private function createKey(): OpenSSLAsymmetricKey
-    {
-        return openssl_pkey_new([
-            'private_key_type' => OPENSSL_KEYTYPE_EC,
-            'curve_name' => 'prime256v1',
-        ]);
-    }
-
-    /**
-     * @param OpenSSLAsymmetricKey $key
-     * @return string
-     */
-    private function exportKey(OpenSSLAsymmetricKey $key): string
-    {
-        openssl_pkey_export($key, $pem);
-
-        return $pem;
     }
 }

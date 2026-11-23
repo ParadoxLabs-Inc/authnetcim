@@ -136,15 +136,16 @@ encrypted for one Payment Processing certificate, so one Merchant ID can't serve
    The certificate lasts about 25 months. An admin notice warns you 30 days before it expires, and Apple Pay is hidden
    at checkout once it has. To renew, repeat this step.
 
-   **Manual alternative:** create the key and request yourself, then paste the certificate and the unencrypted key
-   into **Merchant Identity Certificate (PEM)** and **Merchant Identity Private Key (PEM)**:
+   **Using your own certificate request:** if you created the key and request outside Magento (for example with
+   Keychain Access on a Mac), save the unencrypted private key from the command line, then upload the `.cer` file in
+   Magento as above:
 
    ```bash
-   openssl req -new -newkey rsa:2048 -nodes -keyout merchant_id.key -out merchant_id.csr -subj "/CN=merchant.com.example.store"
-   openssl x509 -inform der -in merchant_id.cer -out merchant_id.pem
+   bin/magento config:set payment/authnetcim_wallet/applepay_identity_key "$(cat merchant_id.key)"
    ```
 
-   If you created the request with Keychain Access on a Mac, export the certificate and key together as
+   Add `--scope=websites --scope-code=<website code>` to set it for a website. The upload is accepted when the
+   certificate matches that key. For a Keychain request, export the certificate and key together as
    `merchant_id.p12`, then extract the key with `openssl pkcs12 -in merchant_id.p12 -nocerts -nodes -out
    merchant_id.key` (add `-legacy` if OpenSSL 3 refuses the file).
 4. **Domain verification.** In Apple Developer, add each storefront domain to the Merchant ID. Paste the contents of
